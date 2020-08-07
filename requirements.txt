@@ -1,0 +1,13 @@
+dask[complete]
+fsspec
+fastparquet
+google-cloud-storage
+intake
+intake-geopandas
+intake-xarray
+netcdf4
+pandas
+pytest
+rasterio
+xarray
+zarr
