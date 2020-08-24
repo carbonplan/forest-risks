@@ -1,35 +1,34 @@
-import networkx as nx
 from dask.dataframe import read_parquet
-from pandas import read_csv
-
+from pandas import read_csv, merge, Series
+from numpy import full, isnan, nan, nanmean, nansum
+from networkx import Graph, connected_components
 
 def fia(states):
-    df = read_csv('gs://carbonplan-data/raw/fia/REF_RESEARCH_STATION.csv')
-    [preprocess_state(state) for state in states]
+    if type(states) is str:
+        if states == 'all':
+            df = read_csv('gs://carbonplan-data/raw/fia/REF_RESEARCH_STATION.csv')
+            [process_by_state(state) for state in df['STATE_ABBR']]
+        else:
+            process_by_state(states)
+    else:
+        [process_by_state(state) for state in states]
+    return
 
 
-def preprocess_state(state):
-    state = state.lower()
-    tree_df = read_parquet(f'gs://carbonplan-scratch/fia/states/tree_{state}.parquet').compute()
-    plot_df = read_parquet(f'gs://carbonplan-scratch/fia/states/plot_{state}.parquet').compute()
-    cond_df = read_parquet(f'gs://carbonplan-scratch/fia/states/cond_{state}.parquet').compute()
-    # do stuff
-
-    
 def generate_uids(data, prev_cn_var="PREV_PLT_CN"):
     """
     Generate dict mapping ever CN to a unique group, allows tracking single plot/tree through time
     Can change `prev_cn_var` to apply to tree (etc)
     """
-    g = nx.Graph()
+    g = Graph()
     for row in data[["CN", prev_cn_var]].itertuples():
-        if ~np.isnan(row.PREV_PLT_CN):  # has ancestor, add nodes + edge
+        if ~isnan(row.PREV_PLT_CN):  # has ancestor, add nodes + edge
             g.add_edge(row.CN, row.PREV_PLT_CN)
         else:
             g.add_node(row.CN)  # no ancestor, potentially not resampled
 
     uids = {}
-    for uid, subgraph in enumerate(nx.connected_components(g)):
+    for uid, subgraph in enumerate(connected_components(g)):
         for node in subgraph:
             uids[node] = uid
     return uids
@@ -37,25 +36,36 @@ def generate_uids(data, prev_cn_var="PREV_PLT_CN"):
 
 def tree_stats(df):
     idx = (df["STATUSCD"] == 1) & (df["DIA"] > 1.0) & (df["DIACHECK"] == 0)
-    out = pd.Series(
-        np.full(6, np.nan), index=["DIA", "HT", "TOTAGE", "SITREE", "BIOMASS", "BALIVE"]
+    out = Series(
+        full(6, nan), index=["DIA", "HT", "TOTAGE", "SITREE", "BIOMASS", "BALIVE"]
     )
     if sum(idx) > 0:
-        out["DIA"] = np.nanmean(df["DIA"][idx])
-        out["HT"] = np.nanmean(df["HT"][idx])
-        out["TOTAGE"] = np.nanmean(df["TOTAGE"][idx])
-        out["SITREE"] = np.nanmean(df["SITREE"][idx])
-        out["BIOMASS"] = np.nansum((df["CARBON_AG"][idx] * 2) * df["TPA_UNADJ"][idx])
-        out["BALIVE"] = np.nansum(
+        out["DIA"] = nanmean(df["DIA"][idx])
+        out["HT"] = nanmean(df["HT"][idx])
+        out["TOTAGE"] = nanmean(df["TOTAGE"][idx])
+        out["SITREE"] = nanmean(df["SITREE"][idx])
+        out["BIOMASS"] = nansum((df["CARBON_AG"][idx] * 2) * df["TPA_UNADJ"][idx])
+        out["BALIVE"] = nansum(
             ((df["DIA"][idx] ** 2) * 0.005454) * df["TPA_UNADJ"][idx]
         )
     return out
 
 
-def process_by_state(state_id):
-    tree_df = intake.cat.fia.raw_table(name="tree").to_dask()
-    plt_df = intake.cat.fia.raw_table(name="plot").to_dask()
-    cond_df = intake.cat.fia.raw_table(name="cond").to_dask()
+def process_by_state(state):
+    state = state.lower()
+    print(f'loading tables for {state}')
+    tree_df = read_parquet(f'gs://carbonplan-scratch/fia/states/tree_{state}.parquet').compute()
+    plot_df = read_parquet(f'gs://carbonplan-scratch/fia/states/plot_{state}.parquet').compute()
+    cond_df = read_parquet(f'gs://carbonplan-scratch/fia/states/cond_{state}.parquet').compute()
+
+    plot_usevars = [
+        "CN", 
+        "PREV_PLT_CN", 
+        "LAT", 
+        "LON", 
+        "ELEV", 
+        "INVYR"
+    ]
 
     tree_usevars = [
         "DIA",
@@ -81,32 +91,27 @@ def process_by_state(state_id):
         "CONDPROP_UNADJ",
     ]
 
-    state_plt = plt_df.loc[
-        plt_df["STATECD"] == state_id,
-        ["CN", "PREV_PLT_CN", "LAT", "LON", "ELEV", "INVYR"],
-    ].compute()
+    plot_df = plot_df.loc[:, plot_usevars]
+    tree_df = tree_df.loc[:, tree_usevars]
+    cond_df = cond_df.loc[:, ["PLT_CN", "CONDID"] + cond_vars]
 
-    if len(state_plt) > 0:
-        state_cond = cond_df.loc[
-            cond_df["STATECD"] == state_id, ["PLT_CN", "CONDID"] + cond_vars
-        ].compute()
-        state_tree = tree_df.loc[tree_df["STATECD"] == state_id, tree_usevars].compute()
-
-        cond_agg = state_cond.groupby(["PLT_CN", "CONDID"])[cond_vars].max()
+    if len(plot_df) > 0:
+        print(f'doing aggregation for {state}')
+        cond_agg = cond_df.groupby(["PLT_CN", "CONDID"])[cond_vars].max()
         cond_agg = cond_agg.rename(
             columns={"BALIVE": "BALIVE_COND", "STDAGE": "STDAGE_COND"}
         )
-        tree_agg = state_tree.groupby(["PLT_CN", "CONDID"]).apply(tree_stats)
+        tree_agg = tree_df.groupby(["PLT_CN", "CONDID"]).apply(tree_stats)
 
-        plt_uids = generate_uids(state_plt)
+        plt_uids = generate_uids(plot_df)
 
-        agg = pd.merge(
+        agg = merge(
             cond_agg, tree_agg, left_index=True, right_index=True
         ).reset_index(level=1)
-        agg = agg.join(state_plt.set_index("CN")[["LAT", "LON", "ELEV", "INVYR"]],)
+        agg = agg.join(plot_df.set_index("CN")[["LAT", "LON", "ELEV", "INVYR"]],)
         agg["plt_uid"] = agg.index.map(plt_uids)
         agg.to_parquet(
-            f"gs://carbonplan-scratch/fia_{state_id:02d}.parquet",
+            f"gs://carbonplan-scratch/fia/states/agg_{state}.parquet",
             compression="gzip",
             engine="fastparquet",
         )
