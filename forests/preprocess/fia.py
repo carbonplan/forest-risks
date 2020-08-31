@@ -16,6 +16,7 @@ def fia(states, save=True):
 
 
 def preprocess_state(state, save=True):
+    print(f'preprocessing state {state}...')
     state = state.lower()
     tree_df = read_parquet(f'gs://carbonplan-scratch/fia/states/tree_{state}.parquet').compute()
     plot_df = read_parquet(f'gs://carbonplan-scratch/fia/states/plot_{state}.parquet').compute()
