@@ -8,12 +8,11 @@ def fia(states, save=True):
     if type(states) is str:
         if states == 'all':
             df = pd.read_csv('gs://carbonplan-data/raw/fia/REF_RESEARCH_STATION.csv')
-            [preprocess_state(state, save=save) for state in df['STATE_ABBR']]
+            return [preprocess_state(state, save=save) for state in df['STATE_ABBR']]
         else:
-            preprocess_state(states, save=save)
+            return preprocess_state(states, save=save)
     else:
-        [preprocess_state(state, save=save) for state in states]
-    return
+        return [preprocess_state(state, save=save) for state in states]
 
 
 def preprocess_state(state, save=True):
@@ -22,36 +21,25 @@ def preprocess_state(state, save=True):
     plot_df = read_parquet(f'gs://carbonplan-scratch/fia/states/plot_{state}.parquet').compute()
     cond_df = read_parquet(f'gs://carbonplan-scratch/fia/states/cond_{state}.parquet').compute()
     
-    tree_usevars = [
-        "DIA",
-        "PLT_CN",
-        "CONDID",
-        "HT",
-        "TOTAGE",
-        "SITREE",
-        "TPA_UNADJ",
-        "CARBON_AG",
-        "STATUSCD",
-        "DIACHECK",
-    ]
-
     cond_vars = [
         "STDAGE",
         "BALIVE",
         "SICOND",
         "SISP",
+        "OWNCD",
         "FORTYPCD",
+        "FLDTYPCD",
         "DSTRBCD1",
         "DSTRBYR1",
         "CONDPROP_UNADJ",
+        "COND_STATUS_CD",
+        "SLOPE",
+        "ASPECT"
     ]
 
     # should be unique, but pandas was complaining, so group to ensure.
     cond_agg = cond_df.groupby(['PLT_CN', 'CONDID'])[cond_vars].max()
-    cond_agg = cond_agg.rename(
-        columns={"BALIVE": "BALIVE_COND", "STDAGE": "STDAGE_COND"}
-    )
-    
+
     tree_agg = tree_df.groupby(["PLT_CN", "CONDID"]).apply(tree_stats)
 
     plt_uids = generate_uids(plot_df)
@@ -60,14 +48,20 @@ def preprocess_state(state, save=True):
         cond_agg, tree_agg, left_index=True, right_index=True
     ).reset_index(level=1)
     agg = agg.join(plot_df.set_index("CN")[["LAT", "LON", "ELEV", "INVYR"]],)
-    agg["plt_uid"] = agg.index.map(plt_uids)
+    agg["PLT_UID"] = agg.index.map(plt_uids)
+
+    # convert lbs/acre -> t/ha
+    agg["BIOMASS_AG"] = agg["BIOMASS_AG"] / 892.1791216197013
+    agg["BIOMASS_BG"] = agg["BIOMASS_BG"] / 892.1791216197013
+
     if save:
         agg.to_parquet(
             f"gs://carbonplan-scratch/fia/preprocessed/{state}.parquet",
             compression="gzip",
             engine="fastparquet",
         )
-    return  # not sure if needed. Dask documentation tends to include
+    else:
+        return agg
 
 def generate_uids(data, prev_cn_var="PREV_PLT_CN"):
     """
@@ -91,15 +85,9 @@ def generate_uids(data, prev_cn_var="PREV_PLT_CN"):
 def tree_stats(df):
     idx = (df["STATUSCD"] == 1) & (df["DIA"] > 1.0) & (df["DIACHECK"] == 0)
     out = pd.Series(
-        np.full(6, np.nan), index=["DIA", "HT", "TOTAGE", "SITREE", "BIOMASS", "BALIVE"]
+        np.full(2, np.nan), index=["BIOMASS_AG", "BIOMASS_BG"]
     )
     if sum(idx) > 0:
-        out["DIA"] = np.nanmean(df["DIA"][idx])
-        out["HT"] = np.nanmean(df["HT"][idx])
-        out["TOTAGE"] = np.nanmean(df["TOTAGE"][idx])
-        out["SITREE"] = np.nanmean(df["SITREE"][idx])
-        out["BIOMASS"] = np.nansum((df["CARBON_AG"][idx] * 2) * df["TPA_UNADJ"][idx])
-        out["BALIVE"] = np.nansum(
-            ((df["DIA"][idx] ** 2) * 0.005454) * df["TPA_UNADJ"][idx]
-        )
+        out["BIOMASS_AG"] = np.nansum((df["CARBON_AG"][idx] * 2) * df["TPA_UNADJ"][idx])
+        out["BIOMASS_BG"] = np.nansum((df["CARBON_BG"][idx] * 2) * df["TPA_UNADJ"][idx])
     return out
