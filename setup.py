@@ -2,19 +2,22 @@
 
 from setuptools import setup
 
-version = '1.0.0'
+version = "1.0.0"
 
-required = open('requirements.txt').read().split('\n')
+required = open("requirements.txt").read().split("\n")
 
 setup(
-    name='forests',
+    name="forests",
     version=version,
-    description=' ',
-    author='carbonplan',
-    author_email='tech@carbonplan.org',
-    url='https://github.com/carbonplan/forests',
-    packages=['forests'],
+    description=" ",
+    author="carbonplan",
+    author_email="tech@carbonplan.org",
+    url="https://github.com/carbonplan/forests",
+    packages=["forests"],
     install_requires=required,
-    long_description='See ' + 'https://github.com/carbonplan/forests',
-    license='MIT'
+    long_description="See " + "https://github.com/carbonplan/forests",
+    license="MIT",
+    entry_points={
+        "carbonplan.modules": ["forests = forests", "forests.preprocess = forests.preprocess",]
+    },
 )
