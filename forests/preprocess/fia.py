@@ -18,9 +18,9 @@ def fia(states, save=True):
 def preprocess_state(state, save=True):
     print(f'preprocessing state {state}...')
     state = state.lower()
-    tree_df = read_parquet(f'gs://carbonplan-scratch/fia/states/tree_{state}.parquet').compute()
-    plot_df = read_parquet(f'gs://carbonplan-scratch/fia/states/plot_{state}.parquet').compute()
-    cond_df = read_parquet(f'gs://carbonplan-scratch/fia/states/cond_{state}.parquet').compute()
+    tree_df = read_parquet(f'gs://carbonplan-data/fia-states/tree_{state}.parquet').compute()
+    plot_df = read_parquet(f'gs://carbonplan-data/fia-states/plot_{state}.parquet').compute()
+    cond_df = read_parquet(f'gs://carbonplan-data/fia-states/cond_{state}.parquet').compute()
     
     cond_vars = [
         "STDAGE",
