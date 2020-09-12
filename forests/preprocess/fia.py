@@ -1,27 +1,60 @@
-from dask.dataframe import read_parquet
+import math
 
 import networkx as nx
 import numpy as np
 import pandas as pd
 
+
 def fia(states, save=True):
     if type(states) is str:
-        if states == 'all':
-            df = pd.read_csv('gs://carbonplan-data/raw/fia/REF_RESEARCH_STATION.csv')
-            return [preprocess_state(state, save=save) for state in df['STATE_ABBR']]
+        if states == "all":
+            df = pd.read_csv("gs://carbonplan-data/raw/fia/REF_RESEARCH_STATION.csv")
+            return [
+                preprocess_state_long(state, save=save) for state in df["STATE_ABBR"]
+            ]
         else:
-            return preprocess_state(states, save=save)
+            return preprocess_state_long(states, save=save)
     else:
-        return [preprocess_state(state, save=save) for state in states]
+        return [preprocess_state_long(state, save=save) for state in states]
 
 
-def preprocess_state(state, save=True):
-    print(f'preprocessing state {state}...')
-    state = state.lower()
-    tree_df = read_parquet(f'gs://carbonplan-data/raw/fia-states/tree_{state}.parquet').compute()
-    plot_df = read_parquet(f'gs://carbonplan-data/raw/fia-states/plot_{state}.parquet').compute()
-    cond_df = read_parquet(f'gs://carbonplan-data/raw/fia-states/cond_{state}.parquet').compute()
-    
+def preprocess_state_long(state_abbr, save=True):
+    print(f"preprocessing state {state_abbr}")
+    tree_df = pd.read_parquet(
+        f"gs://carbonplan-data/raw/fia-states/tree_{state_abbr}.parquet",
+        columns=[
+            "CN",
+            "PLT_CN",
+            "DIA",
+            "STATUSCD",
+            "CONDID",
+            "TPA_UNADJ",
+            "TPAMORT_UNADJ",
+            "DIACHECK",
+            "CARBON_AG",
+            "CARBON_BG",
+        ],
+    )
+    # calculate tree-level statistics that will sum later.
+    tree_df["unadj_basal_area"] = (
+        math.pi * (tree_df["DIA"] / (2 * 12)) ** 2 * tree_df["TPA_UNADJ"]
+    )
+
+    # 892.179 converts lbs/acre to t/ha
+    tree_df["unadj_ag_biomass"] = (
+        tree_df["CARBON_AG"] * tree_df["TPA_UNADJ"] * 2 / 892.1791216197013
+    )
+    tree_df["unadj_bg_biomass"] = (
+        tree_df["CARBON_BG"] * tree_df["TPA_UNADJ"] * 2 / 892.1791216197013
+    )
+
+    plot_df = pd.read_parquet(
+        f"gs://carbonplan-data/raw/fia-states/plot_{state_abbr}.parquet"
+    )
+    cond_df = pd.read_parquet(
+        f"gs://carbonplan-data/raw/fia-states/cond_{state_abbr}.parquet"
+    )
+
     cond_vars = [
         "STDAGE",
         "BALIVE",
@@ -35,34 +68,58 @@ def preprocess_state(state, save=True):
         "CONDPROP_UNADJ",
         "COND_STATUS_CD",
         "SLOPE",
-        "ASPECT"
+        "ASPECT",
+        "INVYR",
+        "CN",
     ]
 
-    # should be unique, but pandas was complaining, so group to ensure.
-    cond_agg = cond_df.groupby(['PLT_CN', 'CONDID'])[cond_vars].max()
+    cond_agg = cond_df.groupby(["PLT_CN", "CONDID"])[cond_vars].max()
+    cond_agg = cond_agg.join(
+        plot_df.set_index("CN")[["LAT", "LON", "ELEV"]], on="PLT_CN"
+    )
 
-    tree_agg = tree_df.groupby(["PLT_CN", "CONDID"]).apply(tree_stats)
+    # per-tree variables that need to sum per condition
+    alive_vars = ["unadj_ag_biomass", "unadj_bg_biomass", "unadj_basal_area"]
+    condition_alive_stats = (
+        tree_df.loc[tree_df["STATUSCD"] == 1]
+        .groupby(["PLT_CN", "CONDID"])[alive_vars]
+        .sum()
+    )
+
+    condition_alive_stats = condition_alive_stats.rename(
+        columns={"unadj_basal_area": "balive"}
+    )
+
+    condition_mortality = (
+        tree_df.loc[tree_df["TPAMORT_UNADJ"] > 0]
+        .groupby(["PLT_CN", "CONDID"])["unadj_basal_area"]
+        .sum()
+    )
+
+    condition_mortality = condition_mortality.to_frame().rename(
+        columns={"unadj_basal_area": "bamort"}
+    )
+
+    full = cond_agg.join(condition_alive_stats)
+    full = full.join(condition_mortality)
+    full = full.reset_index()
+
+    full.loc[:, "adj_mort"] = full.bamort / full.CONDPROP_UNADJ
+    full.loc[:, "adj_balive"] = full.balive / full.CONDPROP_UNADJ
+    full.loc[:, "adj_bg_biomass"] = full.unadj_bg_biomass / full.CONDPROP_UNADJ
+    full.loc[:, "adj_ag_biomass"] = full.unadj_ag_biomass / full.CONDPROP_UNADJ
 
     plt_uids = generate_uids(plot_df)
-
-    agg = pd.merge(
-        cond_agg, tree_agg, left_index=True, right_index=True
-    ).reset_index(level=1)
-    agg = agg.join(plot_df.set_index("CN")[["LAT", "LON", "ELEV", "INVYR"]],)
-    agg["PLT_UID"] = agg.index.map(plt_uids)
-
-    # convert lbs/acre -> t/ha
-    agg["BIOMASS_AG"] = agg["BIOMASS_AG"] / 892.1791216197013
-    agg["BIOMASS_BG"] = agg["BIOMASS_BG"] / 892.1791216197013
+    full["plt_uid"] = full["PLT_CN"].map(plt_uids)
 
     if save:
-        agg.to_parquet(
-            f"gs://carbonplan-scratch/fia/preprocessed/{state}.parquet",
+        full.to_parquet(
+            f"gs://carbonplan-data/processed/fia-states/long/{state_abbr}.parquet",
             compression="gzip",
             engine="fastparquet",
         )
-    else:
-        return agg
+    return full
+
 
 def generate_uids(data, prev_cn_var="PREV_PLT_CN"):
     """
@@ -81,14 +138,3 @@ def generate_uids(data, prev_cn_var="PREV_PLT_CN"):
         for node in subgraph:
             uids[node] = uid
     return uids
-
-
-def tree_stats(df):
-    idx = (df["STATUSCD"] == 1) & (df["DIA"] > 1.0) & (df["DIACHECK"] == 0)
-    out = pd.Series(
-        np.full(2, np.nan), index=["BIOMASS_AG", "BIOMASS_BG"]
-    )
-    if sum(idx) > 0:
-        out["BIOMASS_AG"] = np.nansum((df["CARBON_AG"][idx] * 2) * df["TPA_UNADJ"][idx])
-        out["BIOMASS_BG"] = np.nansum((df["CARBON_BG"][idx] * 2) * df["TPA_UNADJ"][idx])
-    return out
