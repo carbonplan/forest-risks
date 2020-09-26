@@ -1,1 +1,1 @@
-from .fia import *
+from .fia import fia

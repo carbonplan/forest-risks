@@ -7,18 +7,18 @@ import fsspec
 import xarray as xr
 import numpy as np
 
-from ..utils import setup
+from .. import setup
 
 def load_rio(f):
     src = rasterio.open(f)
     return src.read(1)
 
-def mtbs(store='gcs', return_type='xarray', coarsen=None):
-    path = setup(store)
+def fire(store='gcs', return_type='xarray', coarsen=None):
+    path = setup.loading(store)
 
     X = xr.Dataset()
 
-    mapper = fsspec.get_mapper(path / 'terraclimate/conus/4000m/raster.zarr')
+    mapper = fsspec.get_mapper(path / 'processed/terraclimate/conus/4000m/raster.zarr')
 
     def weighted_mean(ds, *args, **kwargs):
         weights = ds.time.dt.days_in_month
@@ -45,14 +45,14 @@ def mtbs(store='gcs', return_type='xarray', coarsen=None):
     classes = [41, 42, 43, 51, 52, 90]
 
     mask = np.tile(np.asarray([
-        xr.open_rasterio(path / f'nlcd/conus/4000m/2001_c{c}.tif').values for c in classes
+        xr.open_rasterio(path / f'processed/nlcd/conus/4000m/2001_c{c}.tif').values for c in classes
     ]).sum(axis=0).squeeze(), [35, 1, 1])
     X['forested'] = X['tmax_max']
     X['forested'].values = mask
 
     y = xr.Dataset()
 
-    mapper = fsspec.get_mapper(path / 'mtbs/conus/4000m/raster.zarr')
+    mapper = fsspec.get_mapper(path / 'processed/mtbs/conus/4000m/raster.zarr')
     mtbs = xr.open_zarr(mapper)
     y['burned_area'] = mtbs['burned_area']
 
