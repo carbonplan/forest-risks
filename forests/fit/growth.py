@@ -24,7 +24,7 @@ def growth(x, y, noise='gamma', init=None):
     bounds = Bounds(lb, ub)
     if init is None:
         init = [np.nanmean(y), 0.1, 10, np.nanstd(y)]
-    result = minimize(f, init, bounds=bounds, method='L-BFGS-B')
+    result = minimize(f, init, bounds=bounds, method='L-BFGS-B', options={'maxcor': 50, 'maxiter': 500})
 
     return Model(result, noise)
     
