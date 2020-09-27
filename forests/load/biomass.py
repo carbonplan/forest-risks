@@ -5,7 +5,7 @@ import xarray as xr
 from rasterio import Affine
 from rasterio.transform import rowcol
 from pyproj import transform, Proj
-from carbonplan_data.utils import albers_conus_crs, albers_conus_extent
+from carbonplan_data.utils import albers_conus_crs, albers_conus_transform
 from .. import setup
 
 def biomass(store='gcs', states='all', return_type='dataframe', clean=True):
@@ -60,11 +60,11 @@ def biomass_state(store, state, clean):
 
     return df
 
-def biomass_features(store, df):
+def biomass_features(store='gcs', df=None):
     path = setup.loading(store)
     mapper = fsspec.get_mapper(path / 'processed/terraclimate/conus/4000m/raster.zarr')
 
-    t = Affine(4000.0000000000005, 0.0, -2493045.0, 0.0, -4000.0000000000005, 3310005.0)
+    t = Affine(*albers_conus_transform(4000))
     p1 = Proj(albers_conus_crs())
     p2 = Proj(proj='latlong', datum='WGS84')
     x, y = transform(p2, p1, df['lon'].values, df['lat'].values)
@@ -75,10 +75,28 @@ def biomass_features(store, df):
     ind_r = xr.DataArray(rc[0], dims=["x"])
     ind_c = xr.DataArray(rc[1], dims=["x"])
 
-    return (
+    df['ppt'] = (
         ds['ppt']
         .resample(time='AS')
         .sum('time')
         .sel(time=slice('2010','2020'))
         .mean('time')
     )[ind_r, ind_c].values
+
+    df['tmax'] = (
+        ds['tmax']
+        .resample(time='AS')
+        .sum('time')
+        .sel(time=slice('2010','2020'))
+        .mean('time')
+    )[ind_r, ind_c].values
+
+    df['pdsi'] = (
+        ds['pdsi']
+        .resample(time='AS')
+        .sum('time')
+        .sel(time=slice('2010','2020'))
+        .mean('time')
+    )[ind_r, ind_c].values
+
+    return df

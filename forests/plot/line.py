@@ -27,7 +27,7 @@ def line(data=None, x=None, y=None, color=None, cmap=None, clim=None, xlim=None,
 
     def color_scaled(color):
         if clim is None and cmap is None:
-            return alt.Color(color)
+            return alt.Color(color, scale=alt.Scale(scheme='viridis'))
         elif clim is None and cmap is not None:
             return alt.Color(color, scale=alt.Scale(scheme=cmap))
         elif clim is not None and cmap is None:
