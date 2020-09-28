@@ -31,7 +31,7 @@ def biomass_state(store, state, clean):
 
     if clean:
         inds = (
-            (df['adj_ag_biomass'] >= 0) & 
+            (df['adj_ag_biomass'] > 0) & 
             (df['STDAGE'] < 999) & 
             (df['STDAGE'] > 0) & 
             (~np.isnan(df['FLDTYPCD'])) & 
@@ -75,6 +75,10 @@ def biomass_features(store='gcs', df=None):
     ind_r = xr.DataArray(rc[0], dims=["x"])
     ind_c = xr.DataArray(rc[1], dims=["x"])
 
+    def weighted_mean(ds, *args, **kwargs):
+        weights = ds.time.dt.days_in_month
+        return ds.weighted(weights).mean(dim='time')
+
     df['ppt'] = (
         ds['ppt']
         .resample(time='AS')
@@ -86,17 +90,11 @@ def biomass_features(store='gcs', df=None):
     df['tmax'] = (
         ds['tmax']
         .resample(time='AS')
-        .sum('time')
+        .map(weighted_mean, dim='time')
         .sel(time=slice('2010','2020'))
         .mean('time')
     )[ind_r, ind_c].values
 
-    df['pdsi'] = (
-        ds['pdsi']
-        .resample(time='AS')
-        .sum('time')
-        .sel(time=slice('2010','2020'))
-        .mean('time')
-    )[ind_r, ind_c].values
+    df = df.dropna().reset_index(drop=True)
 
     return df

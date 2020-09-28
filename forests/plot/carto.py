@@ -23,7 +23,7 @@ def carto(data=None, lon='lon', lat='lat', projection='albersUsa', color=None, c
 
     if color is None:
         geomap = alt.Chart(df).mark_circle(
-            size=3,
+            size=5,
             color='rgb(150,150,150)'
         ).encode(
             longitude='lon:Q',

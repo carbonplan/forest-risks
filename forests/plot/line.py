@@ -47,12 +47,12 @@ def line(data=None, x=None, y=None, color=None, cmap=None, clim=None, xlim=None,
             height=300
         )
     else:
-        line = alt.Chart(df).mark_link(
+        line = alt.Chart(df).mark_line(
             strokeWidth=3
         ).encode(
             x=x_scaled(_x), 
             y=y_scaled(_y),
-            color=color_scaled(color)
+            color=color_scaled(_color)
         ).properties(
             width=350, 
             height=300
