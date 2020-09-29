@@ -65,6 +65,7 @@ def preprocess_state_long(state_abbr, save=True):
         "FLDTYPCD",
         "DSTRBCD1",
         "DSTRBYR1",
+        "TRTCD1",
         "CONDPROP_UNADJ",
         "COND_STATUS_CD",
         "SLOPE",
@@ -121,15 +122,37 @@ def preprocess_state_long(state_abbr, save=True):
     return full
 
 
+def to_wide(state_abbr):
+    state_long = pd.read_parquet(
+        f"gs://carbonplan-data/processed/fia-states/long/{state_abbr}.parquet"
+    )
+    # sort by plt_uid-cond pairs by INVYR, so can give idx by cumcount. 
+    state_long = state_long.sort_values(["plt_uid", "CONDID", "INVYR"])
+    state_long["wide_idx"] = state_long.groupby(["plt_uid", "CONDID"]).cumcount()
+
+    tmp = []
+    for var in ["INVYR", "adj_balive", "adj_mort"]:
+        state_long["tmp_idx"] = var + "_" + state_long["wide_idx"].astype(str)
+        tmp.append(
+            state_long.pivot(index=["plt_uid", "CONDID"], columns="tmp_idx", values=var)
+        )
+
+    wide = pd.concat(tmp, axis=1)
+    attrs = state_long.groupby(["plt_uid", "CONDID"])[
+        ["LAT", "LON", "FORTYPCD", "FLDTYPCD", "ELEV", "SLOPE", "ASPECT"]
+    ].max()
+    return attrs.join(wide).dropna(subset=["INVYR_1"])  # only repeat plots go wide
+
+
 def generate_uids(data, prev_cn_var="PREV_PLT_CN"):
     """
     Generate dict mapping ever CN to a unique group, allows tracking single plot/tree through time
     Can change `prev_cn_var` to apply to tree (etc)
     """
     g = nx.Graph()
-    for row in data[["CN", prev_cn_var]].itertuples():
-        if ~np.isnan(row.PREV_PLT_CN):  # has ancestor, add nodes + edge
-            g.add_edge(row.CN, row.PREV_PLT_CN)
+    for _, row in data[["CN", prev_cn_var]].iterrows():
+        if ~np.isnan(row[prev_cn_var]):  # has ancestor, add nodes + edge
+            g.add_edge(row.CN, row[prev_cn_var])
         else:
             g.add_node(row.CN)  # no ancestor, potentially not resampled
 
