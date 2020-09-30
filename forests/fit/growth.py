@@ -2,6 +2,9 @@ import numpy as np
 from scipy.stats import gamma, norm
 from scipy.optimize import minimize, Bounds
 
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning)
+
 def logistic(x, f, p):
     a, b, c, w0, w1 = p
     return (a + w0 * f[0] + w1 * f[1]) * (1 / (1 + c * np.exp(-b * (x))) - (1 / (1 + c))) * ((c + 1) / c)
@@ -12,9 +15,9 @@ def growth(x, y, f, noise='gamma', init=None):
         a, b, c, w0, w1, scale = p
         _mu = logistic(x, f, [a, b, c, w0, w1])
         if noise == 'gamma':
-            return -np.nansum(gamma.logpdf(y, _mu / scale, scale=scale))
+            return -np.sum(gamma.logpdf(y, np.maximum(_mu / scale, 1e-12), scale=scale))
         if noise == 'normal':
-            return -np.nansum(norm.logpdf(y, loc=_mu, scale=scale))
+            return -np.sum(norm.logpdf(y, loc=_mu, scale=scale))
 
     fx = lambda p : loglik(x, y, f, p)
 
@@ -26,26 +29,27 @@ def growth(x, y, f, noise='gamma', init=None):
     bounds = Bounds(lb, ub)
     if init is None:
         init = [np.nanmean(y), 0.1, 10, 0, 0, np.nanstd(y)]
-    options = {'eps': 1e-8, 'maxcor': 100, 'maxiter': 500, 'iprint': 99}
-    result = minimize(fx, init, bounds=bounds, method='L-BFGS-B', options=options)
+    options_lbfgsb = {'eps': 1e-10, 'maxcor': 100, 'maxiter': 500}
+    options_trust = {'maxiter': 2000}
+    result = minimize(fx, init, bounds=bounds, method='trust-constr', options=options_trust)
 
     if result.success is False:
+        print(result)
         raise ValueError('optimization failed')
 
-    return Model(result, noise)
+    return Model(result, noise, x, y, f)
     
 class Model:
-    def __init__(self, result, noise):
+    def __init__(self, result, noise, x=None, y=None, f=None):
         self.result = result
         self.noise = noise
         self.p = result.x[0:len(result.x) - 1]
         self.scale = result.x[len(result.x) - 1]
+        if x is not None and y is not None and f is not None:
+            self.train_r2 = self.r2(x, f, y)
     
     def __repr__(self):
-        return self.summary()
-
-    def summary(self):
-        return None
+        print(self.result.__repr__())
 
     def r2(self, x, f, y):
         yhat = self.predict(x, f)

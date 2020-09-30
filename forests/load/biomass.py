@@ -8,10 +8,10 @@ from pyproj import transform, Proj
 from carbonplan_data.utils import albers_conus_crs, albers_conus_transform
 from .. import setup
 
-def biomass(store='gcs', states='all', return_type='dataframe', clean=True):
+def biomass(store='gcs', states='conus', return_type='dataframe', clean=True):
     path = setup.loading(store)
 
-    if states == 'all':
+    if states == 'conus':
         states = ['AL','AZ','AR','CA','CO','CT','DE','FL','GA','IA','ID','IL', 
             'IN','KS','KY','LA','ME','MA','MD','MI','MN','MO','MS','MT','NC','ND','NE','NH',
             'NJ','NM','NV','NY','OH','OK','OR','PA','RI','SC','SD','TN','TX', 
@@ -41,7 +41,8 @@ def biomass_state(store, state, clean):
             (df['DSTRBCD1'] == 0) & 
             (df['COND_STATUS_CD'] == 1) & 
             (df['CONDPROP_UNADJ'] > 0.3) & 
-            (df['INVYR'] < 9999)
+            (df['INVYR'] < 9999) & 
+            (df['INVYR'] > 2000)
         )
         df = df[inds]
 
@@ -57,6 +58,8 @@ def biomass_state(store, state, clean):
         })
         .filter(['lat', 'lon', 'age', 'biomass', 'year', 'type_code'])
     )
+
+    df['state'] = state.upper()
 
     return df
 
@@ -83,7 +86,7 @@ def biomass_features(store='gcs', df=None):
         ds['ppt']
         .resample(time='AS')
         .sum('time')
-        .sel(time=slice('2010','2020'))
+        .sel(time=slice('2000','2020'))
         .mean('time')
     )[ind_r, ind_c].values
 
@@ -91,7 +94,7 @@ def biomass_features(store='gcs', df=None):
         ds['tmax']
         .resample(time='AS')
         .map(weighted_mean, dim='time')
-        .sel(time=slice('2010','2020'))
+        .sel(time=slice('2000','2020'))
         .mean('time')
     )[ind_r, ind_c].values
 

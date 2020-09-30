@@ -133,3 +133,4 @@ dmypy.json
 data/
 
 notebooks/fire/data
+notebooks/biomass/data
