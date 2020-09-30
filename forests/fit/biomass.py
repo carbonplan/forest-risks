@@ -9,7 +9,7 @@ def logistic(x, f, p):
     a, b, c, w0, w1 = p
     return (a + w0 * f[0] + w1 * f[1]) * (1 / (1 + c * np.exp(-b * (x))) - (1 / (1 + c))) * ((c + 1) / c)
 
-def growth(x, y, f, noise='gamma', init=None):
+def biomass(x, y, f, noise='gamma', init=None):
 
     def loglik(x, y, f, p):
         a, b, c, w0, w1, scale = p
@@ -49,7 +49,7 @@ class Model:
             self.train_r2 = self.r2(x, f, y)
     
     def __repr__(self):
-        print(self.result.__repr__())
+        return str(self.result)
 
     def r2(self, x, f, y):
         yhat = self.predict(x, f)

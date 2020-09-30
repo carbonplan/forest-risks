@@ -1,14 +1,8 @@
-import fsspec
 import numpy as np
 import pandas as pd
-import xarray as xr
-from rasterio import Affine
-from rasterio.transform import rowcol
-from pyproj import transform, Proj
-from carbonplan_data.utils import albers_conus_crs, albers_conus_transform
 from .. import setup
 
-def biomass(store='gcs', states='conus', return_type='dataframe', clean=True):
+def fia(store='gcs', states='conus', clean=True, wide=False):
     path = setup.loading(store)
 
     if states == 'conus':
@@ -17,15 +11,17 @@ def biomass(store='gcs', states='conus', return_type='dataframe', clean=True):
             'NJ','NM','NV','NY','OH','OK','OR','PA','RI','SC','SD','TN','TX', 
             'UT','VT','VA','WA','WV','WI','WY']
 
+    load_state = fia_state_wide if wide is True else fia_state
+
     if type(states) is str:
-        return biomass_state(store, states, clean)
+        return load_state(store, states, clean)
 
     if type(states) is list:
-        return pd.concat([biomass_state(
+        return pd.concat([load_state(
             store, state, clean
         ) for state in states])
 
-def biomass_state(store, state, clean):
+def fia_state(store, state, clean):
     path = setup.loading(store)
     df = pd.read_parquet(path / f'processed/fia-states/long/{state.lower()}.parquet')
 
@@ -63,41 +59,36 @@ def biomass_state(store, state, clean):
 
     return df
 
-def biomass_features(store='gcs', df=None):
+def fia_state_wide(store, state, clean):
     path = setup.loading(store)
-    mapper = fsspec.get_mapper(path / 'processed/terraclimate/conus/4000m/raster.zarr')
+    df = pd.read_parquet(path / f'processed/fia-states/long/{state.lower()}.parquet')
+    df = df.sort_values(['plt_uid', 'CONDID', 'INVYR'])
+    df['wide_idx'] = df.groupby(['plt_uid', 'CONDID']).cumcount()
 
-    t = Affine(*albers_conus_transform(4000))
-    p1 = Proj(albers_conus_crs())
-    p2 = Proj(proj='latlong', datum='WGS84')
-    x, y = transform(p2, p1, df['lon'].values, df['lat'].values)
-    rc = rowcol(t, x, y)
+    tmp = []
+    for var in [
+        'INVYR',
+        'adj_balive',
+        'adj_mort',
+        'fraction_insect',
+        'fraction_disease',
+        'fraction_fire',
+        'fraction_human',
+        'disturb_animal',
+        'disturb_bugs',
+        'disturb_disease',
+        'disturb_fire',
+        'disturb_human',
+        'disturb_weather'
+    ]:
 
-    ds = xr.open_zarr(mapper)
+        df['tmp_idx'] = var + '_' + df['wide_idx'].astype(str)
+        tmp.append(
+            df.pivot(index=['plt_uid', 'CONDID'], columns='tmp_idx', values=var)
+        )
 
-    ind_r = xr.DataArray(rc[0], dims=["x"])
-    ind_c = xr.DataArray(rc[1], dims=["x"])
-
-    def weighted_mean(ds, *args, **kwargs):
-        weights = ds.time.dt.days_in_month
-        return ds.weighted(weights).mean(dim='time')
-
-    df['ppt'] = (
-        ds['ppt']
-        .resample(time='AS')
-        .sum('time')
-        .sel(time=slice('2000','2020'))
-        .mean('time')
-    )[ind_r, ind_c].values
-
-    df['tmax'] = (
-        ds['tmax']
-        .resample(time='AS')
-        .map(weighted_mean, dim='time')
-        .sel(time=slice('2000','2020'))
-        .mean('time')
-    )[ind_r, ind_c].values
-
-    df = df.dropna().reset_index(drop=True)
-
-    return df
+    wide = pd.concat(tmp, axis=1)
+    attrs = df.groupby(['plt_uid', 'CONDID'])[
+        ['LAT', 'LON', 'FORTYPCD', 'FLDTYPCD', 'ELEV', 'SLOPE', 'ASPECT']
+    ].max()
+    return attrs.join(wide).dropna(subset=['INVYR_1'])
