@@ -64,7 +64,6 @@ def fia_state_wide(store, state, clean):
     df = pd.read_parquet(path / f'processed/fia-states/long/{state.lower()}.parquet')
     df = df.sort_values(['plt_uid', 'CONDID', 'INVYR'])
     df['wide_idx'] = df.groupby(['plt_uid', 'CONDID']).cumcount()
-
     tmp = []
     for var in [
         'INVYR',
@@ -81,12 +80,10 @@ def fia_state_wide(store, state, clean):
         'disturb_human',
         'disturb_weather'
     ]:
-
         df['tmp_idx'] = var + '_' + df['wide_idx'].astype(str)
         tmp.append(
             df.pivot(index=['plt_uid', 'CONDID'], columns='tmp_idx', values=var)
         )
-
     wide = pd.concat(tmp, axis=1)
     attrs = df.groupby(['plt_uid', 'CONDID'])[
         ['LAT', 'LON', 'FORTYPCD', 'FLDTYPCD', 'ELEV', 'SLOPE', 'ASPECT']
