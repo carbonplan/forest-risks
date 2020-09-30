@@ -67,7 +67,6 @@ def fia_state_wide(store, state, clean):
     state_long = pd.read_parquet(path / f'processed/fia-states/long/{state.lower()}.parquet')
     state_long = state_long.sort_values(['plt_uid', 'CONDID', 'INVYR'])
     state_long['wide_idx'] = state_long.groupby(['plt_uid', 'CONDID']).cumcount()
-
     tmp = []
     missing_vars = [] # append missing vars, then will fill in nan cols after concat the wide df
     for var in [
@@ -85,7 +84,6 @@ def fia_state_wide(store, state, clean):
         'disturb_human',
         'disturb_weather'
     ]:
-
         state_long['tmp_idx'] = var + '_' + state_long['wide_idx'].astype(str)
         if var in state_long.columns:
             tmp.append(

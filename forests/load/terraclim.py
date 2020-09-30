@@ -7,7 +7,7 @@ import xarray as xr
 from rasterio import Affine
 from rasterio.transform import rowcol
 from pyproj import transform, Proj
-from carbonplan_data.utils import albers_conus_crs, albers_conus_transform
+from .. import utils
 from .. import setup
 
 
@@ -52,8 +52,8 @@ def terraclim(store='gcs', df=None, tlim=None, mean=True,
         X = X_coarse          
 
     if df is not None:
-        t = Affine(*albers_conus_transform(4000))
-        p1 = Proj(albers_conus_crs())
+        t = Affine(*utils.albers_conus_transform(4000))
+        p1 = Proj(utils.albers_conus_crs())
         p2 = Proj(proj='latlong', datum='WGS84')
         x, y = transform(p2, p1, df['lon'].values, df['lat'].values)
         rc = rowcol(t, x, y)
