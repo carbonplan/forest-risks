@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from .. import setup
 
-def fia(store='gcs', states='conus', clean=True, wide=False):
+def fia(store='gcs', states='conus', clean=True, group_repeats=False):
     path = setup.loading(store)
 
     if states == 'conus':
@@ -11,7 +11,7 @@ def fia(store='gcs', states='conus', clean=True, wide=False):
             'NJ','NM','NV','NY','OH','OK','OR','PA','RI','SC','SD','TN','TX', 
             'UT','VT','VA','WA','WV','WI','WY']
 
-    load_state = fia_state_wide if wide is True else fia_state
+    load_state = fia_state_grouped if group_repeats is True else fia_state
 
     if type(states) is str:
         return load_state(store, states, clean)
@@ -59,7 +59,7 @@ def fia_state(store, state, clean):
 
     return df
 
-def fia_state_wide(store, state, clean):
+def fia_state_grouped(store, state, clean):
     path = setup.loading(store)
     df = pd.read_parquet(path / f'processed/fia-states/long/{state.lower()}.parquet')
     df = df.sort_values(['plt_uid', 'CONDID', 'INVYR'])
