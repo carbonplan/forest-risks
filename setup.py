@@ -27,7 +27,7 @@ setup(
     entry_points={
         "carbonplan.modules": [
             "forests = forests",
-            "forests.data = forests.data"
+            "forests.data = forests.data",
             "forests.fit = forests.fit",
             "forests.load = forests.load",
             "forests.plot = forests.plot",
