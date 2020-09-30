@@ -101,4 +101,6 @@ def fia_state_grouped(store, state, clean):
     attrs = state_long.groupby(['plt_uid', 'CONDID'])[
         ['LAT', 'LON', 'FORTYPCD', 'FLDTYPCD', 'ELEV', 'SLOPE', 'ASPECT']
     ].max()
+    if 'INVYR_1' not in attrs.columns:
+        return None
     return attrs.join(wide).dropna(subset=['INVYR_1'])
