@@ -10,12 +10,12 @@ def fia(states, save=True):
         if states == "all":
             df = pd.read_csv("gs://carbonplan-data/raw/fia/REF_RESEARCH_STATION.csv")
             return [
-                preprocess_state_long(state, save=save) for state in df["STATE_ABBR"]
+                preprocess_state(state, save=save) for state in df["STATE_ABBR"]
             ]
         else:
-            return preprocess_state_long(states, save=save)
+            return preprocess_state(states, save=save)
     else:
-        return [preprocess_state_long(state, save=save) for state in states]
+        return [preprocess_state(state, save=save) for state in states]
 
 
 def tree_based_mortality(tree_df):
@@ -53,7 +53,7 @@ def tree_based_mortality(tree_df):
     return fraction_dist.replace(np.nan, 0).round(2)
 
 
-def preprocess_state_long(state_abbr, save=True):
+def preprocess_state(state_abbr, save=True):
     print(f"preprocessing state {state_abbr}")
     tree_df = pd.read_parquet(
         f"gs://carbonplan-data/raw/fia-states/tree_{state_abbr}.parquet",
@@ -186,43 +186,6 @@ def preprocess_state_long(state_abbr, save=True):
             engine="fastparquet",
         )
     return full
-
-
-def to_wide(state_abbr):
-    state_long = pd.read_parquet(
-        f"gs://carbonplan-data/processed/fia-states/long/{state_abbr}.parquet"
-    )
-    # sort by plt_uid-cond pairs by INVYR, so can give idx by cumcount.
-    state_long = state_long.sort_values(["plt_uid", "CONDID", "INVYR"])
-    state_long["wide_idx"] = state_long.groupby(["plt_uid", "CONDID"]).cumcount()
-
-    tmp = []
-    for var in [
-        "INVYR",
-        "adj_balive",
-        "adj_mort",
-        "fraction_insect",
-        "fraction_disease",
-        "fraction_fire",
-        "fraction_human",
-        "disturb_animal",
-        "disturb_bugs",
-        "disturb_disease",
-        "disturb_fire",
-        "disturb_human",
-        "disturb_weather"
-    ]:
-
-        state_long["tmp_idx"] = var + "_" + state_long["wide_idx"].astype(str)
-        tmp.append(
-            state_long.pivot(index=["plt_uid", "CONDID"], columns="tmp_idx", values=var)
-        )
-
-    wide = pd.concat(tmp, axis=1)
-    attrs = state_long.groupby(["plt_uid", "CONDID"])[
-        ["LAT", "LON", "FORTYPCD", "FLDTYPCD", "ELEV", "SLOPE", "ASPECT"]
-    ].max()
-    return attrs.join(wide).dropna(subset=["INVYR_1"])  # only repeat plots go wide
 
 
 def generate_uids(data, prev_cn_var="PREV_PLT_CN"):
