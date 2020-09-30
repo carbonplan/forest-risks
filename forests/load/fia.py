@@ -60,10 +60,13 @@ def fia_state(store, state, clean):
     return df
 
 def fia_state_wide(store, state, clean):
+    """
+    Pivot long (plot-condition-invyr per row) to wide (all plot-condition invyrs in a single row
+    """
     path = setup.loading(store)
-    df = pd.read_parquet(path / f'processed/fia-states/long/{state.lower()}.parquet')
-    df = df.sort_values(['plt_uid', 'CONDID', 'INVYR'])
-    df['wide_idx'] = df.groupby(['plt_uid', 'CONDID']).cumcount()
+    state_long = pd.read_parquet(path / f'processed/fia-states/long/{state.lower()}.parquet')
+    state_long = state_long.sort_values(['plt_uid', 'CONDID', 'INVYR'])
+    state_long['wide_idx'] = state_long.groupby(['plt_uid', 'CONDID']).cumcount()
 
     tmp = []
     for var in [
@@ -82,13 +85,14 @@ def fia_state_wide(store, state, clean):
         'disturb_weather'
     ]:
 
-        df['tmp_idx'] = var + '_' + df['wide_idx'].astype(str)
-        tmp.append(
-            df.pivot(index=['plt_uid', 'CONDID'], columns='tmp_idx', values=var)
-        )
+        state_long['tmp_idx'] = var + '_' + state_long['wide_idx'].astype(str)
+        if var in state_long.columns:
+            tmp.append(
+                state_long.pivot(index=['plt_uid', 'CONDID'], columns='tmp_idx', values=var)
+            )
 
     wide = pd.concat(tmp, axis=1)
-    attrs = df.groupby(['plt_uid', 'CONDID'])[
+    attrs = state_long.groupby(['plt_uid', 'CONDID'])[
         ['LAT', 'LON', 'FORTYPCD', 'FLDTYPCD', 'ELEV', 'SLOPE', 'ASPECT']
     ].max()
     return attrs.join(wide).dropna(subset=['INVYR_1'])
