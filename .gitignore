@@ -130,7 +130,6 @@ dmypy.json
 
 
 .DS_Store
-data/
 
 notebooks/fire/data
 notebooks/biomass/data
