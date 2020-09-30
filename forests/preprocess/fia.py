@@ -18,6 +18,41 @@ def fia(states, save=True):
         return [preprocess_state_long(state, save=save) for state in states]
 
 
+def tree_based_mortality(tree_df):
+    """
+    Roll tree-based mortality codes up to condition level.
+    TODO: raw agent codes contain per-state info that we might want to use
+    """
+    tree_df["bulk_agentcd"] = tree_df["AGENTCD"] // 10
+    per_agent_mort = (
+        tree_df[~np.isnan(tree_df["bulk_agentcd"])]
+        .groupby(["PLT_CN", "CONDID", "bulk_agentcd"])
+        .TPAMORT_UNADJ.sum()
+    )
+    total_mort = tree_df.groupby(["PLT_CN", "CONDID"]).TPAMORT_UNADJ.sum()
+
+    per_agent_mort = per_agent_mort.reset_index(level=2)
+
+    all_mort = per_agent_mort.join(total_mort, lsuffix="_agent", rsuffix="_total")
+    all_mort["fraction"] = (
+        all_mort["TPAMORT_UNADJ_agent"] / all_mort["TPAMORT_UNADJ_total"]
+    )
+
+    bulk_agent_map = {
+        1: "fraction_insect",
+        2: "fraction_disease",
+        3: "fraction_fire",
+        8: "fraction_human",
+    }
+    fraction_dist = all_mort[["bulk_agentcd", "fraction"]].pivot(
+        columns="bulk_agentcd"
+    )["fraction"]
+    fraction_dist = fraction_dist.rename(columns=bulk_agent_map)[
+        bulk_agent_map.values()
+    ]
+    return fraction_dist.replace(np.nan, 0).round(2)
+
+
 def preprocess_state_long(state_abbr, save=True):
     print(f"preprocessing state {state_abbr}")
     tree_df = pd.read_parquet(
@@ -29,6 +64,7 @@ def preprocess_state_long(state_abbr, save=True):
             "STATUSCD",
             "CONDID",
             "TPA_UNADJ",
+            "AGENTCD",
             "TPAMORT_UNADJ",
             "DIACHECK",
             "CARBON_AG",
@@ -64,7 +100,8 @@ def preprocess_state_long(state_abbr, save=True):
         "FORTYPCD",
         "FLDTYPCD",
         "DSTRBCD1",
-        "DSTRBYR1",
+        "DSTRBCD2",
+        "DSTRBCD3",
         "TRTCD1",
         "CONDPROP_UNADJ",
         "COND_STATUS_CD",
@@ -77,6 +114,31 @@ def preprocess_state_long(state_abbr, save=True):
     cond_agg = cond_df.groupby(["PLT_CN", "CONDID"])[cond_vars].max()
     cond_agg = cond_agg.join(
         plot_df.set_index("CN")[["LAT", "LON", "ELEV"]], on="PLT_CN"
+    )
+
+    # TODO: one-hot-encode DSTRBCDs
+    def dstrbcd_to_disturb_class(dstrbcd):
+        """
+        Transforms dstrbcd (int 0-90) to bulk disturbance class (bugs, fires, weather, etc)
+        """
+        disturb_class_map = {
+            1: "bugs",
+            2: "disease",
+            3: "fire",
+            4: "animal",
+            5: "weather",
+            8: "human",
+        }
+        return (dstrbcd // 10).map(disturb_class_map)
+
+    hot_encodings = [
+        pd.get_dummies(dstrbcd_to_disturb_class(cond_agg[k]), prefix="disturb")
+        for k in ["DSTRBCD1", "DSTRBCD2", "DSTRBCD3"]
+    ]
+    # sum all disturb codes, then cast to bool so we know if 0/1 disturbance type occurred
+    # https://stackoverflow.com/questions/13078751/combine-duplicated-columns-within-a-dataframe
+    disturb_flags = (
+        (pd.concat(hot_encodings, axis=1)).groupby(level=0, axis=1).sum().astype(bool)
     )
 
     # per-tree variables that need to sum per condition
@@ -101,8 +163,12 @@ def preprocess_state_long(state_abbr, save=True):
         columns={"unadj_basal_area": "bamort"}
     )
 
+    tree_mortality_fractions = tree_based_mortality(tree_df)
+
     full = cond_agg.join(condition_alive_stats)
+    full = full.join(disturb_flags)
     full = full.join(condition_mortality)
+    full = full.join(tree_mortality_fractions)
     full = full.reset_index()
 
     full.loc[:, "adj_mort"] = full.bamort / full.CONDPROP_UNADJ
@@ -126,12 +192,27 @@ def to_wide(state_abbr):
     state_long = pd.read_parquet(
         f"gs://carbonplan-data/processed/fia-states/long/{state_abbr}.parquet"
     )
-    # sort by plt_uid-cond pairs by INVYR, so can give idx by cumcount. 
+    # sort by plt_uid-cond pairs by INVYR, so can give idx by cumcount.
     state_long = state_long.sort_values(["plt_uid", "CONDID", "INVYR"])
     state_long["wide_idx"] = state_long.groupby(["plt_uid", "CONDID"]).cumcount()
 
     tmp = []
-    for var in ["INVYR", "adj_balive", "adj_mort"]:
+    for var in [
+        "INVYR",
+        "adj_balive",
+        "adj_mort",
+        "fraction_insect",
+        "fraction_disease",
+        "fraction_fire",
+        "fraction_human",
+        "disturb_animal",
+        "disturb_bugs",
+        "disturb_disease",
+        "disturb_fire",
+        "disturb_human",
+        "disturb_weather"
+    ]:
+
         state_long["tmp_idx"] = var + "_" + state_long["wide_idx"].astype(str)
         tmp.append(
             state_long.pivot(index=["plt_uid", "CONDID"], columns="tmp_idx", values=var)
