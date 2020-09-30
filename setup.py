@@ -27,9 +27,11 @@ setup(
     entry_points={
         "carbonplan.modules": [
             "forests = forests",
-            "forests.preprocess = forests.preprocess",
+            "forests.data = forests.data"
             "forests.fit = forests.fit",
             "forests.load = forests.load",
+            "forests.plot = forests.plot",
+            "forests.preprocess = forests.preprocess"
         ]
     },
     python_requires=PYTHON_REQUIRES,
