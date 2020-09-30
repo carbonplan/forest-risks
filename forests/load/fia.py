@@ -69,6 +69,7 @@ def fia_state_wide(store, state, clean):
     state_long['wide_idx'] = state_long.groupby(['plt_uid', 'CONDID']).cumcount()
 
     tmp = []
+    missing_vars = [] # append missing vars, then will fill in nan cols after concat the wide df
     for var in [
         'INVYR',
         'adj_balive',
@@ -90,8 +91,14 @@ def fia_state_wide(store, state, clean):
             tmp.append(
                 state_long.pivot(index=['plt_uid', 'CONDID'], columns='tmp_idx', values=var)
             )
-
+        else:
+            missing_vars.append(var)
     wide = pd.concat(tmp, axis=1)
+
+    if missing_vars:
+        for missing_var in missing_vars:
+            wide[missing_var] = np.nan
+
     attrs = state_long.groupby(['plt_uid', 'CONDID'])[
         ['LAT', 'LON', 'FORTYPCD', 'FLDTYPCD', 'ELEV', 'SLOPE', 'ASPECT']
     ].max()
