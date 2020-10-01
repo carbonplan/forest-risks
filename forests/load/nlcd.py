@@ -13,7 +13,7 @@ def nlcd(store='gcs', classes=[41,42,43,51,52,90], return_type='xarray', coarsen
     bands = xr.concat(
         [xr.open_rasterio(path / f'processed/nlcd/conus/4000m/2001_c{c}.tif') for c in classes],
         dim=xr.Variable('band', classes))
-    mask = bands.sum('band')
+    mask = bands.sum('band', keep_attrs=True)
 
     if coarsen:
         mask = mask.coarsen(x=coarsen, y=coarsen, boundary='trim').mean()

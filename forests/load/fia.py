@@ -57,7 +57,7 @@ def fia_state(store, state, clean):
 
     df['state'] = state.upper()
 
-    return df
+    return df.reset_index(drop=True)
 
 def fia_state_grouped(store, state, clean):
     """

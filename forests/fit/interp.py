@@ -13,7 +13,7 @@ def score(y_true, y_pred):
     return r2_score(y_true[m], y_pred[m])
 
 
-def points_to_grid(df, mask, var="biomass", spacing=4000):
+def interp(df, mask, var="biomass", spacing=4000):
     """Grid a set of lat/lon points to a grid defined by mask
 
     Parameters
