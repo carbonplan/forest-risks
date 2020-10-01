@@ -10,7 +10,7 @@ print('[biomass] loading data')
 df = load.fia(store='local', states='CA')
 df = load.terraclim(store='local', tlim=(2000,2020), vars=['tmax', 'ppt'], mean=True, df=df)
 
-type_codes = df['type_code'].unique()[0:3]
+type_codes = df['type_code'].unique()
 
 print('[biomass] fitting models')
 models = {}
@@ -23,12 +23,14 @@ for code in tqdm(type_codes):
         model = fit.biomass(x=x, y=y, f=f, noise='gamma')
         models[code] = model
 
+pickle.dump(models, open('models.pkl', 'wb'))
+
 pf = pd.DataFrame()
 pf['lat'] = df['lat']
 pf['lon'] = df['lon']
 pf['type_code'] = df['type_code']
 
-targets = np.arange(2000,2150,50)
+targets = np.arange(2000,2110,10)
 
 print('[biomass] evaluating predictions')
 for it in tqdm(range(len(targets))):
