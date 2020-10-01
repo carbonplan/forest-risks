@@ -13,18 +13,18 @@ def score(y_true, y_pred):
     return r2_score(y_true[m], y_pred[m])
 
 
-def points_to_grid(df, mask, var_name="biomass", spacing=4000):
+def points_to_grid(df, mask, var="biomass", spacing=4000):
     """Grid a set of lat/lon points to a grid defined by mask
 
     Parameters
     ----------
     df : pd.DataFrame
         Data points to be gridded in the form of a Pandas DataFrame with
-        columns ``lat``, ``lon``, and ``var_name``.
+        columns ``lat``, ``lon``, and ``var``.
     mask : xr.DataArray
         Target grid defintion. Must include a pyproj parsable crs attribute
         (e.g. ``mask.attrs['crs']``). Data should be between 0 and 1.
-    var_name : str
+    var : str
         Name of column in df to grid.
     spacing : float
         Grid spacing in units defined by the masks crs.
@@ -46,7 +46,7 @@ def points_to_grid(df, mask, var_name="biomass", spacing=4000):
     # split for validation... this may belong outside of this function
     train, test = vd.train_test_split(
         projection(*coordinates),
-        df[var_name],
+        df[var],
         random_state=RANDOM_SEED,
     )
 
@@ -65,14 +65,14 @@ def points_to_grid(df, mask, var_name="biomass", spacing=4000):
 
     # make the grid
     grid = chain.grid(
-        spacing=spacing, region=region, data_names=[var_name], dims=("y", "x")
+        spacing=spacing, region=region, data_names=[var], dims=("y", "x")
     )
     grid = vd.distance_mask(
         proj_coords,
         maxdist=4 * spacing,
         grid=grid,
     )
-    grid = np.flipud(grid[var_name]) * mask
-    grid.name = var_name
+    grid = np.flipud(grid[var]) * mask
+    grid.name = var
 
     return grid
