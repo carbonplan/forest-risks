@@ -5,7 +5,7 @@ from .. import setup
 
 def mtbs(store='gcs', return_type='xarray', coarsen=None):
     path = setup.loading(store)
-    mapper = fsspec.get_mapper(path / 'processed/mtbs/conus/4000m/raster.zarr')
+    mapper = fsspec.get_mapper((path / 'processed/mtbs/conus/4000m/raster.zarr').as_uri())
     mtbs = xr.open_zarr(mapper)
     mtbs['x'] = range(len(mtbs['x']))
     mtbs['y'] = range(len(mtbs['y']))

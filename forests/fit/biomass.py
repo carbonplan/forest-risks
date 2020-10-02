@@ -1,9 +1,8 @@
 import numpy as np
 from scipy.stats import gamma, norm
 from scipy.optimize import minimize, Bounds
-
 import warnings
-warnings.filterwarnings('ignore', category=UserWarning)
+
 
 def logistic(x, f, p):
     a, b, c, w0, w1 = p
@@ -31,7 +30,10 @@ def biomass(x, y, f, noise='gamma', init=None):
         init = [np.nanmean(y), 0.1, 10, 0, 0, np.nanstd(y)]
     options_lbfgsb = {'eps': 1e-10, 'maxcor': 100, 'maxiter': 500}
     options_trust = {'maxiter': 5000}
-    result = minimize(fx, init, bounds=bounds, method='trust-constr', options=options_trust)
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=UserWarning)
+        result = minimize(fx, init, bounds=bounds, method='trust-constr', options=options_trust)
 
     if result.success is False:
         print('optimization failed')
