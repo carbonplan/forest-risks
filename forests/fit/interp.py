@@ -61,7 +61,6 @@ def interp(df, mask, var="biomass", spacing=4000):
     chain.fit(*train)
     y_pred = chain.predict(test[0])
     fit_score = score(test[1][0], y_pred)
-    print(f"fit gridder... r2={fit_score}")
 
     # make the grid
     grid = chain.grid(

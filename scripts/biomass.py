@@ -23,7 +23,8 @@ for code in tqdm(type_codes):
         model = fit.biomass(x=x, y=y, f=f, noise='gamma')
         models[code] = model
 
-pickle.dump(models, open('data/models.pkl', 'wb'))
+with open('data/models.pkl', 'wb') as f:
+    pickle.dump(models, f)
 
 pf = pd.DataFrame()
 pf['lat'] = df['lat']
