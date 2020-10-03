@@ -55,6 +55,9 @@ def fia_state(store, state, clean):
         .filter(['lat', 'lon', 'age', 'biomass', 'year', 'type_code'])
     )
 
+    #mapper = {code: ref[ref['FLDCD']==code]['MapsTo'].values[0] for code in ref['FLDCD']}
+    #df['type_code'] = df['type_code'].map(mapper)
+
     df['state'] = state.upper()
 
     return df.reset_index(drop=True)
