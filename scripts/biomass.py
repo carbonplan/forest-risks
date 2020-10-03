@@ -1,14 +1,15 @@
-# fit biomass models and compute projections
+import pickle
+
 import numpy as np
 import pandas as pd
 import xarray as xr
 from tqdm import tqdm
-import pickle
-from forests import load, fit
+
+from forests import fit, load
 
 print('[biomass] loading data')
 df = load.fia(store='local', states='CA')
-df = load.terraclim(store='local', tlim=(2000,2020), vars=['tmax', 'ppt'], mean=True, df=df)
+df = load.terraclim(store='local', tlim=(2000, 2020), vars=['tmax', 'ppt'], mean=True, df=df)
 
 type_codes = df['type_code'].unique()
 
@@ -31,12 +32,12 @@ pf['lat'] = df['lat']
 pf['lon'] = df['lon']
 pf['type_code'] = df['type_code']
 
-targets = np.arange(2000,2110,10)
+targets = np.arange(2000, 2110, 10)
 
 print('[biomass] evaluating predictions')
 for it in tqdm(range(len(targets))):
     target = targets[it]
-    prev_target = targets[it-1]
+    prev_target = targets[it - 1]
     pf[target] = np.NaN
     for code in type_codes:
         if code in models.keys():
@@ -48,7 +49,9 @@ for it in tqdm(range(len(targets))):
             if it == 0:
                 pf[target][inds] = model.predict(np.maximum(x + (target - year), 0), f)
             else:
-                diff = model.predict(x + (target - year), f) - model.predict(x + (prev_target - year), f)
+                diff = model.predict(x + (target - year), f) - model.predict(
+                    x + (prev_target - year), f
+                )
                 pf[target][inds] = np.maximum(pf[prev_target][inds] + diff, 0)
 
 pf = pf.dropna().reset_index(drop=True)

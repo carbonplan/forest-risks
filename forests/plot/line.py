@@ -1,6 +1,6 @@
-import numpy as np
-import pandas as pd
 import altair as alt
+import pandas as pd
+
 
 def line(data=None, x=None, y=None, color=None, cmap=None, clim=None, xlim=None, ylim=None):
     """
@@ -36,26 +36,18 @@ def line(data=None, x=None, y=None, color=None, cmap=None, clim=None, xlim=None,
             return alt.Color(color, scale=alt.Scale(domain=clim, scheme=cmap, clamp=True))
 
     if color is None:
-        line = alt.Chart(df).mark_line(
-            strokeWidth=3,
-            color='rgb(250,100,150)'
-        ).encode(
-            x=x_scaled(_x), 
-            y=y_scaled(_y),
-        ).properties(
-            width=350, 
-            height=300
+        line = (
+            alt.Chart(df)
+            .mark_line(strokeWidth=3, color='rgb(250,100,150)')
+            .encode(x=x_scaled(_x), y=y_scaled(_y),)
+            .properties(width=350, height=300)
         )
     else:
-        line = alt.Chart(df).mark_line(
-            strokeWidth=3
-        ).encode(
-            x=x_scaled(_x), 
-            y=y_scaled(_y),
-            color=color_scaled(_color)
-        ).properties(
-            width=350, 
-            height=300
+        line = (
+            alt.Chart(df)
+            .mark_line(strokeWidth=3)
+            .encode(x=x_scaled(_x), y=y_scaled(_y), color=color_scaled(_color))
+            .properties(width=350, height=300)
         )
 
     return line

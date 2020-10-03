@@ -1,7 +1,10 @@
 import altair as alt
 import pandas as pd
 
-def carto(data=None, lon='lon', lat='lat', projection='albersUsa', color=None, cmap=None, clim=None):
+
+def carto(
+    data=None, lon='lon', lat='lat', projection='albersUsa', color=None, cmap=None, clim=None
+):
     if data is None:
         df = pd.DataFrame({'lon': lon, 'lat': lat})
         if color is not None:
@@ -22,28 +25,20 @@ def carto(data=None, lon='lon', lat='lat', projection='albersUsa', color=None, c
             return alt.Color(color, scale=alt.Scale(domain=clim, scheme=cmap, clamp=True))
 
     if color is None:
-        geomap = alt.Chart(df).mark_circle(
-            size=5,
-            color='rgb(150,150,150)'
-        ).encode(
-            longitude='lon:Q',
-            latitude='lat:Q'
-        ).project(
-            type=projection
-        ).properties(
-            width=650,
-            height=400
+        geomap = (
+            alt.Chart(df)
+            .mark_circle(size=5, color='rgb(150,150,150)')
+            .encode(longitude='lon:Q', latitude='lat:Q')
+            .project(type=projection)
+            .properties(width=650, height=400)
         )
     else:
-        geomap = alt.Chart(df).mark_circle(size=3).encode(
-            longitude='lon:Q',
-            latitude='lat:Q',
-            color=color_scaled(_color)
-        ).project(
-            type=projection
-        ).properties(
-            width=650,
-            height=400
+        geomap = (
+            alt.Chart(df)
+            .mark_circle(size=3)
+            .encode(longitude='lon:Q', latitude='lat:Q', color=color_scaled(_color))
+            .project(type=projection)
+            .properties(width=650, height=400)
         )
 
     return geomap

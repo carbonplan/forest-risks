@@ -1,6 +1,6 @@
-import numpy as np
-import pandas as pd
 import altair as alt
+import pandas as pd
+
 
 def xy(data=None, x=None, y=None, color=None, cmap=None, clim=None, xlim=None, ylim=None):
     """
@@ -36,27 +36,18 @@ def xy(data=None, x=None, y=None, color=None, cmap=None, clim=None, xlim=None, y
             return alt.Color(color, scale=alt.Scale(domain=clim, scheme=cmap, clamp=True))
 
     if color is None:
-        points = alt.Chart(df).mark_circle(
-            size=42,
-            color='black',
-            fill='black'
-        ).encode(
-            x=x_scaled(_x), 
-            y=y_scaled(_y),
-        ).properties(
-            width=350, 
-            height=300
+        points = (
+            alt.Chart(df)
+            .mark_circle(size=42, color='black', fill='black')
+            .encode(x=x_scaled(_x), y=y_scaled(_y),)
+            .properties(width=350, height=300)
         )
     else:
-        points = alt.Chart(df).mark_circle(
-            size=42
-        ).encode(
-            x=x_scaled(_x), 
-            y=y_scaled(_y),
-            color=color_scaled(_color)
-        ).properties(
-            width=350, 
-            height=300
+        points = (
+            alt.Chart(df)
+            .mark_circle(size=42)
+            .encode(x=x_scaled(_x), y=y_scaled(_y), color=color_scaled(_color))
+            .properties(width=350, height=300)
         )
 
     return points

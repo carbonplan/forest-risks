@@ -3,6 +3,7 @@ import xarray as xr
 
 from .. import setup
 
+
 def mtbs(store='gcs', return_type='xarray', coarsen=None):
     path = setup.loading(store)
     mapper = fsspec.get_mapper((path / 'processed/mtbs/conus/4000m/raster.zarr').as_uri())
