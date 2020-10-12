@@ -13,7 +13,8 @@ def score(y_true, y_pred):
 
 
 def interp(df, mask, var='biomass', spacing=4000):
-    '''Grid a set of lat/lon points to a grid defined by mask
+    """
+    Grid a set of lat/lon points to a grid defined by mask
 
     Parameters
     ----------
@@ -32,7 +33,7 @@ def interp(df, mask, var='biomass', spacing=4000):
     -------
     grid : xr.DataArray
         Gridded data from df.
-    '''
+    """
     import verde as vd
 
     # extract the projection and grid info

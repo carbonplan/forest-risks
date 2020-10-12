@@ -22,5 +22,6 @@ def mtbs(store='gcs', return_type='xarray', coarsen=None):
 
     if return_type == 'numpy':
         time = mtbs['time'].values
-        y = mtbs['burned_area'].values
+        y = {'burned_area': mtbs['burned_area'].values}
+        
         return y, time

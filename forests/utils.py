@@ -1,3 +1,8 @@
+from pyproj import transform, Proj
+from rasterio import Affine
+from rasterio.crs import CRS
+from rasterio.transform import rowcol, xy
+
 def albers_conus_extent():
     return "-2493045.0 177285.0 2342655.0 3310005.0"
 
@@ -51,3 +56,13 @@ def albers_ak_crs():
 
 def albers_ak_transform(res=4000):
     return [res, 0.0, -2232345.0, 0.0, -res, 2380125.0]
+
+
+def rowcol_to_latlon(row, col, res=250):
+    row = asarray(row) if type(row) is list else row
+    col = asarray(col) if type(col) is list else col
+    x, y = xy(Affine(*albers_conus_transform(res)), row, col)
+    p1 = Proj(CRS.from_wkt(albers_conus_crs()))
+    p2 = Proj(proj='latlong', datum='WGS84')
+    lon, lat = transform(p1, p2, x, y)
+    return lat, lon

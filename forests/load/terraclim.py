@@ -16,6 +16,7 @@ def terraclim(
     mean=True,
     coarsen=None,
     vars=['ppt', 'tmax'],
+    aggs=['sum', 'mean'],
     return_type='xarray',
 ):
 
@@ -41,23 +42,28 @@ def terraclim(
             weights = ds.time.dt.days_in_month
             return ds.weighted(weights).mean(dim='time')
 
-        for var in vars:
-            if var == 'ppt':
-                X[var] = ds[var].resample(time='AS').sum('time').sel(time=slice(*tlim))
+        keys = [var + '_' + agg for var, agg in zip(vars, aggs)]
+
+        for key in keys:
+            var, agg = key.split('_')
+            base = ds[var].resample(time='AS')
+            if agg == 'sum':
+                X[key] = base.sum('time').sel(time=slice(*tlim))
+            elif agg == 'mean':
+                X[key] = base.map(weighted_mean, dim='time').sel(time=slice(*tlim))
+            elif agg == 'max':
+                X[key] = base.max('time').sel(time=slice(*tlim))
+            elif agg == 'min':
+                X[key] = base.min('time').sel(time=slice(*tlim))
             else:
-                X[var] = (
-                    ds[var]
-                    .resample(time='AS')
-                    .map(weighted_mean, dim='time')
-                    .sel(time=slice(*tlim))
-                )
+                raise ValueError(f'agg method {agg} not supported')
             if mean is True:
-                X[var] = X[var].mean('time')
+                X[key] = X[key].mean('time')
 
         if coarsen:
             X_coarse = xr.Dataset()
-            for var in vars:
-                X_coarse[var] = X[var].coarsen(x=coarsen, y=coarsen, boundary='trim').mean()
+            for key in keys:
+                X_coarse[key] = X[key].coarsen(x=coarsen, y=coarsen, boundary='trim').mean()
             X = X_coarse
 
         if df is not None:
@@ -68,8 +74,8 @@ def terraclim(
             rc = rowcol(t, x, y)
             ind_r = xr.DataArray(rc[0], dims=['x'])
             ind_c = xr.DataArray(rc[1], dims=['x'])
-            for var in vars:
-                df[var] = X[var][ind_r, ind_c].values
+            for key in keys:
+                df[key] = X[key][ind_r, ind_c].values
             df = df.dropna().reset_index(drop=True)
             return df
 
@@ -79,5 +85,5 @@ def terraclim(
                 return X
 
             if return_type == 'numpy':
-                X = {var: X[var].values for var in X}
+                X = {key: X[key].values for key in X}
                 return X

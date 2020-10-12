@@ -1,3 +1,5 @@
+altair
+altair-data-server
 dask[complete]
 fsspec
 fastparquet

@@ -2,11 +2,29 @@ import altair as alt
 import pandas as pd
 
 
-def xy(data=None, x=None, y=None, color=None, cmap=None, clim=None, xlim=None, ylim=None):
+def xy(
+    data=None, 
+    x=None, 
+    y=None, 
+    color=None, 
+    cmap=None, 
+    clim=None, 
+    xlim=None, 
+    ylim=None,
+    xlabel=None,
+    ylabel=None,
+    clabel=None
+):
     """
     plot two variables optionally colored by some feature
     """
     if data is None:
+        if hasattr(x, 'name') and xlabel is None:
+            xlabel = x.name
+        if hasattr(y, 'name') and ylabel is None:
+            ylabel = y.name
+        if color is not None and hasattr(color, 'name') and clabel is None:
+            clabel = color.name
         df = pd.DataFrame({'x': x, 'y': y})
         _x = 'x'
         _y = 'y'
@@ -14,26 +32,51 @@ def xy(data=None, x=None, y=None, color=None, cmap=None, clim=None, xlim=None, y
             df['color'] = color
             _color = 'color'
     else:
+        if hasattr(data[x], 'name') and xlabel is None:
+            xlabel = data[x].name
+        if hasattr(data[y], 'name') and ylabel is None:
+            ylabel = data[y].name
+        if color is not None and hasattr(data[color], 'name') and clabel is None:
+            clabel = color.name
         df = data
         _x = x
         _y = y
         _color = color
 
+    if xlabel is None:
+        xlabel = 'x'
+    
+    if ylabel is None:
+        ylabel = 'y'
+
+    if clabel is None:
+        clabel = 'color'
+
+    xaxis = alt.Axis(title=xlabel)
+    yaxis = alt.Axis(title=ylabel)
+    clegend = alt.Legend(title=clabel)
+
     def x_scaled(x):
-        return alt.X(x) if xlim is None else alt.X(x, scale=alt.Scale(domain=xlim, clamp=True))
+        if xlim is None:
+            return alt.X(x, axis=xaxis)
+        else:
+            return alt.X(x, axis=xaxis, scale=alt.Scale(domain=xlim, clamp=True))
 
     def y_scaled(y):
-        return alt.Y(y) if ylim is None else alt.Y(y, scale=alt.Scale(domain=ylim, clamp=True))
+        if ylim is None:
+            alt.Y(y, axis=yaxis)
+        else:
+            return alt.Y(y, axis=yaxis, scale=alt.Scale(domain=ylim, clamp=True))
 
     def color_scaled(color):
         if clim is None and cmap is None:
-            return alt.Color(color, scale=alt.Scale(scheme='viridis'))
+            return alt.Color(color, legend=clegend, scale=alt.Scale(scheme='viridis'))
         elif clim is None and cmap is not None:
-            return alt.Color(color, scale=alt.Scale(scheme=cmap))
+            return alt.Color(color, legend=clegend, scale=alt.Scale(scheme=cmap))
         elif clim is not None and cmap is None:
-            return alt.Color(color, scale=alt.Scale(domain=clim))
+            return alt.Color(color, legend=clegend, scale=alt.Scale(domain=clim))
         elif clim is not None and cmap is not None:
-            return alt.Color(color, scale=alt.Scale(domain=clim, scheme=cmap, clamp=True))
+            return alt.Color(color, legend=clegend, scale=alt.Scale(domain=clim, scheme=cmap, clamp=True))
 
     if color is None:
         points = (
