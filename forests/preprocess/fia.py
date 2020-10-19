@@ -1,3 +1,4 @@
+# flake8: noqa
 import math
 
 import networkx as nx
@@ -102,9 +103,9 @@ def preprocess_state(state_abbr, save=True):
 
     # TODO: one-hot-encode DSTRBCDs
     def dstrbcd_to_disturb_class(dstrbcd):
-        '''
+        """
         Transforms dstrbcd (int 0-90) to bulk disturbance class (bugs, fires, weather, etc)
-        '''
+        """
         disturb_class_map = {
             1: 'bugs',
             2: 'disease',

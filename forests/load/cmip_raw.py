@@ -75,7 +75,9 @@ def cmip():
 
     # get historical simulations
     hist_subset = full_subset.search(
-        activity_id=['CMIP'], experiment_id=['historical'], require_all_on=['variable_id'],
+        activity_id=['CMIP'],
+        experiment_id=['historical'],
+        require_all_on=['variable_id'],
     )
 
     # get future simulations

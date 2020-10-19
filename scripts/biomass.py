@@ -2,10 +2,12 @@ import pickle
 
 import numpy as np
 import pandas as pd
-import xarray as xr
 from tqdm import tqdm
 
-from forests import fit, load
+from forests import load  # , fit
+
+# import xarray as xr
+
 
 print('[biomass] loading data')
 df = load.fia(store='local', states='conus')

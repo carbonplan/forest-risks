@@ -39,7 +39,10 @@ def line(data=None, x=None, y=None, color=None, cmap=None, clim=None, xlim=None,
         line = (
             alt.Chart(df)
             .mark_line(strokeWidth=3, color='rgb(250,100,150)')
-            .encode(x=x_scaled(_x), y=y_scaled(_y),)
+            .encode(
+                x=x_scaled(_x),
+                y=y_scaled(_y),
+            )
             .properties(width=350, height=300)
         )
     else:

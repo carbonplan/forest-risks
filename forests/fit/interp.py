@@ -45,7 +45,11 @@ def interp(df, mask, var='biomass', spacing=4000):
     proj_coords = projection(*coordinates)
 
     # split for validation... this may belong outside of this function
-    train, test = vd.train_test_split(projection(*coordinates), df[var], random_state=RANDOM_SEED,)
+    train, test = vd.train_test_split(
+        projection(*coordinates),
+        df[var],
+        random_state=RANDOM_SEED,
+    )
 
     # fit the gridder
     chain = vd.Chain(
@@ -61,7 +65,11 @@ def interp(df, mask, var='biomass', spacing=4000):
 
     # make the grid
     grid = chain.grid(spacing=spacing, region=region, data_names=[var], dims=('y', 'x'))
-    grid = vd.distance_mask(proj_coords, maxdist=4 * spacing, grid=grid,)
+    grid = vd.distance_mask(
+        proj_coords,
+        maxdist=4 * spacing,
+        grid=grid,
+    )
     grid = np.flipud(grid[var]) * mask
     grid.name = var
 

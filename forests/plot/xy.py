@@ -3,17 +3,17 @@ import pandas as pd
 
 
 def xy(
-    data=None, 
-    x=None, 
-    y=None, 
-    color=None, 
-    cmap=None, 
-    clim=None, 
-    xlim=None, 
+    data=None,
+    x=None,
+    y=None,
+    color=None,
+    cmap=None,
+    clim=None,
+    xlim=None,
     ylim=None,
     xlabel=None,
     ylabel=None,
-    clabel=None
+    clabel=None,
 ):
     """
     plot two variables optionally colored by some feature
@@ -45,7 +45,7 @@ def xy(
 
     if xlabel is None:
         xlabel = 'x'
-    
+
     if ylabel is None:
         ylabel = 'y'
 
@@ -76,13 +76,18 @@ def xy(
         elif clim is not None and cmap is None:
             return alt.Color(color, legend=clegend, scale=alt.Scale(domain=clim))
         elif clim is not None and cmap is not None:
-            return alt.Color(color, legend=clegend, scale=alt.Scale(domain=clim, scheme=cmap, clamp=True))
+            return alt.Color(
+                color, legend=clegend, scale=alt.Scale(domain=clim, scheme=cmap, clamp=True)
+            )
 
     if color is None:
         points = (
             alt.Chart(df)
             .mark_circle(size=42, color='black', fill='black')
-            .encode(x=x_scaled(_x), y=y_scaled(_y),)
+            .encode(
+                x=x_scaled(_x),
+                y=y_scaled(_y),
+            )
             .properties(width=350, height=300)
         )
     else:
