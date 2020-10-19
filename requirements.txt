@@ -9,6 +9,7 @@ intake
 intake-geopandas
 intake-xarray
 netcdf4
+networkx
 pandas
 pytest
 rasterio
