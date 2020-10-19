@@ -12,5 +12,6 @@ netcdf4
 pandas
 pytest
 rasterio
+scikit-learn
 xarray
 zarr
