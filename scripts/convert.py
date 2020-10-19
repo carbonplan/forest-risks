@@ -4,8 +4,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-
-from forests import utils
+from carbonplan.forests import utils
 
 args = sys.argv
 

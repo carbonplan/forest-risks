@@ -1,2 +1,4 @@
-def test_foo():
-    pass
+def test_version():
+    from carbonplan.forests import version
+
+    assert version != '0.0.0'

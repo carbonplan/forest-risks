@@ -2,11 +2,10 @@ import warnings
 
 import numpy as np
 import xarray as xr
+from carbonplan.forests import load
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
-
-from forests import load
 
 warnings.simplefilter('ignore', category=RuntimeWarning)
 
