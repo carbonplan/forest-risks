@@ -24,16 +24,6 @@ setup(
     url="https://github.com/carbonplan/forests",
     packages=find_packages(),
     include_package_data=True,
-    entry_points={
-        "carbonplan.modules": [
-            "forests = forests",
-            "forests.data = forests.data",
-            "forests.fit = forests.fit",
-            "forests.load = forests.load",
-            "forests.plot = forests.plot",
-            "forests.preprocess = forests.preprocess",
-        ]
-    },
     python_requires=PYTHON_REQUIRES,
     install_requires=INSTALL_REQUIRES,
     tests_require=["pytest"],
