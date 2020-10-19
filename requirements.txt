@@ -13,5 +13,6 @@ pandas
 pytest
 rasterio
 scikit-learn
+urlpath
 xarray
 zarr
