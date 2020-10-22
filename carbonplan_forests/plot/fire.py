@@ -1,0 +1,168 @@
+import altair as alt
+from . import carto, line
+
+def monthly(data, data_var='vlf', projection='albersUsa', clim=None):
+    lat = data['lat'].values.flatten()
+    lon = data['lon'].values.flatten()
+
+    months = [2, 3, 4, 5, 6, 7, 8, 9, 10]
+    months_labels = ['mar','apr','may','jun','jul','aug','sep','oct', 'nov']
+    fires = data[data_var].groupby('time.month').mean().isel(month=months)
+
+    if projection == 'mercator':
+        latlim = [22,53]
+        lonlim = [-130,-62]
+    else:
+        latlim = None
+        lonlim = None
+
+    chart = alt.vconcat()
+    counter = 0
+    for month in range(int(len(months) / 3)):
+        row = alt.hconcat()
+        for column in range(3):
+            color = fires[counter].values.flatten()
+            inds = color > clim[0]
+            row |= carto(
+                lat=lat[inds], 
+                lon=lon[inds], 
+                color=color[inds], 
+                clim=clim,
+                cmap='reds', 
+                clabel=data_var,
+                size=12, 
+                width=270, 
+                height=170,
+                projection=projection,
+                title=str(months_labels[counter]),
+            )
+            counter += 1
+        chart &= row
+
+    return chart.configure_view(strokeOpacity=0)
+
+def summary(data, data_var='vlf', projection='albersUsa', clim=None):
+    lat = data['lat'].values.flatten()
+    lon = data['lon'].values.flatten()
+    color = data[data_var].mean('time').values.flatten()
+    inds = color > clim[0]
+
+    column = alt.vconcat()
+
+    x = data.groupby('time.year').mean()['year'].values
+    y = data.groupby('time.year').mean().mean(['x', 'y'])[data_var].values
+
+    column &= line(
+        x=x,
+        y=y,
+        width=300,
+        height=122,
+        strokeWidth=2,
+        color='rgb(175,91,92)'
+    )
+
+    x = data.groupby('time.month').mean()['month'].values
+    y = data.groupby('time.month').mean().mean(['x', 'y'])[data_var].values
+
+    column &= line(
+        x=x,
+        y=y,
+        width=300,
+        height=122,
+        strokeWidth=2,
+        color='rgb(175,91,92)'
+    )
+
+    chart = alt.hconcat()
+
+    chart |= column
+
+    chart |= carto(
+        lat=lat[inds], 
+        lon=lon[inds], 
+        color=color[inds], 
+        clim=clim,
+        cmap='reds', 
+        clabel=data_var,
+        size=40, 
+        width=500, 
+        height=300,
+        projection=projection,
+    )
+
+    return chart
+
+def evaluation(data, model, data_var='vlf', model_var='prob', projection='albersUsa', clim=None):
+    lat = data['lat'].values.flatten()
+    lon = data['lon'].values.flatten()
+    color = data[data_var].mean('time').values.flatten()
+    inds = color > clim[0]
+
+    column = alt.vconcat()
+
+    x = data.groupby('time.year').mean()['year'].values
+    y = data.groupby('time.year').mean().mean(['x', 'y'])[data_var].values
+    yhat = model.groupby('time.year').mean().mean(['x', 'y'])[model_var].values
+
+    column &= (
+        line(
+            x=x,
+            y=y,
+            width=300,
+            height=122,
+            strokeWidth=2,
+            opacity=0.5,
+            color='rgb(175,91,92)'
+        ) + 
+        line(
+            x=x,
+            y=yhat,
+            width=300,
+            height=122,
+            strokeWidth=2,
+            color='rgb(175,91,92)'
+        )
+    )
+
+    x = data.groupby('time.month').mean()['month'].values
+    y = data.groupby('time.month').mean().mean(['x', 'y'])[data_var].values
+    yhat = model.groupby('time.month').mean().mean(['x', 'y'])[model_var].values
+
+    column &= (
+        line(
+            x=x,
+            y=y,
+            width=300,
+            height=122,
+            strokeWidth=2,
+            opacity=0.5,
+            color='rgb(175,91,92)'
+        ) + 
+        line(
+            x=x,
+            y=yhat,
+            width=300,
+            height=122,
+            strokeWidth=2,
+            color='rgb(175,91,92)'
+        )
+    )
+
+    chart = alt.hconcat()
+
+    chart |= column
+
+    chart |= carto(
+        lat=lat[inds], 
+        lon=lon[inds], 
+        color=color[inds], 
+        clim=clim,
+        cmap='reds', 
+        clabel=data_var,
+        size=40, 
+        width=500, 
+        height=300,
+        projection=projection,
+    )
+
+    return chart

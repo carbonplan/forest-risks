@@ -9,7 +9,7 @@ def load_rio(f):
     return src.read(1)
 
 
-def nlcd(store='gcs', classes=[41, 42, 43, 90], year=2001, return_type='xarray', coarsen=None):
+def nlcd(store='gcs', classes=[41, 42, 43, 90], year=2001, coarsen=None):
     path = setup.loading(store)
 
     if classes == 'all':
@@ -24,9 +24,6 @@ def nlcd(store='gcs', classes=[41, 42, 43, 90], year=2001, return_type='xarray',
     if coarsen:
         mask = mask.coarsen(x=coarsen, y=coarsen, boundary='trim').mean()
 
-    if return_type == 'xarray':
-        mask.load()
-        return mask
+    mask.load()
+    return mask
 
-    if return_type == 'numpy':
-        return mask.values

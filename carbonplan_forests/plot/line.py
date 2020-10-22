@@ -2,7 +2,20 @@ import altair as alt
 import pandas as pd
 
 
-def line(data=None, x=None, y=None, color=None, cmap=None, clim=None, xlim=None, ylim=None):
+def line(
+    data=None, 
+    x=None, 
+    y=None, 
+    color=None, 
+    cmap=None, 
+    clim=None, 
+    xlim=None, 
+    ylim=None,
+    width=350,
+    height=300,
+    strokeWidth=3,
+    opacity=1
+):
     """
     plot two variables optionally colored by some feature
     """
@@ -36,21 +49,24 @@ def line(data=None, x=None, y=None, color=None, cmap=None, clim=None, xlim=None,
             return alt.Color(color, scale=alt.Scale(domain=clim, scheme=cmap, clamp=True))
 
     if color is None:
+        color = 'rgb(250,100,150)'
+
+    if type(color) is str:
         line = (
             alt.Chart(df)
-            .mark_line(strokeWidth=3, color='rgb(250,100,150)')
+            .mark_line(strokeWidth=strokeWidth, color=color, opacity=opacity)
             .encode(
                 x=x_scaled(_x),
                 y=y_scaled(_y),
             )
-            .properties(width=350, height=300)
+            .properties(width=width, height=height)
         )
     else:
         line = (
             alt.Chart(df)
-            .mark_line(strokeWidth=3)
+            .mark_line(strokeWidth=strokeWidth, opacity=opacity)
             .encode(x=x_scaled(_x), y=y_scaled(_y), color=color_scaled(_color))
-            .properties(width=350, height=300)
+            .properties(width=width, height=height)
         )
 
     return line

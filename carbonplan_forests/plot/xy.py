@@ -14,6 +14,8 @@ def xy(
     xlabel=None,
     ylabel=None,
     clabel=None,
+    width=350,
+    height=300
 ):
     """
     plot two variables optionally colored by some feature
@@ -88,14 +90,14 @@ def xy(
                 x=x_scaled(_x),
                 y=y_scaled(_y),
             )
-            .properties(width=350, height=300)
+            .properties(width=width, height=height)
         )
     else:
         points = (
             alt.Chart(df)
             .mark_circle(size=42)
             .encode(x=x_scaled(_x), y=y_scaled(_y), color=color_scaled(_color))
-            .properties(width=350, height=300)
+            .properties(width=width, height=height)
         )
 
     return points

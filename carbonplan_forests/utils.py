@@ -68,3 +68,16 @@ def rowcol_to_latlon(row, col, res=250):
     p2 = Proj(proj='latlong', datum='WGS84')
     lon, lat = transform(p1, p2, x, y)
     return lat, lon
+
+def latlon_to_rowcol(lat, lon, res=250):
+    lat = asarray(lat) if type(lat) is list else lat
+    lon = asarray(lon) if type(lon) is list else lon
+    x, y = latlon_to_xy(lat, lon)
+    r, c = rowcol(albers_conus_transform(res), x, y)
+    return r, c
+
+def latlon_to_xy(lat, lon):
+    p1 = Proj(base_crs)
+    p2 = Proj(proj='latlong', datum='WGS84')
+    x, y = transform(p2, p1, asarray(lon), asarray(lat))
+    return x, y

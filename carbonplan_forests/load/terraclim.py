@@ -1,6 +1,7 @@
 import warnings
 
 import fsspec
+import numpy as np
 import xarray as xr
 from pyproj import Proj, transform
 from rasterio import Affine
@@ -13,21 +14,17 @@ def terraclim(
     store='gcs',
     df=None,
     tlim=None,
-    mean=True,
+    mean=False,
     coarsen=None,
-    vars=['ppt', 'tmax'],
-    aggs=['sum', 'mean'],
-    return_type='xarray',
+    data_vars=['ppt', 'tmax'],
+    aggs=None,
+    mask=True
 ):
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', category=ResourceWarning)
         warnings.simplefilter('ignore', category=FutureWarning)
         warnings.simplefilter('ignore', category=RuntimeWarning)
-
-        if tlim is None:
-            raise ValueError('must specify time limits as tlim')
-        tlim = list(map(str, tlim))
 
         path = setup.loading(store)
         mapper = fsspec.get_mapper(
@@ -42,23 +39,36 @@ def terraclim(
             weights = ds.time.dt.days_in_month
             return ds.weighted(weights).mean(dim='time')
 
-        keys = [var + '_' + agg for var, agg in zip(vars, aggs)]
+        if aggs is not None:
+            keys = [var + '_' + agg for var, agg in zip(data_vars, aggs)]
+            for key in keys:
+                var, agg = key.split('_')
+                base = ds[var].resample(time='AS')
+                if agg == 'sum':
+                    X[key] = base.sum('time')
+                elif agg == 'mean':
+                    X[key] = base.map(weighted_mean, dim='time')
+                elif agg == 'max':
+                    X[key] = base.max('time')
+                elif agg == 'min':
+                    X[key] = base.min('time')
+                else:
+                    raise ValueError(f'agg method {agg} not supported')
+                if mean is True:
+                    X[key] = X[key].mean('time')
+        else:
+            keys = data_vars
+            for key in keys:
+                X[key] = ds[key]
 
-        for key in keys:
-            var, agg = key.split('_')
-            base = ds[var].resample(time='AS')
-            if agg == 'sum':
-                X[key] = base.sum('time').sel(time=slice(*tlim))
-            elif agg == 'mean':
-                X[key] = base.map(weighted_mean, dim='time').sel(time=slice(*tlim))
-            elif agg == 'max':
-                X[key] = base.max('time').sel(time=slice(*tlim))
-            elif agg == 'min':
-                X[key] = base.min('time').sel(time=slice(*tlim))
-            else:
-                raise ValueError(f'agg method {agg} not supported')
-            if mean is True:
-                X[key] = X[key].mean('time')
+        if tlim:
+            tlim = list(map(str, tlim))
+            X = X.sel(time=slice(*tlim))
+
+        if mask is not None:
+            vals = mask.values
+            vals[vals == 0] = np.NaN
+            X = X * vals
 
         if coarsen:
             X_coarse = xr.Dataset()
@@ -80,10 +90,5 @@ def terraclim(
             return df
 
         else:
-            if return_type == 'xarray':
-                X.load()
-                return X
-
-            if return_type == 'numpy':
-                X = {key: X[key].values for key in X}
-                return X
+            X.load()
+            return X
