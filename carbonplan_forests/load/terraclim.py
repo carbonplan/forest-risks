@@ -18,7 +18,7 @@ def terraclim(
     coarsen=None,
     data_vars=['ppt', 'tmax'],
     aggs=None,
-    mask=True
+    mask=None
 ):
 
     with warnings.catch_warnings():

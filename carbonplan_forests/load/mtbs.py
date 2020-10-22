@@ -6,7 +6,7 @@ from .. import setup
 from ..utils import rowcol_to_latlon
 
 
-def mtbs(store='gcs', tlim=None, res=64000, coarsen=None):
+def mtbs(store='gcs', tlim=(1984,2018), res=64000, coarsen=None):
     path = setup.loading(store)
     mapper = fsspec.get_mapper((path / f'processed/mtbs/conus/{res}m/monthly_raster.zarr').as_uri())
     mtbs = xr.open_zarr(mapper)
