@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import xarray as xr
 from sklearn.linear_model import LogisticRegression
@@ -29,11 +31,19 @@ def fire(x, y, f):
     """
     shape = (len(x.time), len(x.y), len(x.x))
 
-    x = np.asarray([x[var].values.flatten() for var in x.data_vars]).T
     y = (y.values.flatten() > 0).astype('int')
     f = np.asarray([np.tile(a, [shape[0], 1, 1]).flatten() for a in f]).T
-    x = np.concatenate([x, f], axis=1)
-    
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', category=RuntimeWarning)
+        f2 = np.asarray([
+            np.asarray([np.tile(a.mean(), [12, shape[1], shape[2]]) for a in x['tmax'].groupby('time.year').max()]).flatten(),
+            np.asarray([np.tile(a.mean(), [12, shape[1], shape[2]]) for a in x['ppt'].groupby('time.year').max()]).flatten()
+        ]).T
+
+    x = np.asarray([x[var].values.flatten() for var in x.data_vars]).T
+    x = np.concatenate([x, f, f2], axis=1)
+
     inds = (~np.isnan(x.sum(axis=1))) & (~np.isnan(y))
     x_z, x_mean, x_std = zscore_2d(x[inds])
 
@@ -62,9 +72,17 @@ class Model:
         da['lat'] = (['y', 'x'], x['lat'])
         da['lon'] =(['y', 'x'], x['lon'])
 
-        x = np.asarray([x[var].values.flatten() for var in x.data_vars]).T
         f = np.asarray([np.tile(a, [shape[0], 1, 1]).flatten() for a in f]).T
-        x = np.concatenate([x, f], axis=1)
+        
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            f2 = np.asarray([
+                np.asarray([np.tile(a.mean(), [12, shape[1], shape[2]]) for a in x['tmax'].groupby('time.year').max()]).flatten(),
+                np.asarray([np.tile(a.mean(), [12, shape[1], shape[2]]) for a in x['ppt'].groupby('time.year').max()]).flatten()
+            ]).T
+
+        x = np.asarray([x[var].values.flatten() for var in x.data_vars]).T
+        x = np.concatenate([x, f, f2], axis=1)
 
         inds = (~np.isnan(x.sum(axis=1)))
 

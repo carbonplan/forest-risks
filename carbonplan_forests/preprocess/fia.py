@@ -47,7 +47,7 @@ def tree_based_mortality(tree_df):
 
 
 def preprocess_state(state_abbr, save=True):
-    print(f'preprocessing state {state_abbr}')
+    state_abbr = state_abbr.lower()
     tree_df = pd.read_parquet(
         f'gs://carbonplan-data/raw/fia-states/tree_{state_abbr}.parquet',
         columns=[
@@ -107,14 +107,20 @@ def preprocess_state(state_abbr, save=True):
         Transforms dstrbcd (int 0-90) to bulk disturbance class (bugs, fires, weather, etc)
         """
         disturb_class_map = {
-            1: 'bugs',
-            2: 'disease',
-            3: 'fire',
-            4: 'animal',
-            5: 'weather',
-            8: 'human',
+            10: 'bugs',
+            12: 'bugs',
+            20: 'bugs',
+            22: 'bugs',
+            30: 'fire',
+            32: 'fire',
+            50: 'weather',
+            51: 'weather',
+            52: 'weather',
+            53: 'weather',
+            54: 'drought',
+            80: 'human',
         }
-        return (dstrbcd // 10).map(disturb_class_map)
+        return (dstrbcd).map(disturb_class_map)
 
     hot_encodings = [
         pd.get_dummies(dstrbcd_to_disturb_class(cond_agg[k]), prefix='disturb')
