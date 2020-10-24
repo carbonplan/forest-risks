@@ -95,7 +95,7 @@ def summary(data, data_var='vlf', projection='albersUsa', clim=None):
 def evaluation(data, model, data_var='vlf', model_var='prob', projection='albersUsa', clim=None):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
-    color = data[data_var].mean('time').values.flatten()
+    color = model[model_var].mean('time').values.flatten()
     inds = color > clim[0]
 
     column = alt.vconcat()

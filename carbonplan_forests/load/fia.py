@@ -311,6 +311,7 @@ def fia_state_grouped(store, state, clean):
             'ELEV': 'elevation',
             'SLOPE': 'slope',
             'ASPECT': 'aspect',
+            'CONDPROP_UNADJ': 'condprop',
             'mort': 'unadj_mort',
             'balive': 'unadj_balive',
             'adj_mort': 'mort',
@@ -349,7 +350,7 @@ def fia_state_grouped(store, state, clean):
             wide[missing_var] = np.nan
 
     attrs = state_long.groupby(['plt_uid', 'CONDID'])[
-        ['lat', 'lon', 'type_code', 'elevation', 'slope', 'aspect']
+        ['lat', 'lon', 'type_code', 'elevation', 'slope', 'aspect', 'condprop']
     ].max()
 
     if 'year_1' not in wide.columns:
@@ -365,6 +366,14 @@ def fia_state_grouped(store, state, clean):
             & (df['type_code'] <= 983)
         )
         df = df[inds]
+
+    for year in range(6):
+        key = f'year_{year}'
+        if key in df.columns:
+            if clean:
+                df = df[(df[key]<9999) | np.isnan((df[key]))]
+            if sum(np.isnan(df[key])) == len(df):
+                del df[key]
 
     df['type_code'] = df['type_code'].map(forest_type_remap)
 

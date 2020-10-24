@@ -17,8 +17,9 @@ def terraclim(
     mean=False,
     coarsen=None,
     data_vars=['ppt', 'tmax'],
-    aggs=None,
-    mask=None
+    data_aggs=None,
+    mask=None,
+    group_repeats=False
 ):
 
     with warnings.catch_warnings():
@@ -39,8 +40,8 @@ def terraclim(
             weights = ds.time.dt.days_in_month
             return ds.weighted(weights).mean(dim='time')
 
-        if aggs is not None:
-            keys = [var + '_' + agg for var, agg in zip(data_vars, aggs)]
+        if data_aggs is not None:
+            keys = [var + '_' + agg for var, agg in zip(data_vars, data_aggs)]
             for key in keys:
                 var, agg = key.split('_')
                 base = ds[var].resample(time='AS')
@@ -82,13 +83,54 @@ def terraclim(
             p2 = Proj(proj='latlong', datum='WGS84')
             x, y = transform(p2, p1, df['lon'].values, df['lat'].values)
             rc = rowcol(t, x, y)
-            ind_r = xr.DataArray(rc[0], dims=['x'])
-            ind_c = xr.DataArray(rc[1], dims=['x'])
-            for key in keys:
-                df[key] = X[key][ind_r, ind_c].values
-            df = df.dropna().reset_index(drop=True)
-            return df
+            ind_r = xr.DataArray(rc[0], dims=['c'])
+            ind_c = xr.DataArray(rc[1], dims=['c'])
 
+            if not group_repeats:
+                for key in keys:
+                    df[key] = X[key][ind_r, ind_c].values
+                for key in keys:
+                    df = df[~np.isnan(df[key])]
+                df = df.reset_index(drop=True)
+                return df
+            else:
+                base = X[keys].isel(y=ind_r, x=ind_c).load()
+                for key in keys:
+                    array = base[key].values.T
+                    time = np.arange(X['time.year'].min(), X['time.year'].max()+1)
+                    maxyear = max(map(lambda x: int(x.split('_')[1]), df.columns[['year' in c for c in df.columns]]))
+                    pairs = [(str(y), str(y + 1)) for y in range(maxyear)]
+                    for pair in pairs:
+                        tlims = [
+                            (time > tmin) & (time <= tmax) if (~np.isnan(tmin) & ~np.isnan(tmax)) else []
+                            for (tmin, tmax) in zip(df[f'year_{pair[0]}'], df[f'year_{pair[1]}'])
+                        ]
+
+                        def get_stats(a, t):
+                            if len(t) > 0:
+                                selection = a[t]
+                                return {
+                                    'min': selection.min(),
+                                    'max': selection.max(),
+                                    'mean': selection.mean()
+                                }
+                            else:
+                                return {
+                                    'min': np.NaN,
+                                    'max': np.NaN,
+                                    'mean': np.NaN
+                                }
+
+                        stats = [get_stats(a, t) for (a, t) in zip(array, tlims)]
+
+                        df[key + '_min_' + pair[1]] = [d['min'] for d in stats]
+                        df[key + '_max_' + pair[1]] = [d['max'] for d in stats]
+                        df[key + '_mean_' + pair[1]] = [d['mean'] for d in stats]
+
+                for key in keys:
+                    df = df[~np.isnan(df[key + '_mean_1'])]
+                df = df.reset_index(drop=True)
+                return df
         else:
             X.load()
             return X
