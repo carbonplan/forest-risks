@@ -51,4 +51,4 @@ This project is being developed by CarbonPlan staff and the following outside co
 
 - Grayson Badgley (@badgley)
 - Anna Trugman
-- Bill Anderegg
+- Bill Anderegg (@anderegg)
