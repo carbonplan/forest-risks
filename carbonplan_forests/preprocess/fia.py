@@ -139,7 +139,7 @@ def preprocess_state(state_abbr, save=True):
     condition_alive_stats = condition_alive_stats.rename(columns={'unadj_basal_area': 'balive'})
 
     condition_mortality = (
-        tree_df.loc[tree_df['TPAMORT_UNADJ'] >= 0]
+        tree_df.loc[tree_df['TPAMORT_UNADJ'] > 0]
         .groupby(['PLT_CN', 'CONDID'])['unadj_basal_area']
         .sum()
     )
