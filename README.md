@@ -30,8 +30,8 @@ pip carbonplan[forests]
 
 This codebase is organized into modules that implement data loading and model fitting, as well as utitlies for plotting and other common tasks. There are two scripts in the `scripts` folder that use these tools to import data, run models, and parse results.
 
-- biomass.py
-- fire.py
+- `biomass.py`
+- `fire.py`
 
 And there is a final script `convert.py` for converting the results to geojson for visualization purposes.
 
