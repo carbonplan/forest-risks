@@ -12,8 +12,8 @@ def line(
     xlim=None, 
     ylim=None,
     width=350,
-    height=300,
-    strokeWidth=3,
+    height=200,
+    strokeWidth=2,
     opacity=1
 ):
     """

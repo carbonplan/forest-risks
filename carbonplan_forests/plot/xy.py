@@ -66,7 +66,7 @@ def xy(
 
     def y_scaled(y):
         if ylim is None:
-            alt.Y(y, axis=yaxis)
+            return alt.Y(y, axis=yaxis)
         else:
             return alt.Y(y, axis=yaxis, scale=alt.Scale(domain=ylim, clamp=True))
 

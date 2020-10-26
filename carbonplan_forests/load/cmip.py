@@ -2,6 +2,7 @@ import warnings
 
 import fsspec
 import xarray as xr
+import numpy as np
 from pyproj import Proj, transform
 from rasterio import Affine
 from rasterio.transform import rowcol
@@ -17,8 +18,8 @@ def cmip(
     scenario=None,
     mean=True,
     coarsen=None,
-    vars=['ppt', 'tmax'],
-    aggs=['sum', 'mean'],
+    data_vars=['ppt', 'tmax'],
+    data_aggs=['sum', 'mean'],
     return_type='xarray',
 ):
 
@@ -27,13 +28,10 @@ def cmip(
         warnings.simplefilter('ignore', category=FutureWarning)
         warnings.simplefilter('ignore', category=RuntimeWarning)
 
-        if tlim is None:
-            raise ValueError('must specify time limits as tlim')
         if scenario is None:
             raise ValueError('must specify scenario')
         if model is None:
             raise ValueError('must specify model')
-        tlim = list(map(str, tlim))
 
         path = setup.loading(store)
         mapper = fsspec.get_mapper(
@@ -42,16 +40,21 @@ def cmip(
 
         ds = xr.open_zarr(mapper, consolidated=True)
 
+        ds['tavg_mean'] = (ds['tmin_mean'] + ds['tmax_mean']) / 2
+
         X = xr.Dataset()
 
-        keys = [var + '_' + agg for var, agg in zip(vars, aggs)]
+        keys = [var + '_' + agg for var, agg in zip(data_vars, data_aggs)]
 
+        # no aggregation over months because we've precomputed that for now
         for key in keys:
-            X[key] = ds[key][0].sel(time=slice(*tlim))
-            if 'tmax' in key or 'tmin' in key:
+            X[key] = ds[key][0]
+            if 'tmax' in key or 'tmin' in key or 'tavg' in key:
                 X[key] = X[key] - 273.15
-            if mean is True:
-                X[key] = X[key].mean('time')
+
+        if tlim is not None:
+            tlim = list(map(str, tlim))
+            X = X.sel(time=slice(*tlim))
 
         if coarsen:
             X_coarse = xr.Dataset()
@@ -65,18 +68,20 @@ def cmip(
             p2 = Proj(proj='latlong', datum='WGS84')
             x, y = transform(p2, p1, df['lon'].values, df['lat'].values)
             rc = rowcol(t, x, y)
-            ind_r = xr.DataArray(rc[0], dims=['x'])
-            ind_c = xr.DataArray(rc[1], dims=['x'])
+            ind_r = xr.DataArray(rc[0], dims=['c'])
+            ind_c = xr.DataArray(rc[1], dims=['c'])
+
+            base = X[keys].isel(y=ind_r, x=ind_c).load()
             for key in keys:
-                df[key] = X[key][ind_r, ind_c].values
-            df = df.dropna().reset_index(drop=True)
+                df[key + '_mean'] = base[key].mean('time').values
+                df[key + '_min'] = base[key].min('time').values
+                df[key + '_max'] = base[key].max('time').values
+            for key in keys:
+                df = df[~np.isnan(df[key + '_mean'])]
+            df = df.reset_index(drop=True)
             return df
 
-        else:
-            if return_type == 'xarray':
-                X.load()
-                return X
+        if return_type == 'xarray':
+            X.load()
+            return X
 
-            if return_type == 'numpy':
-                X = {key: X[key].values for key in X}
-                return X

@@ -14,7 +14,6 @@ def terraclim(
     store='gcs',
     df=None,
     tlim=None,
-    mean=False,
     coarsen=None,
     data_vars=['ppt', 'tmax'],
     data_aggs=None,
@@ -33,6 +32,9 @@ def terraclim(
         )
 
         ds = xr.open_zarr(mapper)
+
+        ds['cwd'] = ds['pet'] - ds['aet']
+        ds['tavg'] = (ds['tmin'] + ds['tmax']) / 2
 
         X = xr.Dataset()
 
@@ -55,8 +57,6 @@ def terraclim(
                     X[key] = base.min('time')
                 else:
                     raise ValueError(f'agg method {agg} not supported')
-                if mean is True:
-                    X[key] = X[key].mean('time')
         else:
             keys = data_vars
             for key in keys:
@@ -65,7 +65,7 @@ def terraclim(
         if tlim:
             tlim = list(map(str, tlim))
             X = X.sel(time=slice(*tlim))
-
+ 
         if mask is not None:
             vals = mask.values
             vals[vals == 0] = np.NaN
@@ -87,10 +87,13 @@ def terraclim(
             ind_c = xr.DataArray(rc[1], dims=['c'])
 
             if not group_repeats:
+                base = X[keys].isel(y=ind_r, x=ind_c).load()
                 for key in keys:
-                    df[key] = X[key][ind_r, ind_c].values
+                    df[key + '_mean'] = base[key].mean('time').values
+                    df[key + '_min'] = base[key].min('time').values
+                    df[key + '_max'] = base[key].max('time').values
                 for key in keys:
-                    df = df[~np.isnan(df[key])]
+                    df = df[~np.isnan(df[key + '_mean'])]
                 df = df.reset_index(drop=True)
                 return df
             else:

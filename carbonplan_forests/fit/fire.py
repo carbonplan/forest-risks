@@ -19,7 +19,7 @@ def zscore_2d(x, mean=None, std=None):
         return (x - mean) / std
 
 
-def fire(x, y, f):
+def fire(x, y, f, crossval=False):
     """
     Fit a fire model
 
@@ -37,27 +37,46 @@ def fire(x, y, f):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', category=RuntimeWarning)
         f2 = np.asarray([
-            np.asarray([np.tile(a.mean(), [12, shape[1], shape[2]]) for a in x['tmax'].groupby('time.year').max()]).flatten(),
-            np.asarray([np.tile(a.mean(), [12, shape[1], shape[2]]) for a in x['ppt'].groupby('time.year').max()]).flatten()
+            np.asarray([np.tile(a.mean(), [12, shape[1], shape[2]]) for a in x['tavg'].groupby('time.year').max()]).flatten(),
+            np.asarray([np.tile(a.mean(), [12, shape[1], shape[2]]) for a in x['ppt'].groupby('time.year').max()]).flatten(),
         ]).T
 
     x = np.asarray([x[var].values.flatten() for var in x.data_vars]).T
     x = np.concatenate([x, f, f2], axis=1)
 
     inds = (~np.isnan(x.sum(axis=1))) & (~np.isnan(y))
-    x_z, x_mean, x_std = zscore_2d(x[inds])
+    x = x[inds]
+    y = y[inds]
+
+    if crossval:
+        train_inds = np.random.rand(len(y)) > 0.75
+        test_inds = ~train_inds
+    else:
+        train_inds = np.ones(len(y)).astype('bool')
+
+    x_z, x_mean, x_std = zscore_2d(x)
 
     model = LogisticRegression(fit_intercept=True, max_iter=500, solver="lbfgs")
-    model.fit(x_z, y[inds])
+    model.fit(x_z[train_inds], y[train_inds])
 
-    return Model(model, x_mean, x_std)
+    train_prob = model.predict_proba(x_z[train_inds])[:, 1]
+    train_roc = roc_auc_score(y[train_inds], train_prob)
 
+    if crossval:
+        test_prob = model.predict_proba(x_z[test_inds])[:, 1]
+        test_roc = roc_auc_score(y[test_inds], test_prob)
+        return Model(model, x_mean, x_std, train_roc, test_roc)
+    else:
+        return Model(model, x_mean, x_std, train_roc)
 
 class Model:
-    def __init__(self, model, x_mean, x_std):
+    def __init__(self, model, x_mean, x_std, train_roc, test_roc=None):
         self.model = model
         self.x_mean = x_mean
         self.x_std = x_std
+        self.train_roc = train_roc
+        if test_roc:
+            self.test_roc = test_roc
 
     def __repr__(self):
         return str(self.model)
@@ -77,8 +96,8 @@ class Model:
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=RuntimeWarning)
             f2 = np.asarray([
-                np.asarray([np.tile(a.mean(), [12, shape[1], shape[2]]) for a in x['tmax'].groupby('time.year').max()]).flatten(),
-                np.asarray([np.tile(a.mean(), [12, shape[1], shape[2]]) for a in x['ppt'].groupby('time.year').max()]).flatten()
+                np.asarray([np.tile(a.mean(), [12, shape[1], shape[2]]) for a in x['tavg'].groupby('time.year').max()]).flatten(),
+                np.asarray([np.tile(a.mean(), [12, shape[1], shape[2]]) for a in x['ppt'].groupby('time.year').max()]).flatten(),
             ]).T
 
         x = np.asarray([x[var].values.flatten() for var in x.data_vars]).T

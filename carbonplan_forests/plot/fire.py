@@ -1,20 +1,17 @@
 import altair as alt
+import numpy as np
 from . import carto, line
 
 def monthly(data, data_var='vlf', projection='albersUsa', clim=None):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
 
+    shape = data['lat'].shape
+    size = (170 / shape[0]) * (270 / shape[1]) * 0.9
+
     months = [2, 3, 4, 5, 6, 7, 8, 9, 10]
     months_labels = ['mar','apr','may','jun','jul','aug','sep','oct', 'nov']
     fires = data[data_var].groupby('time.month').mean().isel(month=months)
-
-    if projection == 'mercator':
-        latlim = [22,53]
-        lonlim = [-130,-62]
-    else:
-        latlim = None
-        lonlim = None
 
     chart = alt.vconcat()
     counter = 0
@@ -30,7 +27,7 @@ def monthly(data, data_var='vlf', projection='albersUsa', clim=None):
                 clim=clim,
                 cmap='reds', 
                 clabel=data_var,
-                size=12, 
+                size=size, 
                 width=270, 
                 height=170,
                 projection=projection,
@@ -46,6 +43,9 @@ def summary(data, data_var='vlf', projection='albersUsa', clim=None):
     lon = data['lon'].values.flatten()
     color = data[data_var].mean('time').values.flatten()
     inds = color > clim[0]
+
+    shape = data['lat'].shape
+    size = (300 / shape[0]) * (500 / shape[1]) * 0.9
 
     column = alt.vconcat()
 
@@ -73,30 +73,33 @@ def summary(data, data_var='vlf', projection='albersUsa', clim=None):
         color='rgb(175,91,92)'
     )
 
-    chart = alt.hconcat()
+    row = alt.hconcat()
 
-    chart |= column
+    row |= column
 
-    chart |= carto(
+    row |= carto(
         lat=lat[inds], 
         lon=lon[inds], 
         color=color[inds], 
         clim=clim,
         cmap='reds', 
         clabel=data_var,
-        size=40, 
+        size=size, 
         width=500, 
         height=300,
         projection=projection,
     )
 
-    return chart
+    return row
 
 def evaluation(data, model, data_var='vlf', model_var='prob', projection='albersUsa', clim=None):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
     color = model[model_var].mean('time').values.flatten()
     inds = color > clim[0]
+
+    shape = data['lat'].shape
+    size = (300 / shape[0]) * (500 / shape[1]) * 0.85
 
     column = alt.vconcat()
 
@@ -159,7 +162,7 @@ def evaluation(data, model, data_var='vlf', model_var='prob', projection='albers
         clim=clim,
         cmap='reds', 
         clabel=data_var,
-        size=40, 
+        size=size, 
         width=500, 
         height=300,
         projection=projection,

@@ -284,6 +284,7 @@ def fia_state(store, state, clean):
             'ELEV': 'elevation',
             'SLOPE': 'slope',
             'ASPECT': 'aspect',
+            'PLT_CN': 'plot_id'
         }
     ).filter(['lat', 'lon', 'age', 'biomass', 'year', 'type_code', 'elevation', 'slope', 'aspect'])
 
@@ -308,6 +309,7 @@ def fia_state_grouped(store, state, clean):
             'LON': 'lon',
             'FLDTYPCD': 'type_code',
             'INVYR': 'year',
+            'STDAGE': 'age',
             'ELEV': 'elevation',
             'SLOPE': 'slope',
             'ASPECT': 'aspect',
@@ -350,7 +352,7 @@ def fia_state_grouped(store, state, clean):
             wide[missing_var] = np.nan
 
     attrs = state_long.groupby(['plt_uid', 'CONDID'])[
-        ['lat', 'lon', 'type_code', 'elevation', 'slope', 'aspect', 'condprop']
+        ['lat', 'lon', 'age', 'type_code', 'elevation', 'slope', 'aspect', 'condprop']
     ].max()
 
     if 'year_1' not in wide.columns:
