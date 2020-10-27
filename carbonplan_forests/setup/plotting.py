@@ -1,7 +1,10 @@
 import altair as alt
 
 
-def plotting():
+def plotting(remote=True):
     alt.renderers.enable('default', embed_options={'actions': False})
-    alt.data_transformers.enable('data_server')
+    if remote:
+        alt.data_transformers.enable('data_server_proxied', urlpath='/user-redirect')
+    else:
+        alt.data_transformers.enable('data_server')
     alt.data_transformers.disable_max_rows()
