@@ -43,7 +43,10 @@ def nftd(store='gcs', groups='all', coarsen=None, append_all=False, mask=None, a
         ]
 
     bands = xr.concat(
-        [xr.open_rasterio(path / f'processed/nftd/conus/4000m/group_g{g}.tif')[0] for g in groups],
+        [
+            xr.open_rasterio((path / f'processed/nftd/conus/4000m/group_g{g}.tif').as_uri())[0]
+            for g in groups
+        ],
         dim=xr.Variable('band', groups),
     )
 

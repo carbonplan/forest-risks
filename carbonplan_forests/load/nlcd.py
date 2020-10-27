@@ -16,7 +16,10 @@ def nlcd(store='gcs', classes=[41, 42, 43, 90], year=2001, coarsen=None):
         classes = [11, 12, 21, 22, 23, 24, 31, 41, 42, 43, 51, 52, 71, 72, 73, 74, 81, 82, 90, 95]
 
     bands = xr.concat(
-        [xr.open_rasterio(path / f'processed/nlcd/conus/4000m/{year}_c{c}.tif') for c in classes],
+        [
+            xr.open_rasterio((path / f'processed/nlcd/conus/4000m/{year}_c{c}.tif').as_uri())
+            for c in classes
+        ],
         dim=xr.Variable('band', classes),
     )
     mask = bands.sum('band', keep_attrs=True)
