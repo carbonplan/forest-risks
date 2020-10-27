@@ -90,6 +90,8 @@ def preprocess_state(state_abbr, save=True):
         'DSTRBCD2',
         'DSTRBCD3',
         'TRTCD1',
+        'TRTCD2',
+        'TRTCD3',
         'CONDPROP_UNADJ',
         'COND_STATUS_CD',
         'SLOPE',
@@ -107,10 +109,10 @@ def preprocess_state(state_abbr, save=True):
         Transforms dstrbcd (int 0-90) to bulk disturbance class (bugs, fires, weather, etc)
         """
         disturb_class_map = {
-            10: 'bugs',
-            12: 'bugs',
-            20: 'bugs',
-            22: 'bugs',
+            10: 'insect',
+            12: 'insect',
+            20: 'insect',
+            22: 'insect',
             30: 'fire',
             32: 'fire',
             50: 'weather',
@@ -122,13 +124,34 @@ def preprocess_state(state_abbr, save=True):
         }
         return (dstrbcd).map(disturb_class_map)
 
-    hot_encodings = [
+    dstrb_hot_encodings = [
         pd.get_dummies(dstrbcd_to_disturb_class(cond_agg[k]), prefix='disturb')
         for k in ['DSTRBCD1', 'DSTRBCD2', 'DSTRBCD3']
     ]
     # sum all disturb codes, then cast to bool so we know if 0/1 disturbance type occurred
     # https://stackoverflow.com/questions/13078751/combine-duplicated-columns-within-a-dataframe
-    disturb_flags = (pd.concat(hot_encodings, axis=1)).groupby(level=0, axis=1).sum().astype(bool)
+    disturb_flags = (pd.concat(dstrb_hot_encodings, axis=1)).groupby(level=0, axis=1).sum().astype(bool)
+
+    def trtcd_to_treatment_class(trtcd):
+        """
+        Transforms trtcd (int 00-30) to bulk treatment class (bugs, fires, weather, etc)
+        """
+        treatment_class_map = {
+            10: 'cutting',
+            20: 'preparation',
+            30: 'regeneration',
+            40: 'regeneration',
+            50: 'other',
+        }
+        return (trtcd).map(treatment_class_map)
+
+    trt_hot_encodings = [
+        pd.get_dummies(trtcd_to_treatment_class(cond_agg[k]), prefix='treatment')
+        for k in ['TRTCD1', 'TRTCD2', 'TRTCD3']
+    ]
+    # sum all treatment codes, then cast to bool so we know if 0/1 treatment type occurred
+    # https://stackoverflow.com/questions/13078751/combine-duplicated-columns-within-a-dataframe
+    treatment_flags = (pd.concat(trt_hot_encodings, axis=1)).groupby(level=0, axis=1).sum().astype(bool)
 
     # per-tree variables that need to sum per condition
     alive_vars = ['unadj_ag_biomass', 'unadj_bg_biomass', 'unadj_basal_area']
@@ -152,6 +175,7 @@ def preprocess_state(state_abbr, save=True):
 
     full = cond_agg.join(condition_alive_stats)
     full = full.join(disturb_flags)
+    full = full.join(treatment_flags)
     full = full.join(condition_mortality)
     full = full.join(tree_mortality_fractions)
     full = full.reset_index()
