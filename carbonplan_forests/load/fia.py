@@ -278,6 +278,7 @@ def fia_state(store, state, clean):
             'LAT': 'lat',
             'LON': 'lon',
             'adj_ag_biomass': 'biomass',
+            'adj_mort': 'mort',
             'STDAGE': 'age',
             'INVYR': 'year',
             'FLDTYPCD': 'type_code',
@@ -286,7 +287,7 @@ def fia_state(store, state, clean):
             'ASPECT': 'aspect',
             'PLT_CN': 'plot_id'
         }
-    ).filter(['lat', 'lon', 'age', 'biomass', 'year', 'type_code', 'elevation', 'slope', 'aspect'])
+    ).filter(['lat', 'lon', 'age', 'biomass', 'year', 'type_code', 'elevation', 'slope', 'aspect', 'mort'])
 
     df['type_code'] = df['type_code'].map(forest_type_remap)
 

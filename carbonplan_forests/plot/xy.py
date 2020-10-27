@@ -15,7 +15,8 @@ def xy(
     ylabel=None,
     clabel=None,
     width=350,
-    height=300
+    height=300,
+    opacity=1
 ):
     """
     plot two variables optionally colored by some feature
@@ -85,7 +86,7 @@ def xy(
     if color is None:
         points = (
             alt.Chart(df)
-            .mark_circle(size=42, color='black', fill='black')
+            .mark_circle(size=42, color='black', fill='black', opacity=opacity)
             .encode(
                 x=x_scaled(_x),
                 y=y_scaled(_y),
@@ -95,7 +96,7 @@ def xy(
     else:
         points = (
             alt.Chart(df)
-            .mark_circle(size=42)
+            .mark_circle(size=42, opacity=opacity)
             .encode(x=x_scaled(_x), y=y_scaled(_y), color=color_scaled(_color))
             .properties(width=width, height=height)
         )
