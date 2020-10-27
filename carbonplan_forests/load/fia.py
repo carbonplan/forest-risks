@@ -353,6 +353,10 @@ def fia_state_grouped(store, state, clean):
         'disturb_fire',
         'disturb_human',
         'disturb_weather',
+        'treatment_cutting',
+        'treatment_regeneration',
+        'treatment_preparation',
+        'treatment_other',
     ]:
         state_long['tmp_idx'] = var + '_' + state_long['wide_idx'].astype(str)
         if var in state_long.columns:
