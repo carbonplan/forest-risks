@@ -2,7 +2,7 @@ import numpy as np
 from pyproj import Proj, transform
 from rasterio import Affine
 from rasterio.crs import CRS
-from rasterio.transform import xy
+from rasterio.transform import rowcol, xy
 
 
 def albers_conus_extent():
@@ -69,15 +69,17 @@ def rowcol_to_latlon(row, col, res=250):
     lon, lat = transform(p1, p2, x, y)
     return lat, lon
 
+
 def latlon_to_rowcol(lat, lon, res=250):
-    lat = asarray(lat) if type(lat) is list else lat
-    lon = asarray(lon) if type(lon) is list else lon
+    lat = np.asarray(lat) if type(lat) is list else lat
+    lon = np.asarray(lon) if type(lon) is list else lon
     x, y = latlon_to_xy(lat, lon)
     r, c = rowcol(albers_conus_transform(res), x, y)
     return r, c
 
-def latlon_to_xy(lat, lon):
+
+def latlon_to_xy(lat, lon, base_crs=albers_conus_crs()):
     p1 = Proj(base_crs)
     p2 = Proj(proj='latlong', datum='WGS84')
-    x, y = transform(p2, p1, asarray(lon), asarray(lat))
+    x, y = transform(p2, p1, np.asarray(lon), np.asarray(lat))
     return x, y

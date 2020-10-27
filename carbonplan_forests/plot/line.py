@@ -3,18 +3,18 @@ import pandas as pd
 
 
 def line(
-    data=None, 
-    x=None, 
-    y=None, 
-    color=None, 
-    cmap=None, 
-    clim=None, 
-    xlim=None, 
+    data=None,
+    x=None,
+    y=None,
+    color=None,
+    cmap=None,
+    clim=None,
+    xlim=None,
     ylim=None,
     width=350,
     height=200,
     strokeWidth=2,
-    opacity=1
+    opacity=1,
 ):
     """
     plot two variables optionally colored by some feature

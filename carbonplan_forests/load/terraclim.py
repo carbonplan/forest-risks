@@ -18,7 +18,7 @@ def terraclim(
     data_vars=['ppt', 'tmax'],
     data_aggs=None,
     mask=None,
-    group_repeats=False
+    group_repeats=False,
 ):
 
     with warnings.catch_warnings():
@@ -65,7 +65,7 @@ def terraclim(
         if tlim:
             tlim = list(map(str, tlim))
             X = X.sel(time=slice(*tlim))
- 
+
         if mask is not None:
             vals = mask.values
             vals[vals == 0] = np.NaN
@@ -100,12 +100,19 @@ def terraclim(
                 base = X[keys].isel(y=ind_r, x=ind_c).load()
                 for key in keys:
                     array = base[key].values.T
-                    time = np.arange(X['time.year'].min(), X['time.year'].max()+1)
-                    maxyear = max(map(lambda x: int(x.split('_')[1]), df.columns[['year' in c for c in df.columns]]))
+                    time = np.arange(X['time.year'].min(), X['time.year'].max() + 1)
+                    maxyear = max(
+                        map(
+                            lambda x: int(x.split('_')[1]),
+                            df.columns[['year' in c for c in df.columns]],
+                        )
+                    )
                     pairs = [(str(y), str(y + 1)) for y in range(maxyear)]
                     for pair in pairs:
                         tlims = [
-                            (time > tmin) & (time <= tmax) if (~np.isnan(tmin) & ~np.isnan(tmax)) else []
+                            (time > tmin) & (time <= tmax)
+                            if (~np.isnan(tmin) & ~np.isnan(tmax))
+                            else []
                             for (tmin, tmax) in zip(df[f'year_{pair[0]}'], df[f'year_{pair[1]}'])
                         ]
 
@@ -115,14 +122,10 @@ def terraclim(
                                 return {
                                     'min': selection.min(),
                                     'max': selection.max(),
-                                    'mean': selection.mean()
+                                    'mean': selection.mean(),
                                 }
                             else:
-                                return {
-                                    'min': np.NaN,
-                                    'max': np.NaN,
-                                    'mean': np.NaN
-                                }
+                                return {'min': np.NaN, 'max': np.NaN, 'mean': np.NaN}
 
                         stats = [get_stats(a, t) for (a, t) in zip(array, tlims)]
 

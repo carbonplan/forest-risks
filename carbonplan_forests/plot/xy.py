@@ -16,7 +16,7 @@ def xy(
     clabel=None,
     width=350,
     height=300,
-    opacity=1
+    opacity=1,
 ):
     """
     plot two variables optionally colored by some feature

@@ -3,8 +3,9 @@ import pickle
 import numpy as np
 import pandas as pd
 import xarray as xr
-from carbonplan_forests import load, fit
 from tqdm import tqdm
+
+from carbonplan_forests import fit, load
 
 print('[biomass] loading data')
 df = load.fia(store='local', states='conus')

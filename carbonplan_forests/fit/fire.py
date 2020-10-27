@@ -5,6 +5,7 @@ import xarray as xr
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 
+
 def zscore_2d(x, mean=None, std=None):
     recomputing = False
     if mean is None or std is None:
@@ -14,7 +15,11 @@ def zscore_2d(x, mean=None, std=None):
     if std is None:
         std = x.std(axis=0)
     if recomputing:
-        return (x - mean) / std, mean, std, 
+        return (
+            (x - mean) / std,
+            mean,
+            std,
+        )
     else:
         return (x - mean) / std
 
@@ -36,10 +41,22 @@ def fire(x, y, f, crossval=False):
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', category=RuntimeWarning)
-        f2 = np.asarray([
-            np.asarray([np.tile(a.mean(), [12, shape[1], shape[2]]) for a in x['tavg'].groupby('time.year').max()]).flatten(),
-            np.asarray([np.tile(a.mean(), [12, shape[1], shape[2]]) for a in x['ppt'].groupby('time.year').max()]).flatten(),
-        ]).T
+        f2 = np.asarray(
+            [
+                np.asarray(
+                    [
+                        np.tile(a.mean(), [12, shape[1], shape[2]])
+                        for a in x['tavg'].groupby('time.year').max()
+                    ]
+                ).flatten(),
+                np.asarray(
+                    [
+                        np.tile(a.mean(), [12, shape[1], shape[2]])
+                        for a in x['ppt'].groupby('time.year').max()
+                    ]
+                ).flatten(),
+            ]
+        ).T
 
     x = np.asarray([x[var].values.flatten() for var in x.data_vars]).T
     x = np.concatenate([x, f, f2], axis=1)
@@ -69,6 +86,7 @@ def fire(x, y, f, crossval=False):
     else:
         return Model(model, x_mean, x_std, train_roc)
 
+
 class Model:
     def __init__(self, model, x_mean, x_std, train_roc, test_roc=None):
         self.model = model
@@ -89,21 +107,33 @@ class Model:
         da['y'] = x.y
         da['time'] = x.time
         da['lat'] = (['y', 'x'], x['lat'])
-        da['lon'] =(['y', 'x'], x['lon'])
+        da['lon'] = (['y', 'x'], x['lon'])
 
         f = np.asarray([np.tile(a, [shape[0], 1, 1]).flatten() for a in f]).T
-        
+
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=RuntimeWarning)
-            f2 = np.asarray([
-                np.asarray([np.tile(a.mean(), [12, shape[1], shape[2]]) for a in x['tavg'].groupby('time.year').max()]).flatten(),
-                np.asarray([np.tile(a.mean(), [12, shape[1], shape[2]]) for a in x['ppt'].groupby('time.year').max()]).flatten(),
-            ]).T
+            f2 = np.asarray(
+                [
+                    np.asarray(
+                        [
+                            np.tile(a.mean(), [12, shape[1], shape[2]])
+                            for a in x['tavg'].groupby('time.year').max()
+                        ]
+                    ).flatten(),
+                    np.asarray(
+                        [
+                            np.tile(a.mean(), [12, shape[1], shape[2]])
+                            for a in x['ppt'].groupby('time.year').max()
+                        ]
+                    ).flatten(),
+                ]
+            ).T
 
         x = np.asarray([x[var].values.flatten() for var in x.data_vars]).T
         x = np.concatenate([x, f, f2], axis=1)
 
-        inds = (~np.isnan(x.sum(axis=1)))
+        inds = ~np.isnan(x.sum(axis=1))
 
         x_z = zscore_2d(x[inds], self.x_mean, self.x_std)
 
@@ -114,5 +144,5 @@ class Model:
         y_hat_full = y_hat_full.reshape(shape)
 
         da['prob'] = (['time', 'y', 'x'], y_hat_full)
-        
+
         return da

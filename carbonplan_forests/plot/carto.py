@@ -5,17 +5,17 @@ from vega_datasets import data as vega_data
 
 def carto(
     data=None,
-    lon='lon', 
-    lat='lat', 
+    lon='lon',
+    lat='lat',
     projection='albersUsa',
-    color=None, 
-    cmap=None, 
+    color=None,
+    cmap=None,
     clabel=None,
     clim=None,
     size=5,
     width=650,
     height=400,
-    title=None
+    title=None,
 ):
     if data is None:
         df = pd.DataFrame({'lon': lon, 'lat': lat})
@@ -41,11 +41,14 @@ def carto(
         elif clim is not None and cmap is None:
             return alt.Color(color, legend=clegend, scale=alt.Scale(domain=clim, clamp=True))
         elif clim is not None and cmap is not None:
-            return alt.Color(color, legend=clegend, scale=alt.Scale(domain=clim, scheme=cmap, clamp=True))
+            return alt.Color(
+                color, legend=clegend, scale=alt.Scale(domain=clim, scheme=cmap, clamp=True)
+            )
 
     states = alt.topo_feature(vega_data.us_10m.url, 'states')
 
-    background = (alt.Chart(states)
+    background = (
+        alt.Chart(states)
         .mark_geoshape(
             fill='white',
             stroke='black',

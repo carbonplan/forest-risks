@@ -285,9 +285,22 @@ def fia_state(store, state, clean):
             'ELEV': 'elevation',
             'SLOPE': 'slope',
             'ASPECT': 'aspect',
-            'PLT_CN': 'plot_id'
+            'PLT_CN': 'plot_id',
         }
-    ).filter(['lat', 'lon', 'age', 'biomass', 'year', 'type_code', 'elevation', 'slope', 'aspect', 'mort'])
+    ).filter(
+        [
+            'lat',
+            'lon',
+            'age',
+            'biomass',
+            'year',
+            'type_code',
+            'elevation',
+            'slope',
+            'aspect',
+            'mort',
+        ]
+    )
 
     df['type_code'] = df['type_code'].map(forest_type_remap)
 
@@ -374,7 +387,7 @@ def fia_state_grouped(store, state, clean):
         key = f'year_{year}'
         if key in df.columns:
             if clean:
-                df = df[(df[key]<9999) | np.isnan((df[key]))]
+                df = df[(df[key] < 9999) | np.isnan((df[key]))]
             if sum(np.isnan(df[key])) == len(df):
                 del df[key]
 
