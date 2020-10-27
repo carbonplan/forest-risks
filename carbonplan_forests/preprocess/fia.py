@@ -66,6 +66,9 @@ def preprocess_state(state_abbr, save=True):
     )
     # calculate tree-level statistics that will sum later.
     tree_df['unadj_basal_area'] = math.pi * (tree_df['DIA'] / (2 * 12)) ** 2 * tree_df['TPA_UNADJ']
+    tree_df['unadj_mort_basal_area'] = tree_df['unadj_basal_area'] * (
+        tree_df['TPAMORT_UNADJ'] > 0
+    )  # evals 1 if TPAMORT > 0, 0 otherwise
 
     # 892.179 converts lbs/acre to t/ha
     tree_df['unadj_ag_biomass'] = (
@@ -103,7 +106,6 @@ def preprocess_state(state_abbr, save=True):
     cond_agg = cond_df.groupby(['PLT_CN', 'CONDID'])[cond_vars].max()
     cond_agg = cond_agg.join(plot_df.set_index('CN')[['LAT', 'LON', 'ELEV']], on='PLT_CN')
 
-    # TODO: one-hot-encode DSTRBCDs
     def dstrbcd_to_disturb_class(dstrbcd):
         """
         Transforms dstrbcd (int 0-90) to bulk disturbance class (bugs, fires, weather, etc)
@@ -130,7 +132,9 @@ def preprocess_state(state_abbr, save=True):
     ]
     # sum all disturb codes, then cast to bool so we know if 0/1 disturbance type occurred
     # https://stackoverflow.com/questions/13078751/combine-duplicated-columns-within-a-dataframe
-    disturb_flags = (pd.concat(dstrb_hot_encodings, axis=1)).groupby(level=0, axis=1).sum().astype(bool)
+    disturb_flags = (
+        (pd.concat(dstrb_hot_encodings, axis=1)).groupby(level=0, axis=1).sum().astype(bool)
+    )
 
     def trtcd_to_treatment_class(trtcd):
         """
@@ -151,7 +155,9 @@ def preprocess_state(state_abbr, save=True):
     ]
     # sum all treatment codes, then cast to bool so we know if 0/1 treatment type occurred
     # https://stackoverflow.com/questions/13078751/combine-duplicated-columns-within-a-dataframe
-    treatment_flags = (pd.concat(trt_hot_encodings, axis=1)).groupby(level=0, axis=1).sum().astype(bool)
+    treatment_flags = (
+        (pd.concat(trt_hot_encodings, axis=1)).groupby(level=0, axis=1).sum().astype(bool)
+    )
 
     # per-tree variables that need to sum per condition
     alive_vars = ['unadj_ag_biomass', 'unadj_bg_biomass', 'unadj_basal_area']
@@ -159,17 +165,7 @@ def preprocess_state(state_abbr, save=True):
         tree_df.loc[tree_df['STATUSCD'] == 1].groupby(['PLT_CN', 'CONDID'])[alive_vars].sum()
     )
 
-    condition_alive_stats = condition_alive_stats.rename(columns={'unadj_basal_area': 'balive'})
-
-    condition_mortality = (
-        tree_df.loc[tree_df['TPAMORT_UNADJ'] > 0]
-        .groupby(['PLT_CN', 'CONDID'])['unadj_basal_area']
-        .sum()
-    )
-
-    condition_mortality = condition_mortality.to_frame().rename(
-        columns={'unadj_basal_area': 'bamort'}
-    )
+    condition_mortality = tree_df.groupby(['PLT_CN', 'CONDID'])['unadj_mort_basal_area'].sum()
 
     tree_mortality_fractions = tree_based_mortality(tree_df)
 
@@ -180,8 +176,8 @@ def preprocess_state(state_abbr, save=True):
     full = full.join(tree_mortality_fractions)
     full = full.reset_index()
 
-    full.loc[:, 'adj_mort'] = full.bamort / full.CONDPROP_UNADJ
-    full.loc[:, 'adj_balive'] = full.balive / full.CONDPROP_UNADJ
+    full.loc[:, 'adj_mort'] = full.unadj_mort_basal_area / full.CONDPROP_UNADJ
+    full.loc[:, 'adj_balive'] = full.unadj_basal_area / full.CONDPROP_UNADJ
     full.loc[:, 'adj_bg_biomass'] = full.unadj_bg_biomass / full.CONDPROP_UNADJ
     full.loc[:, 'adj_ag_biomass'] = full.unadj_ag_biomass / full.CONDPROP_UNADJ
 
