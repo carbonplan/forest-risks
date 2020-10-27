@@ -26,4 +26,3 @@ def nlcd(store='gcs', classes=[41, 42, 43, 90], year=2001, coarsen=None):
 
     mask.load()
     return mask
-

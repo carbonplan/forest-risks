@@ -1,8 +1,8 @@
 import warnings
 
 import fsspec
-import xarray as xr
 import numpy as np
+import xarray as xr
 from pyproj import Proj, transform
 from rasterio import Affine
 from rasterio.transform import rowcol
@@ -84,4 +84,3 @@ def cmip(
         if return_type == 'xarray':
             X.load()
             return X
-

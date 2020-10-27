@@ -15,5 +15,6 @@ pytest
 rasterio
 scikit-learn
 urlpath
+vega_datasets
 xarray
 zarr

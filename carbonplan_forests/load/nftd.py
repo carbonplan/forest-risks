@@ -1,5 +1,5 @@
-import rasterio
 import numpy as np
+import rasterio
 import xarray as xr
 
 from .. import setup
@@ -14,8 +14,33 @@ def nftd(store='gcs', groups='all', coarsen=None, append_all=False, mask=None, a
     path = setup.loading(store)
 
     if groups == 'all':
-        groups = [100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320,
-           340, 360, 370, 400, 500, 600, 700, 800, 900, 910, 920, 940, 950]
+        groups = [
+            100,
+            120,
+            140,
+            160,
+            180,
+            200,
+            220,
+            240,
+            260,
+            280,
+            300,
+            320,
+            340,
+            360,
+            370,
+            400,
+            500,
+            600,
+            700,
+            800,
+            900,
+            910,
+            920,
+            940,
+            950,
+        ]
 
     bands = xr.concat(
         [xr.open_rasterio(path / f'processed/nftd/conus/4000m/group_g{g}.tif')[0] for g in groups],
@@ -35,7 +60,7 @@ def nftd(store='gcs', groups='all', coarsen=None, append_all=False, mask=None, a
                 x = bands.sel(band=band).values.flatten()
                 y = bands.sel(band=other).values.flatten()
                 notnan = ~np.isnan(x) & ~np.isnan(y)
-                corrs.append(np.corrcoef(x[notnan], y[notnan])[0,1])
+                corrs.append(np.corrcoef(x[notnan], y[notnan])[0, 1])
             ind = np.argmax(corrs)
             matches[band] = band_inds[~small_inds][ind]
 
