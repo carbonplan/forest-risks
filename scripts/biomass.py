@@ -36,7 +36,6 @@ pf = pd.DataFrame()
 pf['lat'] = df['lat']
 pf['lon'] = df['lon']
 pf['type_code'] = df['type_code']
-print(len(pf))
 
 print('[biomass] evaluating predictions on training data')
 for code in type_codes:
