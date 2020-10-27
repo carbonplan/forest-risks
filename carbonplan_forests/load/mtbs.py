@@ -11,7 +11,7 @@ def mtbs(store='gcs', tlim=(1984, 2018), coarsen=None):
     mapper = fsspec.get_mapper(
         (path / 'processed/mtbs/conus/4000m/monthly_perims_raster.zarr').as_uri()
     )
-    mtbs = xr.open_zarr(mapper)
+    mtbs = xr.open_zarr(mapper, consolidated=True)
     mtbs['x'] = range(len(mtbs['x']))
     mtbs['y'] = range(len(mtbs['y']))
     mtbs = mtbs.drop('x')
