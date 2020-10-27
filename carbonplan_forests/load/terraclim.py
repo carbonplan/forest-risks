@@ -31,7 +31,7 @@ def terraclim(
             (path / 'processed/terraclimate/conus/4000m/raster.zarr').as_uri()
         )
 
-        ds = xr.open_zarr(mapper)
+        ds = xr.open_zarr(mapper, consolidated=True)
 
         ds['cwd'] = ds['pet'] - ds['aet']
         ds['tavg'] = (ds['tmin'] + ds['tmax']) / 2
