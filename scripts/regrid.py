@@ -21,6 +21,13 @@ pf = pd.read_parquet(f'data/{dataset}.parquet')
 ds = xr.Dataset()
 pf = pf.dropna().reset_index(drop=True)
 
+if dataset in ['drought', 'insects']:
+    badinds = (pf['historical'] > 1) | (np.isnan(pf['historical']))
+    for key in pf.columns:
+        if key not in ['lat', 'lon', 'type_code', 'r2']:
+            badinds = badinds | ((pf[key] > 1) | (np.isnan(pf[key])))
+    pf = pf[~badinds]
+
 print(f'[{dataset}] regridding predictions')
 final_mask = load.nlcd(store=store, year=2016, classes=[41, 42, 43, 90])
 if dataset == 'biomass':
