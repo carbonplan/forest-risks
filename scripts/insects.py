@@ -1,7 +1,6 @@
 import sys
 
 import numpy as np
-import pandas as pd
 from tqdm import tqdm
 
 from carbonplan_forests import fit, load, prepare, utils
