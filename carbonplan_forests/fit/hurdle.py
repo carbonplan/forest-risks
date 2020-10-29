@@ -9,7 +9,7 @@ def hurdle(x, y, log=True):
     n_obs = len(x)
 
     clf = LogisticRegression(fit_intercept=True, penalty='none', max_iter=1000)
-    reg = TweedieRegressor(power=0, link='log', alpha=0, tol=1e-8, max_iter=1000)
+    reg = TweedieRegressor(fit_intercept=True, power=0, link='log', alpha=0, tol=1e-8, max_iter=1000)
 
     clf.fit(x, y > 0)
     reg.fit(x[y > 0], y[y > 0])
