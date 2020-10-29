@@ -44,7 +44,7 @@ groups = load.nftd(
     store=store, groups='all', mask=mask, coarsen=coarsen_predict, area_threshold=1500
 )
 climate = load.terraclim(
-    store=store, tlim=(1984, 2018), coarsen=coarsen_predict, data_vars=data_vars, mask=mask
+    store=store, tlim=(2005, 2014), coarsen=coarsen_predict, data_vars=data_vars, mask=mask
 )
 prediction = model.predict(x=climate[fit_vars], f=groups)
 ds['historical'] = prediction['prob'] * final_mask.values
@@ -66,7 +66,7 @@ for scenario in tqdm(scenarios):
             data_vars=data_vars,
         )
         prediction = model.predict(x=climate[fit_vars], f=groups)
-        results.append(prediction['prob'].mean('time') * final_mask.values)
+        results.append(prediction['prob'] * final_mask.values)
     da = xr.concat(results, dim=xr.Variable('year', targets))
     ds[cmip_model + '_' + scenario] = da
 

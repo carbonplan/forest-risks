@@ -46,7 +46,7 @@ pf = df[['lat', 'lon', 'type_code']].copy().reset_index(drop=True)
 print('[insects] evaluating predictions on historical data')
 df = load.terraclim(
     store=store,
-    tlim=(2000, 2009),
+    tlim=(2005, 2014),
     data_vars=data_vars,
     data_aggs=data_aggs,
     df=df,
