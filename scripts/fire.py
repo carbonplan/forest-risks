@@ -49,25 +49,25 @@ climate = load.terraclim(
 prediction = model.predict(x=climate[fit_vars], f=groups)
 ds['historical'] = prediction['prob'] * final_mask.values
 
-print('[fire] evaluating on future climate')
-targets = list(map(lambda x: str(x), np.arange(2020, 2120, 20)))
-cmip_model = 'BCC-CSM2-MR'
-scenarios = ['ssp245', 'ssp370', 'ssp585']
-for scenario in tqdm(scenarios):
-    results = []
-    for target in targets:
-        tlim = (int(target) - 5, int(target) + 4)
-        climate = load.cmip(
-            store=store,
-            model=cmip_model,
-            coarsen=coarsen_predict,
-            scenario=scenario,
-            tlim=tlim,
-            data_vars=data_vars,
-        )
-        prediction = model.predict(x=climate[fit_vars], f=groups)
-        results.append(prediction['prob'] * final_mask.values)
-    da = xr.concat(results, dim=xr.Variable('year', targets))
-    ds[cmip_model + '_' + scenario] = da
+# print('[fire] evaluating on future climate')
+# targets = list(map(lambda x: str(x), np.arange(2020, 2120, 20)))
+# cmip_model = 'BCC-CSM2-MR'
+# scenarios = ['ssp245', 'ssp370', 'ssp585']
+# for scenario in tqdm(scenarios):
+#     results = []
+#     for target in targets:
+#         tlim = (int(target) - 5, int(target) + 4)
+#         climate = load.cmip(
+#             store=store,
+#             model=cmip_model,
+#             coarsen=coarsen_predict,
+#             scenario=scenario,
+#             tlim=tlim,
+#             data_vars=data_vars,
+#         )
+#         prediction = model.predict(x=climate[fit_vars], f=groups)
+#         results.append(prediction['prob'] * final_mask.values)
+#     da = xr.concat(results, dim=xr.Variable('year', targets))
+#     ds[cmip_model + '_' + scenario] = da
 
 ds.to_zarr('data/fire.zarr')
