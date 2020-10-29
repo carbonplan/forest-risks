@@ -17,8 +17,8 @@ def cmip(
     model=None,
     scenario=None,
     coarsen=None,
-    data_vars=False,
-    data_aggs=False,
+    data_vars=None,
+    data_aggs=None,
     remove_nans=False,
     annual=False,
 ):
@@ -32,6 +32,8 @@ def cmip(
             raise ValueError('must specify scenario')
         if model is None:
             raise ValueError('must specify model')
+        if data_vars is None:
+            raise ValueError('must specify data_vars')
 
         path = setup.loading(store)
 
