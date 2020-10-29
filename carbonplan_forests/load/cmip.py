@@ -63,6 +63,7 @@ def cmip(
                 (path / f'carbonplan-scratch/downscaling/bias-correction/{pattern}').as_uri()
             )
             ds = xr.open_zarr(mapper, consolidated=True)
+            X = xr.Dataset()
             if data_aggs is not None:
                 keys = [var + '_' + agg for var, agg in zip(data_vars, data_aggs)]
                 for key in keys:
