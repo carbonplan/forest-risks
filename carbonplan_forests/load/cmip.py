@@ -65,7 +65,7 @@ def cmip(
             ds = xr.open_zarr(mapper, consolidated=True)
             ds = ds.rename({'pr': 'ppt', 'tasmax': 'tmax', 'tasmin': 'tmin'})
             ds['tavg'] = (ds['tmax'] + ds['tmin']) / 2
-            
+
             X = xr.Dataset()
             if data_aggs is not None:
                 keys = [var + '_' + agg for var, agg in zip(data_vars, data_aggs)]
@@ -120,5 +120,6 @@ def cmip(
             df = df.reset_index(drop=True)
             return df
 
+        X = X.drop(['x', 'y'])
         X.load()
         return X
