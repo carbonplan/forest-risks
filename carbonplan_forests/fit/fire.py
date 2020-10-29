@@ -5,23 +5,7 @@ import xarray as xr
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 
-
-def zscore_2d(x, mean=None, std=None):
-    recomputing = False
-    if mean is None or std is None:
-        recomputing = True
-    if mean is None:
-        mean = x.mean(axis=0)
-    if std is None:
-        std = x.std(axis=0)
-    if recomputing:
-        return (
-            (x - mean) / std,
-            mean,
-            std,
-        )
-    else:
-        return (x - mean) / std
+from ..utils import zscore_2d
 
 
 def fire(x, y, f, crossval=False):

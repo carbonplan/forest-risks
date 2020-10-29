@@ -348,7 +348,7 @@ def fia_state_grouped(store, state, clean):
         'fraction_fire',
         'fraction_human',
         'disturb_animal',
-        'disturb_bugs',
+        'disturb_insect',
         'disturb_disease',
         'disturb_fire',
         'disturb_human',

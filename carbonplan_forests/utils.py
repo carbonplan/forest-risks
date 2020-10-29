@@ -83,3 +83,21 @@ def latlon_to_xy(lat, lon, base_crs=albers_conus_crs()):
     p2 = Proj(proj='latlong', datum='WGS84')
     x, y = transform(p2, p1, np.asarray(lon), np.asarray(lat))
     return x, y
+
+
+def zscore_2d(x, mean=None, std=None):
+    recomputing = False
+    if mean is None or std is None:
+        recomputing = True
+    if mean is None:
+        mean = x.mean(axis=0)
+    if std is None:
+        std = x.std(axis=0)
+    if recomputing:
+        return (
+            (x - mean) / std,
+            mean,
+            std,
+        )
+    else:
+        return (x - mean) / std

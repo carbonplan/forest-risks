@@ -16,6 +16,7 @@ def carto(
     width=650,
     height=400,
     title=None,
+    opacity=0.8,
 ):
     if data is None:
         df = pd.DataFrame({'lon': lon, 'lat': lat})
@@ -65,7 +66,7 @@ def carto(
     if color is None:
         geomap = (
             alt.Chart(df)
-            .mark_square(size=size, color='rgb(150,150,150)', opacity=0.8)
+            .mark_square(size=size, color='rgb(150,150,150)', opacity=opacity)
             .encode(longitude='lon:Q', latitude='lat:Q')
             .project(type=projection)
             .properties(width=width, height=height)
@@ -73,7 +74,7 @@ def carto(
     else:
         geomap = (
             alt.Chart(df)
-            .mark_square(size=size, opacity=0.8)
+            .mark_square(size=size, opacity=opacity)
             .encode(longitude='lon:Q', latitude='lat:Q', color=color_scaled(_color))
             .project(type=projection)
             .properties(width=width, height=height)
