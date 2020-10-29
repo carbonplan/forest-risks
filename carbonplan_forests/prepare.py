@@ -9,13 +9,7 @@ def drought(df, eval_only=False, duration=10):
     df = df.copy()
 
     if eval_only:
-        fit_vars = [
-            'ppt_sum_min', 
-            'tavg_mean_max', 
-            'age', 
-            'age_squared', 
-            'duration'
-        ]
+        fit_vars = ['ppt_sum_min', 'tavg_mean_max', 'age', 'age_squared', 'duration']
         df['age_squared'] = df['age'] ** 2
         df['duration'] = duration
         x = df[fit_vars]
@@ -25,13 +19,7 @@ def drought(df, eval_only=False, duration=10):
         return x, meta
 
     else:
-        fit_vars = [
-            'ppt_sum_min_1',
-            'tavg_mean_max_1',
-            'age',
-            'age_squared',
-            'duration'
-        ]
+        fit_vars = ['ppt_sum_min_1', 'tavg_mean_max_1', 'age', 'age_squared', 'duration']
         # 'pdsi_mean_min_1','cwd_sum_max_1',
         # 'pet_mean_max_1', 'vpd_mean_max_1',
         inds = (

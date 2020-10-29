@@ -300,7 +300,7 @@ def fia_state(store, state, clean):
             'slope',
             'aspect',
             'mort',
-            'owner'
+            'owner',
         ]
     )
 
