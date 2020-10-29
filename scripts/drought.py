@@ -7,7 +7,7 @@ from carbonplan_forests import fit, load, prepare, utils
 
 args = sys.argv
 
-if len(args) < 1:
+if len(args) < 2:
     store = 'local'
 else:
     store = args[1]

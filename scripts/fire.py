@@ -11,7 +11,7 @@ warnings.simplefilter('ignore', category=RuntimeWarning)
 
 args = sys.argv
 
-if len(args) < 1:
+if len(args) < 2:
     store = 'local'
 else:
     store = args[1]
@@ -65,8 +65,8 @@ for scenario in tqdm(scenarios):
             tlim=tlim,
             data_vars=data_vars,
         )
-        prediction = model.precict(x=climate[fit_vars], f=groups)
-        results.append(xr.DataArray(prediction.mean('time')))
+        prediction = model.predict(x=climate[fit_vars], f=groups)
+        results.append(prediction['prob'].mean('time') * final_mask.values)
     da = xr.concat(results, dim=xr.Variable('year', targets))
     ds[cmip_model + '_' + scenario] = da
 

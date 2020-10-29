@@ -9,7 +9,7 @@ from carbonplan_forests import utils
 
 args = sys.argv
 
-if len(args) < 1:
+if len(args) < 2:
     raise ValueError('must specify dataset')
 dataset = args[1]
 
