@@ -90,21 +90,3 @@ pf['r2'] = pf['type_code'].map(lambda k: models[k].train_r2)
 pf['scale'] = pf['type_code'].map(lambda k: models[k].scale)
 
 pf.to_parquet('data/biomass.parquet', compression='gzip', engine='fastparquet')
-
-# print('[biomass] regridding predictions')
-# ds = xr.Dataset()
-# pf = pf.dropna().reset_index(drop=True)
-# final_mask = load.nlcd(store=store, year=2016, classes=[41, 42, 43, 90])
-# final_mask.values = final_mask.values * (final_mask.values > 0.5)
-# ds['historical'] = fit.interp(pf, final_mask, var='historical')
-
-# for scenario in tqdm(scenarios):
-#     results = []
-#     for target in targets:
-#         key = cmip_model + '_' + scenario + '_' + target
-#         gridded = fit.interp(pf, final_mask, var=key)
-#         results.append(gridded)
-#     da = xr.concat(results, dim=xr.Variable('year', targets))
-#     ds[cmip_model + '_' + scenario] = da
-
-# ds.to_zarr('data/biomass.zarr')

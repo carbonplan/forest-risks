@@ -1,5 +1,5 @@
 import numpy as np
-import pandas as pd
+
 
 def drought(df, eval_only=False, duration=10):
     """
@@ -9,10 +9,7 @@ def drought(df, eval_only=False, duration=10):
     df = df.copy()
 
     if eval_only:
-        fit_vars = [
-            'ppt_sum_min','tavg_mean_max',
-            'age', 'age_squared', 'duration'
-        ]
+        fit_vars = ['ppt_sum_min', 'tavg_mean_max', 'age', 'age_squared', 'duration']
         df['age_squared'] = df['age'] ** 2
         df['duration'] = duration
         x = df[fit_vars]
@@ -22,19 +19,22 @@ def drought(df, eval_only=False, duration=10):
         return x, meta
 
     else:
-        
+
         fit_vars = [
-            'ppt_sum_min_1','tavg_mean_max_1',
-            'age', 'age_squared', 'duration',
+            'ppt_sum_min_1',
+            'tavg_mean_max_1',
+            'age',
+            'age_squared',
+            'duration',
         ]
         # 'pdsi_mean_min_1','cwd_sum_max_1',
         # 'pet_mean_max_1', 'vpd_mean_max_1',
         inds = (
-            (df['condprop'] > 0.3) & 
-            (df['disturb_human_1'] != True) & 
-            (df['disturb_fire_1'] != True) & 
-            (df['disturb_insect_1'] != True) & 
-            (df['treatment_cutting_1'] != True)
+            (df['condprop'] > 0.3)
+            & (df['disturb_human_1'] != True)
+            & (df['disturb_fire_1'] != True)
+            & (df['disturb_insect_1'] != True)
+            & (df['treatment_cutting_1'] != True)
         )
         df = df[inds].copy()
         df['age_squared'] = df['age'] ** 2
@@ -49,8 +49,9 @@ def drought(df, eval_only=False, duration=10):
 
         x = x[inds].values
         y = y[inds].values
-        
+
         return x, y, meta
+
 
 def insects(df, eval_only=False, duration=10):
     """
@@ -60,10 +61,7 @@ def insects(df, eval_only=False, duration=10):
     df = df.copy()
 
     if eval_only:
-        fit_vars = [
-            'ppt_sum_min','tavg_mean_max',
-            'age', 'age_squared', 'duration'
-        ]
+        fit_vars = ['ppt_sum_min', 'tavg_mean_max', 'age', 'age_squared', 'duration']
         df['age_squared'] = df['age'] ** 2
         df['duration'] = duration
         x = df[fit_vars]
@@ -73,18 +71,21 @@ def insects(df, eval_only=False, duration=10):
         return x, meta
 
     else:
-        
+
         fit_vars = [
-            'ppt_sum_min_1','tavg_mean_max_1',
-            'age', 'age_squared', 'duration',
+            'ppt_sum_min_1',
+            'tavg_mean_max_1',
+            'age',
+            'age_squared',
+            'duration',
         ]
         # 'pdsi_mean_min_1','cwd_sum_max_1',
         # 'pet_mean_max_1', 'vpd_mean_max_1',
         inds = (
-            (df['condprop'] > 0.3) & 
-            (df['disturb_human_1'] != True) & 
-            (df['disturb_fire_1'] != True) & 
-            (df['treatment_cutting_1'] != True)
+            (df['condprop'] > 0.3)
+            & (df['disturb_human_1'] != True)
+            & (df['disturb_fire_1'] != True)
+            & (df['treatment_cutting_1'] != True)
         )
         df = df[inds].copy()
         df['age_squared'] = df['age'] ** 2
@@ -98,6 +99,5 @@ def insects(df, eval_only=False, duration=10):
 
         x = x[inds].values
         y = y[inds].values
-        
-        return x, y, meta
 
+        return x, y, meta

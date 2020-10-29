@@ -1,11 +1,8 @@
-import pickle
-
 import numpy as np
 import pandas as pd
-import xarray as xr
 from tqdm import tqdm
 
-from carbonplan_forests import load, prepare, fit, utils
+from carbonplan_forests import fit, load, prepare, utils
 
 store = 'local'
 data_vars = ['ppt', 'tavg']
@@ -40,7 +37,7 @@ for code in tqdm(codes):
 
 print('[drought] preparing for evaluations')
 df = load.fia(store=store, states='conus')
-pf = df[['lat','lon','type_code']].copy().reset_index(drop=True)
+pf = df[['lat', 'lon', 'type_code']].copy().reset_index(drop=True)
 
 print('[drought] evaluating predictions on historical data')
 df = load.terraclim(
@@ -68,7 +65,7 @@ for it in tqdm(range(len(targets))):
     for scenario in scenarios:
         key = cmip_model + '_' + scenario + '_' + target
         df = load.cmip(
-            store=store, 
+            store=store,
             tlim=(int(tlim[0]), int(tlim[1])),
             data_vars=data_vars,
             data_aggs=data_aggs,
