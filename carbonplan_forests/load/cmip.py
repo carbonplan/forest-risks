@@ -63,6 +63,9 @@ def cmip(
                 (path / f'carbonplan-scratch/downscaling/bias-correction/{pattern}').as_uri()
             )
             ds = xr.open_zarr(mapper, consolidated=True)
+            ds = ds.rename({'pr': 'ppt', 'tasmax': 'tmax', 'tasmin': 'tmin'})
+            ds['tavg'] = (ds['tmax'] + ds['tmin']) / 2
+            
             X = xr.Dataset()
             if data_aggs is not None:
                 keys = [var + '_' + agg for var, agg in zip(data_vars, data_aggs)]
@@ -79,13 +82,13 @@ def cmip(
                         X[key] = base.min('time')
                     else:
                         raise ValueError(f'agg method {agg} not supported')
-                else:
-                    keys = data_vars
-                    for key in keys:
-                        X[key] = ds[key][0]
+            else:
+                keys = data_vars
                 for key in keys:
-                    if 'tmax' in key or 'tmin' in key or 'tavg' in key:
-                        X[key] = X[key] - 273.15
+                    X[key] = ds[key][0]
+            for key in keys:
+                if 'tmax' in key or 'tmin' in key or 'tavg' in key:
+                    X[key] = X[key] - 273.15
 
         if tlim is not None:
             tlim = list(map(str, tlim))
