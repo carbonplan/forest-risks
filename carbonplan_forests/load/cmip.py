@@ -11,17 +11,16 @@ from .. import setup, utils
 
 
 def cmip(
-    store='gcs',
+    store='az',
     df=None,
     tlim=None,
     model=None,
     scenario=None,
-    mean=True,
     coarsen=None,
-    data_vars=['ppt', 'tmax'],
-    data_aggs=['sum', 'mean'],
-    return_type='xarray',
+    data_vars=False,
+    data_aggs=False,
     remove_nans=False,
+    annual=False,
 ):
 
     with warnings.catch_warnings():
@@ -35,23 +34,55 @@ def cmip(
             raise ValueError('must specify model')
 
         path = setup.loading(store)
-        mapper = fsspec.get_mapper(
-            (path / f'scratch/downscaling/bias-correction-annual/{model}.{scenario}.zarr').as_uri()
-        )
 
-        ds = xr.open_zarr(mapper, consolidated=True)
+        providers = {'BCC-CSM2-MR': 'BCC'}
+        provider = providers[model]
+        pattern = f'ScenarioMIP.{provider}.{model}.{scenario}.Amon.gn'
 
-        ds['tavg_mean'] = (ds['tmin_mean'] + ds['tmax_mean']) / 2
+        if annual and data_aggs is False:
+            raise ValueError('must specify data_aggs when using annual data')
 
-        X = xr.Dataset()
+        if annual:
+            mapper = fsspec.get_mapper(
+                (path / f'carbonplan-scratch/downscaling/bias-correction-annual/{pattern}').as_uri()
+            )
+            ds = xr.open_zarr(mapper, consolidated=True)
+            ds['tavg_mean'] = (ds['tmin_mean'] + ds['tmax_mean']) / 2
 
-        keys = [var + '_' + agg for var, agg in zip(data_vars, data_aggs)]
+            X = xr.Dataset()
+            keys = [var + '_' + agg for var, agg in zip(data_vars, data_aggs)]
 
-        # no aggregation over months because we've precomputed that for now
-        for key in keys:
-            X[key] = ds[key][0]
-            if 'tmax' in key or 'tmin' in key or 'tavg' in key:
-                X[key] = X[key] - 273.15
+            for key in keys:
+                X[key] = ds[key][0]
+                if 'tmax' in key or 'tmin' in key or 'tavg' in key:
+                    X[key] = X[key] - 273.15
+        else:
+            mapper = fsspec.get_mapper(
+                (path / f'carbonplan-scratch/downscaling/bias-correction/{pattern}').as_uri()
+            )
+            ds = xr.open_zarr(mapper, consolidated=True)
+            if data_aggs is not None:
+                keys = [var + '_' + agg for var, agg in zip(data_vars, data_aggs)]
+                for key in keys:
+                    var, agg = key.split('_')
+                    base = ds[var][0].resample(time='AS')
+                    if agg == 'sum':
+                        X[key] = base.sum('time')
+                    elif agg == 'mean':
+                        X[key] = base.map(utils.weighted_mean, dim='time')
+                    elif agg == 'max':
+                        X[key] = base.max('time')
+                    elif agg == 'min':
+                        X[key] = base.min('time')
+                    else:
+                        raise ValueError(f'agg method {agg} not supported')
+                else:
+                    keys = data_vars
+                    for key in keys:
+                        X[key] = ds[key][0]
+                for key in keys:
+                    if 'tmax' in key or 'tmin' in key or 'tavg' in key:
+                        X[key] = X[key] - 273.15
 
         if tlim is not None:
             tlim = list(map(str, tlim))
@@ -83,6 +114,5 @@ def cmip(
             df = df.reset_index(drop=True)
             return df
 
-        if return_type == 'xarray':
-            X.load()
-            return X
+        X.load()
+        return X

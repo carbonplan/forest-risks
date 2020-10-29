@@ -1,3 +1,4 @@
+import sys
 import pickle
 
 import numpy as np
@@ -6,7 +7,13 @@ from tqdm import tqdm
 
 from carbonplan_forests import fit, load
 
-store = 'local'
+args = sys.argv
+
+if len(args) < 1:
+    store = 'local'
+else:
+    store = args[1]
+
 data_vars = ['tavg', 'ppt']
 data_aggs = ['mean', 'sum']
 
@@ -66,6 +73,7 @@ for it in tqdm(range(len(targets))):
             data_aggs=data_aggs,
             model=cmip_model,
             scenario=scenario,
+            annual=True,
             df=df,
         )
         pf[key] = np.NaN

@@ -11,7 +11,7 @@ from .. import setup, utils
 
 
 def terraclim(
-    store='gcs',
+    store='az',
     df=None,
     tlim=None,
     coarsen=None,
@@ -29,7 +29,7 @@ def terraclim(
 
         path = setup.loading(store)
         mapper = fsspec.get_mapper(
-            (path / 'processed/terraclimate/conus/4000m/raster.zarr').as_uri()
+            (path / 'carbonplan-data/processed/terraclimate/conus/4000m/raster.zarr').as_uri()
         )
 
         ds = xr.open_zarr(mapper, consolidated=True)
@@ -39,10 +39,6 @@ def terraclim(
 
         X = xr.Dataset()
 
-        def weighted_mean(ds, *args, **kwargs):
-            weights = ds.time.dt.days_in_month
-            return ds.weighted(weights).mean(dim='time')
-
         if data_aggs is not None:
             keys = [var + '_' + agg for var, agg in zip(data_vars, data_aggs)]
             for key in keys:
@@ -51,7 +47,7 @@ def terraclim(
                 if agg == 'sum':
                     X[key] = base.sum('time')
                 elif agg == 'mean':
-                    X[key] = base.map(weighted_mean, dim='time')
+                    X[key] = base.map(utils.weighted_mean, dim='time')
                 elif agg == 'max':
                     X[key] = base.max('time')
                 elif agg == 'min':

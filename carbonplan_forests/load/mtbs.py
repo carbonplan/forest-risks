@@ -6,10 +6,10 @@ from .. import setup
 from ..utils import rowcol_to_latlon
 
 
-def mtbs(store='gcs', tlim=(1984, 2018), coarsen=None):
+def mtbs(store='az', tlim=(1984, 2018), coarsen=None):
     path = setup.loading(store)
     mapper = fsspec.get_mapper(
-        (path / 'processed/mtbs/conus/4000m/monthly_perims_raster.zarr').as_uri()
+        (path / 'carbonplan-data/processed/mtbs/conus/4000m/monthly_perims_raster.zarr').as_uri()
     )
     mtbs = xr.open_zarr(mapper, consolidated=True)
     mtbs['x'] = range(len(mtbs['x']))

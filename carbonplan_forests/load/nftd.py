@@ -10,7 +10,7 @@ def load_rio(f):
     return src.read(1)
 
 
-def nftd(store='gcs', groups='all', coarsen=None, append_all=False, mask=None, area_threshold=None):
+def nftd(store='az', groups='all', coarsen=None, append_all=False, mask=None, area_threshold=None):
     path = setup.loading(store)
 
     if groups == 'all':
@@ -44,7 +44,9 @@ def nftd(store='gcs', groups='all', coarsen=None, append_all=False, mask=None, a
 
     bands = xr.concat(
         [
-            xr.open_rasterio((path / f'processed/nftd/conus/4000m/group_g{g}.tif').as_uri())[0]
+            xr.open_rasterio(
+                (path / f'carbonplan-data/processed/nftd/conus/4000m/group_g{g}.tif').as_uri()
+            )[0]
             for g in groups
         ],
         dim=xr.Variable('band', groups),

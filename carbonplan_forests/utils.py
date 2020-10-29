@@ -116,3 +116,8 @@ def remove_nans(x, y=None, return_inds=False):
             return x[inds], y[inds], inds
         else:
             return x[inds], y[inds]
+
+
+def weighted_mean(ds, *args, **kwargs):
+    weights = ds.time.dt.days_in_month
+    return ds.weighted(weights).mean(dim='time')

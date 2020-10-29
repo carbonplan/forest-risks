@@ -13,7 +13,11 @@ if len(args) < 1:
     raise ValueError('must specify dataset')
 dataset = args[1]
 
-store = 'local'
+if len(args) == 1:
+    store = 'local'
+else:
+    store = args[2]
+
 cmip_model = 'BCC-CSM2-MR'
 scenarios = ['ssp245', 'ssp370', 'ssp585']
 

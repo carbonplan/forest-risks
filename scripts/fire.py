@@ -1,3 +1,4 @@
+import sys
 import warnings
 
 import numpy as np
@@ -8,7 +9,13 @@ from carbonplan_forests import fit, load
 
 warnings.simplefilter('ignore', category=RuntimeWarning)
 
-store = 'local'
+args = sys.argv
+
+if len(args) < 1:
+    store = 'local'
+else:
+    store = args[1]
+
 coarsen_fit = 16
 coarsen_predict = 4
 tlim = (1984, 2018)
@@ -51,7 +58,12 @@ for scenario in tqdm(scenarios):
     for target in targets:
         tlim = (int(target) - 5, int(target) + 4)
         climate = load.cmip(
-            store=store, model=cmip_model, scenario=scenario, tlim=tlim, data_vars=data_vars
+            store=store,
+            model=cmip_model,
+            coarsen=coarsen_predict,
+            scenario=scenario,
+            tlim=tlim,
+            data_vars=data_vars,
         )
         prediction = model.precict(x=climate[fit_vars], f=groups)
         results.append(xr.DataArray(prediction.mean('time')))

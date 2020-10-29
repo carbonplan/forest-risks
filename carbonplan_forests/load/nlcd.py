@@ -9,7 +9,7 @@ def load_rio(f):
     return src.read(1)
 
 
-def nlcd(store='gcs', classes=[41, 42, 43, 90], year=2001, coarsen=None):
+def nlcd(store='az', classes=[41, 42, 43, 90], year=2001, coarsen=None):
     path = setup.loading(store)
 
     if classes == 'all':
@@ -17,7 +17,9 @@ def nlcd(store='gcs', classes=[41, 42, 43, 90], year=2001, coarsen=None):
 
     bands = xr.concat(
         [
-            xr.open_rasterio((path / f'processed/nlcd/conus/4000m/{year}_c{c}.tif').as_uri())
+            xr.open_rasterio(
+                (path / f'carbonplan-data/processed/nlcd/conus/4000m/{year}_c{c}.tif').as_uri()
+            )
             for c in classes
         ],
         dim=xr.Variable('band', classes),

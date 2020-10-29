@@ -229,7 +229,7 @@ conus_states = [
 ]
 
 
-def fia(store='gcs', states='conus', clean=True, group_repeats=False):
+def fia(store='az', states='conus', clean=True, group_repeats=False):
     if states == 'conus':
         states = conus_states
 
@@ -254,7 +254,9 @@ def fia(store='gcs', states='conus', clean=True, group_repeats=False):
 
 def fia_state(store, state, clean):
     path = setup.loading(store)
-    df = pd.read_parquet(path / f'processed/fia-states/long/{state.lower()}.parquet')
+    df = pd.read_parquet(
+        path / f'carbonplan-data/processed/fia-states/long/{state.lower()}.parquet'
+    )
 
     if clean:
         inds = (

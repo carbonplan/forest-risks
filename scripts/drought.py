@@ -1,26 +1,30 @@
+import sys
+
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
 from carbonplan_forests import fit, load, prepare, utils
 
-store = 'local'
+args = sys.argv
+
+if len(args) < 1:
+    store = 'local'
+else:
+    store = args[1]
+
 data_vars = ['ppt', 'tavg']
 data_aggs = ['sum', 'mean']
 
 print('[drought] loading data')
-# df = load.fia(store=store, states='conus', group_repeats=True)
-# df = load.terraclim(
-#     store=store,
-#     tlim=(int(df['year_0'].min()), 2020),
-#     data_vars=data_vars,
-#     data_aggs=data_aggs,
-#     df=df,
-#     group_repeats=True,
-# )
-df = pd.read_csv(
-    "/Users/freeman/Dropbox (Personal)/fia_wide_with_terraclim_v5.csv",
-    low_memory=False,
+df = load.fia(store=store, states='conus', group_repeats=True)
+df = load.terraclim(
+    store=store,
+    tlim=(int(df['year_0'].min()), 2020),
+    data_vars=data_vars,
+    data_aggs=data_aggs,
+    df=df,
+    group_repeats=True,
 )
 
 print('[drought] prepare for fitting')
@@ -71,6 +75,7 @@ for it in tqdm(range(len(targets))):
             data_aggs=data_aggs,
             model=cmip_model,
             scenario=scenario,
+            annual=True,
             df=df,
         )
         pf[key] = np.NaN
