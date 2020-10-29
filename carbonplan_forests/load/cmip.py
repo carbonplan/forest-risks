@@ -21,6 +21,7 @@ def cmip(
     data_vars=['ppt', 'tmax'],
     data_aggs=['sum', 'mean'],
     return_type='xarray',
+    remove_nans=False,
 ):
 
     with warnings.catch_warnings():
@@ -76,8 +77,9 @@ def cmip(
                 df[key + '_mean'] = base[key].mean('time').values
                 df[key + '_min'] = base[key].min('time').values
                 df[key + '_max'] = base[key].max('time').values
-            for key in keys:
-                df = df[~np.isnan(df[key + '_mean'])]
+            if remove_nans:
+                for key in keys:
+                    df = df[~np.isnan(df[key + '_mean'])]
             df = df.reset_index(drop=True)
             return df
 

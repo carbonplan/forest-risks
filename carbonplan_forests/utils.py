@@ -101,3 +101,18 @@ def zscore_2d(x, mean=None, std=None):
         )
     else:
         return (x - mean) / std
+
+
+def remove_nans(x, y=None, return_inds=False):
+    if y is None:
+        inds = np.isnan(x).sum(axis=1) == 0
+        if return_inds:
+            return x[inds], inds
+        else:
+            return x[inds]
+    else:
+        inds = (np.isnan(x).sum(axis=1) == 0) & (~np.isnan(y)) & (~np.isinf(y))
+        if return_inds:
+            return x[inds], y[inds], inds
+        else:
+            return x[inds], y[inds]

@@ -66,12 +66,12 @@ def fire(x, y, f, crossval=False):
     if crossval:
         test_prob = model.predict_proba(x_z[test_inds])[:, 1]
         test_roc = roc_auc_score(y[test_inds], test_prob)
-        return Model(model, x_mean, x_std, train_roc, test_roc)
+        return FireModel(model, x_mean, x_std, train_roc, test_roc)
     else:
-        return Model(model, x_mean, x_std, train_roc)
+        return FireModel(model, x_mean, x_std, train_roc)
 
 
-class Model:
+class FireModel:
     def __init__(self, model, x_mean, x_std, train_roc, test_roc=None):
         self.model = model
         self.x_mean = x_mean

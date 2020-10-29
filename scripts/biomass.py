@@ -2,15 +2,23 @@ import pickle
 
 import numpy as np
 import pandas as pd
-import xarray as xr
 from tqdm import tqdm
 
 from carbonplan_forests import fit, load
 
+store = 'local'
+data_vars = ['tavg', 'ppt']
+data_aggs = ['mean', 'sum']
+
 print('[biomass] loading data')
-df = load.fia(store='local', states='conus')
+df = load.fia(store=store, states='conus')
 df = load.terraclim(
-    store='local', tlim=(2000, 2020), data_vars=['tavg', 'ppt'], data_aggs=['mean', 'sum'], df=df
+    store=store,
+    tlim=(2000, 2020),
+    data_vars=data_vars,
+    data_aggs=data_aggs,
+    remove_nans=True,
+    df=df,
 )
 type_codes = df['type_code'].unique()
 
@@ -18,18 +26,14 @@ print('[biomass] fitting models')
 models = {}
 for code in tqdm(type_codes):
     df_type = df[df['type_code'] == code].reset_index()
-    if len(df_type) > 30:
-        x = df_type['age']
-        y = df_type['biomass']
-        f = [df_type['tavg_mean_mean'], df_type['ppt_sum_mean']]
-        model = fit.biomass(x=x, y=y, f=f, noise='gamma')
-        models[code] = model
+    x = df_type['age']
+    y = df_type['biomass']
+    f = [df_type['tavg_mean_mean'], df_type['ppt_sum_mean']]
+    model = fit.biomass(x=x, y=y, f=f, noise='gamma')
+    models[code] = model
 
 with open('data/biomass.pkl', 'wb') as f:
     pickle.dump(models, f)
-
-# with open('data/biomass.pkl', 'rb') as f:
-#     models = pickle.load(f)
 
 print('[biomass] preparing for evaluations')
 pf = pd.DataFrame()
@@ -44,7 +48,7 @@ for code in type_codes:
         inds = df['type_code'] == code
         x = df[inds]['age']
         f = [df[inds]['tavg_mean_mean'], df[inds]['ppt_sum_mean']]
-        pf.loc[inds, 'fitted_biomass'] = model.predict(x, f)
+        pf.loc[inds, 'historical'] = model.predict(x, f)
 
 print('[biomass] evaluating predictions on future climate models')
 targets = list(map(lambda x: str(x), np.arange(2020, 2120, 20)))
@@ -52,14 +56,14 @@ cmip_model = 'BCC-CSM2-MR'
 scenarios = ['ssp245', 'ssp370', 'ssp585']
 for it in tqdm(range(len(targets))):
     target = targets[it]
-    tlim = (str(int(target) - 10), str(int(target) + 9))
+    tlim = (str(int(target) - 5), str(int(target) + 4))
     for scenario in scenarios:
         key = cmip_model + '_' + scenario + '_' + target
         df = load.cmip(
-            store='local',
+            store=store,
             tlim=(int(tlim[0]), int(tlim[1])),
-            data_vars=['tavg', 'ppt'],
-            data_aggs=['mean', 'sum'],
+            data_vars=data_vars,
+            data_aggs=data_aggs,
             model=cmip_model,
             scenario=scenario,
             df=df,
@@ -87,22 +91,20 @@ pf['scale'] = pf['type_code'].map(lambda k: models[k].scale)
 
 pf.to_parquet('data/biomass.parquet', compression='gzip', engine='fastparquet')
 
-# pf = pd.read_parquet('data/biomass.parquet')
+# print('[biomass] regridding predictions')
+# ds = xr.Dataset()
+# pf = pf.dropna().reset_index(drop=True)
+# final_mask = load.nlcd(store=store, year=2016, classes=[41, 42, 43, 90])
+# final_mask.values = final_mask.values * (final_mask.values > 0.5)
+# ds['historical'] = fit.interp(pf, final_mask, var='historical')
 
-print('[biomass] regridding predictions')
-ds = xr.Dataset()
-pf = pf.dropna().reset_index(drop=True)
-final_mask = load.nlcd(store='local', year=2016, classes=[41, 42, 43, 90])
-final_mask.values = final_mask.values * (final_mask.values > 0.5)
-ds['fitted_biomass'] = fit.interp(pf, final_mask, var='fitted_biomass')
+# for scenario in tqdm(scenarios):
+#     results = []
+#     for target in targets:
+#         key = cmip_model + '_' + scenario + '_' + target
+#         gridded = fit.interp(pf, final_mask, var=key)
+#         results.append(gridded)
+#     da = xr.concat(results, dim=xr.Variable('year', targets))
+#     ds[cmip_model + '_' + scenario] = da
 
-for scenario in tqdm(scenarios):
-    results = []
-    for target in targets:
-        key = cmip_model + '_' + scenario + '_' + target
-        gridded = fit.interp(pf, final_mask, var=key)
-        results.append(gridded)
-    da = xr.concat(results, dim=xr.Variable('year', targets))
-    ds[cmip_model + '_' + scenario] = da
-
-ds.to_zarr('data/biomass.zarr')
+# ds.to_zarr('data/biomass.zarr')

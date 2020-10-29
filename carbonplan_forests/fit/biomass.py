@@ -33,7 +33,6 @@ def biomass(x, y, f, noise='gamma', init=None):
     bounds = Bounds(lb, ub)
     if init is None:
         init = [np.nanmean(y), 0.1, 10, 0, 0, np.nanstd(y)]
-    # options_lbfgsb = {'eps': 1e-10, 'maxcor': 100, 'maxiter': 500}
     options_trust = {'maxiter': 5000}
 
     with warnings.catch_warnings():
@@ -43,10 +42,10 @@ def biomass(x, y, f, noise='gamma', init=None):
     if result.success is False:
         print('optimization failed')
 
-    return Model(result, noise, x, y, f)
+    return BiomassModel(result, noise, x, y, f)
 
 
-class Model:
+class BiomassModel:
     def __init__(self, result, noise, x=None, y=None, f=None):
         self.result = result
         self.noise = noise

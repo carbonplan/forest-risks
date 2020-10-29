@@ -11,6 +11,8 @@ def line(
     clim=None,
     xlim=None,
     ylim=None,
+    xlabel=None,
+    ylabel=None,
     width=350,
     height=200,
     strokeWidth=2,
@@ -20,6 +22,10 @@ def line(
     plot two variables optionally colored by some feature
     """
     if data is None:
+        if hasattr(x, 'name') and xlabel is None:
+            xlabel = x.name
+        if hasattr(y, 'name') and ylabel is None:
+            ylabel = y.name
         df = pd.DataFrame({'x': x, 'y': y})
         _x = 'x'
         _y = 'y'
@@ -27,16 +33,35 @@ def line(
             df['color'] = color
             _color = 'color'
     else:
+        if hasattr(data[x], 'name') and xlabel is None:
+            xlabel = data[x].name
+        if hasattr(data[y], 'name') and ylabel is None:
+            ylabel = data[y].name
         df = data
         _x = x
         _y = y
         _color = color
 
+    if xlabel is None:
+        xlabel = 'x'
+
+    if ylabel is None:
+        ylabel = 'y'
+
+    xaxis = alt.Axis(title=xlabel)
+    yaxis = alt.Axis(title=ylabel)
+
     def x_scaled(x):
-        return alt.X(x) if xlim is None else alt.X(x, scale=alt.Scale(domain=xlim, clamp=True))
+        if xlim is None:
+            return alt.X(x, axis=xaxis)
+        else:
+            return alt.X(x, axis=xaxis, scale=alt.Scale(domain=xlim, clamp=True))
 
     def y_scaled(y):
-        return alt.Y(y) if ylim is None else alt.Y(y, scale=alt.Scale(domain=ylim, clamp=True))
+        if ylim is None:
+            return alt.Y(y, axis=yaxis)
+        else:
+            return alt.Y(y, axis=yaxis, scale=alt.Scale(domain=ylim, clamp=True))
 
     def color_scaled(color):
         if clim is None and cmap is None:

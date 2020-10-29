@@ -19,6 +19,7 @@ def terraclim(
     data_aggs=None,
     mask=None,
     group_repeats=False,
+    remove_nans=False,
 ):
 
     with warnings.catch_warnings():
@@ -92,8 +93,9 @@ def terraclim(
                     df[key + '_mean'] = base[key].mean('time').values
                     df[key + '_min'] = base[key].min('time').values
                     df[key + '_max'] = base[key].max('time').values
-                for key in keys:
-                    df = df[~np.isnan(df[key + '_mean'])]
+                if remove_nans:
+                    for key in keys:
+                        df = df[~np.isnan(df[key + '_mean'])]
                 df = df.reset_index(drop=True)
                 return df
             else:
@@ -133,8 +135,9 @@ def terraclim(
                         df[key + '_max_' + pair[1]] = [d['max'] for d in stats]
                         df[key + '_mean_' + pair[1]] = [d['mean'] for d in stats]
 
-                for key in keys:
-                    df = df[~np.isnan(df[key + '_mean_1'])]
+                if remove_nans:
+                    for key in keys:
+                        df = df[~np.isnan(df[key + '_mean_1'])]
                 df = df.reset_index(drop=True)
                 return df
         else:
