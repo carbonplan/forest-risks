@@ -51,9 +51,9 @@ def cmip(
 
         if store == 'az':
             if annual:
-                prefix = f'downscaling/bias-correction/{pattern}'
+                prefix = f'downscaling/bias-correction-annual/{pattern}'
             else:
-                prefix = f'downscaling/bias-correction-annaul/{pattern}'
+                prefix = f'downscaling/bias-correction/{pattern}'
             mapper = zarr.storage.ABSStore(
                 'carbonplan-scratch',
                 prefix=prefix,
