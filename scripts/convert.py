@@ -1,6 +1,6 @@
+import functools
 import sys
 
-import functools
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -14,14 +14,16 @@ if len(args) < 2:
     raise ValueError('must specify dataset')
 dataset = args[1]
 
-precision = {'biomass': 2, 'fire': 3, 'drought': 3, 'insects': 3, 'feedbacks': 3}
+precision = {'biomass': 2, 'fire': 3, 'drought': 3, 'insects': 3, 'biophysical': 3}
 
 ds = xr.open_zarr(f'data/{dataset}.zarr')
 
 if dataset == 'fire':
     scenarios = ['ssp245', 'ssp370', 'ssp585']
     for scenario in scenarios:
-        keys = list(filter(lambda a: a is not None, [k if scenario in k else None for k in ds.data_vars]))
+        keys = list(
+            filter(lambda a: a is not None, [k if scenario in k else None for k in ds.data_vars])
+        )
         ds[scenario] = functools.reduce(lambda a, b: a + b, [ds[key] for key in keys]) / len(keys)
 
 if dataset in ['fire', 'biomass', 'drought', 'insects']:
@@ -42,8 +44,8 @@ if dataset in ['fire', 'biomass', 'drought', 'insects']:
             a[np.isnan(a)] = 0
             df[key] = np.round(a[r, c], precision[dataset])
 
-if dataset == 'feedbacks':
-    a = ds['feedbacks'].values
+if dataset == 'biophysical':
+    a = ds['biophysical'].values
     a = -a
     a[np.isnan(a)] = 0
     a[a < 0.25 * a.max()] = 0

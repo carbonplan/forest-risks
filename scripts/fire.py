@@ -1,7 +1,7 @@
+import functools
 import sys
 import warnings
 
-import functools
 import numpy as np
 import xarray as xr
 from tqdm import tqdm
@@ -24,11 +24,12 @@ tlim = (1984, 2018)
 data_vars = ['ppt', 'tavg']
 fit_vars = ['ppt', 'tavg']
 
+
 def integrated_risk(da):
-    return (1 - functools.reduce(
-        lambda a, b: a * b, 
-        [1 - year for year in da.groupby('time.month').mean()]
-    ))
+    return 1 - functools.reduce(
+        lambda a, b: a * b, [1 - year for year in da.groupby('time.month').mean()]
+    )
+
 
 print('[fire] loading data')
 mask = load.nlcd(store=store, classes='all', year=2001)
