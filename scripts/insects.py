@@ -61,31 +61,32 @@ for code in codes:
 
 print('[insects] evaluating on future climate models')
 targets = list(map(lambda x: str(x), np.arange(2020, 2120, 20)))
-cmip_model = 'BCC-CSM2-MR'
+cmip_models = ['BCC-CSM2-MR', 'ACCESS-ESM1-5', 'CanESM5', 'MIROC6', 'MPI-ESM1-2-LR']
 scenarios = ['ssp245', 'ssp370', 'ssp585']
 for it in tqdm(range(len(targets))):
     target = targets[it]
     tlim = (str(int(target) - 5), str(int(target) + 4))
-    for scenario in scenarios:
-        key = cmip_model + '_' + scenario + '_' + target
-        df = load.cmip(
-            store=store,
-            tlim=(int(tlim[0]), int(tlim[1])),
-            data_vars=data_vars,
-            data_aggs=data_aggs,
-            model=cmip_model,
-            scenario=scenario,
-            annual=True,
-            df=df,
-        )
-        pf[key] = np.NaN
-        x, meta = prepare.insects(df, eval_only=True, duration=10)
-        x_z = utils.zscore_2d(x, x_mean, x_std)
-        for code in codes:
-            if code in models.keys():
-                model = models[code]
-                inds = df['type_code'] == code
-                pf.loc[inds, key] = model.predict(x=x_z[inds])
+    for cmip_model in cmip_models:
+        for scenario in scenarios:
+            key = cmip_model + '_' + scenario + '_' + target
+            df = load.cmip(
+                store=store,
+                tlim=(int(tlim[0]), int(tlim[1])),
+                data_vars=data_vars,
+                data_aggs=data_aggs,
+                model=cmip_model,
+                scenario=scenario,
+                annual=True,
+                df=df,
+            )
+            pf[key] = np.NaN
+            x, meta = prepare.insects(df, eval_only=True, duration=10)
+            x_z = utils.zscore_2d(x, x_mean, x_std)
+            for code in codes:
+                if code in models.keys():
+                    model = models[code]
+                    inds = df['type_code'] == code
+                    pf.loc[inds, key] = model.predict(x=x_z[inds])
 
 pf['r2'] = pf['type_code'].map(lambda k: models[k].train_r2 if k in models.keys() else np.NaN)
 

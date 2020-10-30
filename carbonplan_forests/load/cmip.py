@@ -1,8 +1,10 @@
+import os
 import warnings
 
 import fsspec
 import numpy as np
 import xarray as xr
+import zarr
 from pyproj import Proj, transform
 from rasterio import Affine
 from rasterio.transform import rowcol
@@ -37,17 +39,42 @@ def cmip(
 
         path = setup.loading(store)
 
-        providers = {'BCC-CSM2-MR': 'BCC'}
+        providers = {
+            'BCC-CSM2-MR': 'BCC',
+            'ACCESS-ESM1-5': 'CSIRO',
+            'CanESM5': 'CCCma',
+            'MIROC6': 'MIROC',
+            'MPI-ESM1-2-LR': 'MPI-M',
+        }
         provider = providers[model]
         pattern = f'ScenarioMIP.{provider}.{model}.{scenario}.Amon.gn'
+
+        if store == 'az':
+            if annual:
+                prefix = f'downscaling/bias-correction/{pattern}'
+            else:
+                prefix = f'downscaling/bias-correction-annaul/{pattern}'
+            mapper = zarr.storage.ABSStore(
+                'carbonplan-scratch',
+                prefix=prefix,
+                account_name='carbonplan',
+                account_key=os.environ['BLOB_ACCOUNT_KEY'],
+            )
+        else:
+            if annual:
+                prefix = (
+                    path / f'carbonplan-scratch/downscaling/bias-correction-annual/{pattern}'
+                ).as_uri()
+            else:
+                prefix = (
+                    path / f'carbonplan-scratch/downscaling/bias-correction/{pattern}'
+                ).as_uri()
+            mapper = fsspec.get_mapper(prefix)
 
         if annual and data_aggs is False:
             raise ValueError('must specify data_aggs when using annual data')
 
         if annual:
-            mapper = fsspec.get_mapper(
-                (path / f'carbonplan-scratch/downscaling/bias-correction-annual/{pattern}').as_uri()
-            )
             ds = xr.open_zarr(mapper, consolidated=True)
             ds['tavg_mean'] = (ds['tmin_mean'] + ds['tmax_mean']) / 2
 
@@ -59,9 +86,6 @@ def cmip(
                 if 'tmax' in key or 'tmin' in key or 'tavg' in key:
                     X[key] = X[key] - 273.15
         else:
-            mapper = fsspec.get_mapper(
-                (path / f'carbonplan-scratch/downscaling/bias-correction/{pattern}').as_uri()
-            )
             ds = xr.open_zarr(mapper, consolidated=True)
             ds = ds.rename({'pr': 'ppt', 'tasmax': 'tmax', 'tasmin': 'tmin'})
             ds['tavg'] = (ds['tmax'] + ds['tmin']) / 2

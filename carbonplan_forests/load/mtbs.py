@@ -1,6 +1,9 @@
+import os
+
 import fsspec
 import numpy as np
 import xarray as xr
+import zarr
 
 from .. import setup
 from ..utils import rowcol_to_latlon
@@ -8,9 +11,21 @@ from ..utils import rowcol_to_latlon
 
 def mtbs(store='az', tlim=(1984, 2018), coarsen=None):
     path = setup.loading(store)
-    mapper = fsspec.get_mapper(
-        (path / 'carbonplan-data/processed/mtbs/conus/4000m/monthly_perims_raster.zarr').as_uri()
-    )
+
+    if store == 'az':
+        prefix = 'processed/mtbs/conus/4000m/monthly_perims_raster.zarr'
+        mapper = zarr.storage.ABSStore(
+            'carbonplan-data',
+            prefix=prefix,
+            account_name='carbonplan',
+            account_key=os.environ['BLOB_ACCOUNT_KEY'],
+        )
+    else:
+        prefix = (
+            path / 'carbonplan-data/processed/mtbs/conus/4000m/monthly_perims_raster.zarr'
+        ).as_uri()
+        mapper = fsspec.get_mapper(prefix)
+
     mtbs = xr.open_zarr(mapper, consolidated=True)
     mtbs['x'] = range(len(mtbs['x']))
     mtbs['y'] = range(len(mtbs['y']))

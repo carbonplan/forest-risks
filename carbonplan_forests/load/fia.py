@@ -319,7 +319,9 @@ def fia_state_grouped(store, state, clean):
     related plot-condition invyrs into a single row
     """
     path = setup.loading(store)
-    state_long = pd.read_parquet(path / f'carbonplan-data/processed/fia-states/long/{state.lower()}.parquet')
+    state_long = pd.read_parquet(
+        path / f'carbonplan-data/processed/fia-states/long/{state.lower()}.parquet'
+    )
 
     state_long = state_long.rename(
         columns={

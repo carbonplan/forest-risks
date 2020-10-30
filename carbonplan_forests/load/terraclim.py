@@ -1,8 +1,10 @@
+import os
 import warnings
 
 import fsspec
 import numpy as np
 import xarray as xr
+import zarr
 from pyproj import Proj, transform
 from rasterio import Affine
 from rasterio.transform import rowcol
@@ -28,9 +30,20 @@ def terraclim(
         warnings.simplefilter('ignore', category=RuntimeWarning)
 
         path = setup.loading(store)
-        mapper = fsspec.get_mapper(
-            (path / 'carbonplan-data/processed/terraclimate/conus/4000m/raster.zarr').as_uri()
-        )
+
+        if store == 'az':
+            prefix = 'processed/terraclimate/conus/4000m/raster.zarr'
+            mapper = zarr.storage.ABSStore(
+                'carbonplan-data',
+                prefix=prefix,
+                account_name='carbonplan',
+                account_key=os.environ['BLOB_ACCOUNT_KEY'],
+            )
+        else:
+            prefix = (
+                path / 'carbonplan-data/processed/terraclimate/conus/4000m/raster.zarr'
+            ).as_uri()
+            mapper = fsspec.get_mapper(prefix)
 
         ds = xr.open_zarr(mapper, consolidated=True)
 
