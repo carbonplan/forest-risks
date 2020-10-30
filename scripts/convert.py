@@ -13,11 +13,10 @@ if len(args) < 2:
     raise ValueError('must specify dataset')
 dataset = args[1]
 
-precision = {'biomass': 2, 'fire': 3}
+precision = {'biomass': 2, 'fire': 3, 'drought': 3, 'insects': 3}
 
 ds = xr.open_zarr(f'data/{dataset}.zarr')
 
-cmip_model = 'BCC-CSM2-MR'
 scenarios = ['ssp245', 'ssp370', 'ssp585']
 targets = ds['year'].values
 
@@ -30,7 +29,7 @@ df = pd.DataFrame()
 
 for s, scenario in enumerate(scenarios):
     for y, year in enumerate(targets):
-        key = '0' + '_' + str(s) + '_' + str(y)
+        key = str(s) + '_' + str(y)
         a = ds[scenario].sel(year=year).values
         a[np.isnan(a)] = 0
         df[key] = np.round(a[r, c], precision[dataset])
