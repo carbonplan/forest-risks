@@ -1,6 +1,7 @@
 import sys
 import warnings
 
+import functools
 import numpy as np
 import xarray as xr
 from tqdm import tqdm
@@ -16,11 +17,18 @@ if len(args) < 2:
 else:
     store = args[1]
 
-coarsen_fit = 16
-coarsen_predict = 4
+coarsen_fit = 4
+coarsen_predict = None
+coarsen_scale = 1 / coarsen_fit
 tlim = (1984, 2018)
 data_vars = ['ppt', 'tavg']
 fit_vars = ['ppt', 'tavg']
+
+def integrated_risk(da):
+    return (1 - functools.reduce(
+        lambda a, b: a * b, 
+        [1 - year for year in da.groupby('time.month').mean()]
+    ))
 
 print('[fire] loading data')
 mask = load.nlcd(store=store, classes='all', year=2001)
@@ -47,27 +55,27 @@ climate = load.terraclim(
     store=store, tlim=(2005, 2014), coarsen=coarsen_predict, data_vars=data_vars, mask=mask
 )
 prediction = model.predict(x=climate[fit_vars], f=groups)
-ds['historical'] = prediction['prob'].mean('time') * final_mask.values
+ds['historical'] = integrated_risk(prediction['prob'] * coarsen_scale) * final_mask.values
 
 print('[fire] evaluating on future climate')
 targets = list(map(lambda x: str(x), np.arange(2020, 2120, 20)))
-cmip_model = 'BCC-CSM2-MR'
+cmip_models = ['BCC-CSM2-MR', 'ACCESS-ESM1-5', 'CanESM5', 'MIROC6', 'MPI-ESM1-2-LR']
 scenarios = ['ssp245', 'ssp370', 'ssp585']
-for scenario in tqdm(scenarios):
-    results = []
-    for target in targets:
-        tlim = (int(target) - 5, int(target) + 4)
-        climate = load.cmip(
-            store=store,
-            model=cmip_model,
-            coarsen=coarsen_predict,
-            scenario=scenario,
-            tlim=tlim,
-            data_vars=data_vars,
-        )
-        prediction = model.predict(x=climate[fit_vars], f=groups)
-        results.append(prediction['prob'].mean('time') * final_mask.values)
-    da = xr.concat(results, dim=xr.Variable('year', targets))
-    ds[cmip_model + '_' + scenario] = da
-
-ds.to_zarr('data/fire.zarr')
+for cmip_model in cmip_models:
+    for scenario in tqdm(scenarios):
+        results = []
+        for target in targets:
+            tlim = (int(target) - 5, int(target) + 4)
+            climate = load.cmip(
+                store=store,
+                model=cmip_model,
+                coarsen=coarsen_predict,
+                scenario=scenario,
+                tlim=tlim,
+                data_vars=data_vars,
+            )
+            prediction = model.predict(x=climate[fit_vars], f=groups)
+            results.append(integrated_risk(prediction['prob'] * coarsen_scale) * final_mask.values)
+        da = xr.concat(results, dim=xr.Variable('year', targets))
+        ds[cmip_model + '_' + scenario] = da
+        ds.to_zarr('data/fire.zarr', mode='w')
