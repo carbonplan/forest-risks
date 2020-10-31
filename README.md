@@ -53,7 +53,6 @@ CarbonPlan is a non-profit organization that uses data and science for carbon re
 
 This project is being developed by CarbonPlan staff and the following outside contributors:
 
+- Bill Anderegg (@anderegg)
 - Grayson Badgley (@badgley)
 - Anna Trugman
-- Bill Anderegg (@anderegg)
-- Orianna Chegwidden (@orianac)
