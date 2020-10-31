@@ -23,17 +23,21 @@ This repository includes our libraries and scripts for mapping forest carbon pot
 ## install
 
 ```shell
-pip carbonplan[forests]
+pip install carbonplan[forests]
 ```
 
 ## usage
 
-This codebase is organized into modules that implement data loading and model fitting, as well as utitlies for plotting and other common tasks. There are two scripts in the `scripts` folder that use these tools to import data, run models, and parse results.
+This codebase is organized into modules that implement data loading and model fitting as well as utitlies for plotting and other common tasks. Most anlayses involve some combination of the `load` and `fit` modules.
+
+There are four scripts in the `scripts` folder that use these tools to import data, run models, and parse results.
 
 - `biomass.py`
 - `fire.py`
+- `drought.py`
+- `insects.py`
 
-And there is a final script `convert.py` for converting the results to geojson for visualization purposes.
+And there are two additional scripts `regrid.py` and `convert.py` for converting the results to zarr files for storage and geojson for visualization purposes.
 
 Several notebooks are additionally provided that show the use of these tools for fitting models and inspecting model outputs. Notebooks are organized by the model type, e.g. `biomass`, `fire`, etc.
 
@@ -52,3 +56,4 @@ This project is being developed by CarbonPlan staff and the following outside co
 - Grayson Badgley (@badgley)
 - Anna Trugman
 - Bill Anderegg (@anderegg)
+- Orianna Chegwidden (@orianac)

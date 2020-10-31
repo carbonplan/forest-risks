@@ -24,9 +24,9 @@ def drought(df, eval_only=False, duration=10):
         # 'pet_mean_max_1', 'vpd_mean_max_1',
         inds = (
             (df['condprop'] > 0.3)
-            & (df['disturb_human_1'] != True)
-            & (df['disturb_fire_1'] != True)
-            & (df['treatment_cutting_1'] != True)
+            & (not (df['disturb_human_1'] is True))
+            & (not (df['disturb_fire_1'] is True))
+            & (not (df['treatment_cutting_1'] is True))
         )
         df = df[inds].copy()
         df['age_squared'] = df['age'] ** 2
@@ -74,9 +74,9 @@ def insects(df, eval_only=False, duration=10):
         # 'pet_mean_max_1', 'vpd_mean_max_1',
         inds = (
             (df['condprop'] > 0.3)
-            & (df['disturb_human_1'] != True)
-            & (df['disturb_fire_1'] != True)
-            & (df['treatment_cutting_1'] != True)
+            & (not (df['disturb_human_1'] is True))
+            & (not (df['disturb_fire_1'] is True))
+            & (not (df['treatment_cutting_1'] is True))
         )
         df = df[inds].copy()
         df['age_squared'] = df['age'] ** 2
