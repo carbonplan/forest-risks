@@ -3,10 +3,10 @@ import pandas as pd
 
 
 def xy(
-    data=None,
     x=None,
     y=None,
     color=None,
+    data=None,
     cmap=None,
     clim=None,
     xlim=None,
@@ -15,7 +15,7 @@ def xy(
     ylabel=None,
     clabel=None,
     width=350,
-    height=300,
+    height=200,
     opacity=1,
 ):
     """

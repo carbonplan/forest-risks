@@ -3,10 +3,10 @@ import pandas as pd
 
 
 def line(
-    data=None,
     x=None,
     y=None,
     color=None,
+    data=None,
     cmap=None,
     clim=None,
     xlim=None,
