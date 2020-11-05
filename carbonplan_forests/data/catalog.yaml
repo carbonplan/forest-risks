@@ -23,7 +23,7 @@ sources:
           url: https://carbonplan.org
     driver: zarr
     args:
-      urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/biomass_grid.zarr'
+      urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/results/biomass.zarr'
       consolidated: True
 
   insects:
@@ -48,7 +48,7 @@ sources:
           url: https://carbonplan.org
     driver: zarr
     args:
-      urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/carbonplan-scratch/insects.zarr'
+      urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/results/insects.zarr'
       consolidated: True
 
   drought:
@@ -71,7 +71,7 @@ sources:
           url: https://carbonplan.org
     driver: zarr
     args:
-      urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/carbonplan-scratch/drought.zarr'
+      urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/results/drought.zarr'
       consolidated: True
 
   biophysical:
@@ -101,7 +101,7 @@ sources:
           url: https://carbonplan.org
     driver: zarr
     args:
-      urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/albedo/albedo.zarr'
+      urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/results/biophysical.zarr'
       consolidated: True
 
   fire:
