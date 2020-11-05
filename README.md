@@ -43,7 +43,7 @@ Several notebooks are additionally provided that show the use of these tools for
 
 ## data products
 
-As part of this project we have created derived data products for five key layers relevant to evaluating forest carbon storage potential and risks.
+As part of this project we have created derived data products for five key variables relevant to evaluating forest carbon storage potential and risks.
 - `biomass` The potential carbon storage in forests assuming continued growth of existing forests.
 - `drought` The projected future impacts of drought on forests.
 - `fire` The risks associated with forest fires.
