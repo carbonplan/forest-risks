@@ -41,6 +41,17 @@ And there are two additional scripts `regrid.py` and `convert.py` for converting
 
 Several notebooks are additionally provided that show the use of these tools for fitting models and inspecting model outputs. Notebooks are organized by the model type, e.g. `biomass`, `fire`, etc.
 
+## data products
+
+As part of this project we have created results for five key variables relevant for evaluating forest carbon storage potential and risks.
+- Biomass: The potential carbon storage in forests assuming continued growth of existing forests.
+- Drought: The projected future impacts of drought on forests.
+- Fire: The risks associated with forest fires.
+- Insects: The risk to forests from insect-related tree mortality.
+- Biophysical: The climate impact of forests by reflecting/absorbing light and transpiration.
+
+The data is available for the continental United States at a 4km spatial scale from the 20th century through the end of the 21st century in decadal increments. All data are accessible via this [catalog](https://github.com/carbonplan/forests/blob/master/carbonplan_forests/data/catalog.yaml). Additional formats and download options will be provided in the future.
+
 ## license
 
 All the code in this repository is [MIT](https://choosealicense.com/licenses/mit/) licensed. Some of the data provided by this API is sourced from content made available under a [CC-BY-4.0](https://choosealicense.com/licenses/cc-by-4.0/) license. We include attribution for this content, and we please request that you also maintain that attribution if using this data.
