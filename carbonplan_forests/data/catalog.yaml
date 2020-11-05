@@ -9,184 +9,143 @@ sources:
       summary: Model results of biomass from historical and future climate simulations.
       description: |
         We developed a statistical model relating forest stand age to biomass, in order
-         to project future biomass under assumptions of historical growth trends. The results
-         exist for the historical period, as well as permutations of three future scenarios and
-         12 global climate models.
+        to project future biomass under assumptions of historical growth trends. The results
+        exist for the historical period, as well as permutations of three future scenarios and
+        12 global climate models.
       tags: [forests]
       type: application/zarr
-      license: Public domain ## CHECK
+      license: Creative Commons Attribution 4.0 International
       providers:
         - name: CarbonPlan
-          description: Data created by CarbonPlan and collaborators
-          url: https://www.carbonplan.org
+          description: |
+            CarbonPlan is a registered non-profit public benefit corporation working on
+            the science and data of carbon removal.
+          url: https://carbonplan.org
     driver: zarr
-    parameters:
-      variable:
-        description: global climate model
-        type: str
-        default: 'biomass'
-      format:
-        description: Format of files
-        type: str
-        default: 'zarr'
-        allowed: [zarr]
-      x:
-        description: x (latitude) location in meters
-        type: int
-      y:
-        description: y (longitude) location in meters
-        type: int
     args:
       urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/biomass_grid.zarr'
+      consolidated: True
 
   insects:
     metadata:
       title: Modeled insect effect
       summary: Model results of insect effect.
       description: |
-        Our analysis of insect-driven mortality was nearly identical to our analysis of drought. The first difference was that the dependent variable was fractional mortality multiplied by a condition-level estimate of the fraction of trees affected by insects, which is an assessment performed at the level of individual trees. The second difference is that, while fitting the hurdle model, we only included forest types with at least one positive exemplar. All other aspects of the input data and the model were the same.
-
+        Our analysis of insect-driven mortality was nearly identical to our analysis of drought.
+        The first difference was that the dependent variable was fractional mortality multiplied
+        by a condition-level estimate of the fraction of trees affected by insects, which is an
+        assessment performed at the level of individual trees. The second difference is that,
+        while fitting the hurdle model, we only included forest types with at least one positive
+        exemplar. All other aspects of the input data and the model were the same.
       tags: [forests]
       type: application/zarr
-      license: Public domain ## CHECK
+      license: Creative Commons Attribution 4.0 International
       providers:
         - name: CarbonPlan
-          description: Data created by CarbonPlan and collaborators
-          url: https://www.carbonplan.org
+          description: |
+            CarbonPlan is a registered non-profit public benefit corporation working on
+            the science and data of carbon removal.
+          url: https://carbonplan.org
     driver: zarr
-    parameters:
-      variable:
-        description:
-        type: str
-        default: 'insect'
-      format:
-        description: Format of files
-        type: str
-        default: 'zarr'
-        allowed: [zarr]
-      x:
-        description: x (latitude) location in meters
-        type: int
-      y:
-        description: y (longitude) location in meters
-        type: int
     args:
-      urlpath: ##TODO Can't find this file 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/carbonplan-scratch/XXXXX'
+      urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/carbonplan-scratch/insects.zarr'
+      consolidated: True
+
   drought:
     metadata:
       title: Modeled drought effect
       summary: Model results of drought effect.
       description: |
-        We fit a statistical model predicting mortality as a function of climatic variables. Given the large prevalence of zeros in our mortality data, we modeled mortality using a “hurdle” model that jointly predicts the probability of a non-zero value and, if a non-zero value is present, its value (Cragg, 1971).
+        We fit a statistical model predicting mortality as a function of climatic variables. Given
+        the large prevalence of zeros in our mortality data, we modeled mortality using a “hurdle”
+        model that jointly predicts the probability of a non-zero value and, if a non-zero value is
+        present, its value (Cragg, 1971).
       tags: [forests]
       type: application/zarr
-      license: Public domain ## CHECK
+      license: Creative Commons Attribution 4.0 International
       providers:
         - name: CarbonPlan
-          description: Data created by CarbonPlan and collaborators
-          url: https://www.carbonplan.org
+          description: |
+            CarbonPlan is a registered non-profit public benefit corporation working on
+            the science and data of carbon removal.
+          url: https://carbonplan.org
     driver: zarr
-    parameters:
-      variable:
-        description:
-        type: str
-        default: 'drought' # TODO change this to biophysical
-      format:
-        description: Format of files
-        type: str
-        default: 'zarr'
-        allowed: [zarr]
-      x:
-        description: x (latitude) location in meters
-        type: int
-      y:
-        description: y (longitude) location in meters
-        type: int
     args:
-      urlpath: ##TODO Can't find this file 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/carbonplan-scratch/XXXXX'
+      urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/carbonplan-scratch/drought.zarr'
+      consolidated: True
 
   biophysical:
     metadata:
       title: Modeled biophysical effect
       summary: Model results of biophysical effect.
       description: |
-        Biophysical effects from forests include an albedo effect (in which energy is reflected or absorbed) and a latent heat effect (in which the cooling effect of trees is modulated through evapotranspiration). In other words, trees can simultaneously warm the planet by absorbing radiation but also cool the planet via evaporating water — in addition to their role in the global carbon cycle. This net effect, which we label “biophysical”, depends on the forest type and the climate conditions. In most forests, this effect is net negative, with trees absorbing more energy than they emit. To estimate this variable we applied a biome-specific biophysical effect from Anderson-Teixeira et al (2012) to each of the mapped forest types from the National Land Cover Dataset (NLCD). The resulting layer is a continuous map of biophysical effects due to forests. We then assume this variable to be constant throughout time.
-
+        Biophysical effects from forests include an albedo effect (in which energy is reflected
+        or absorbed) and a latent heat effect (in which the cooling effect of trees is modulated
+        through evapotranspiration). In other words, trees can simultaneously warm the planet by
+        absorbing radiation but also cool the planet via evaporating water — in addition to their
+        role in the global carbon cycle. This net effect, which we label “biophysical”, depends on
+        the forest type and the climate conditions. In most forests, this effect is net negative,
+        with trees absorbing more energy than they emit. To estimate this variable we applied a
+        biome-specific biophysical effect from Anderson-Teixeira et al (2012) to each of the mapped
+        forest types from the National Land Cover Dataset (NLCD). The resulting layer is a continuous
+        map of biophysical effects due to forests. We then assume this variable to be constant
+        throughout time.
       tags: [forests]
       type: application/zarr
-      license: Public domain ## CHECK
+      license: Creative Commons Attribution 4.0 International
       providers:
         - name: CarbonPlan
-          description: Data created by CarbonPlan and collaborators
-          url: https://www.carbonplan.org
+          description: |
+            CarbonPlan is a registered non-profit public benefit corporation working on
+            the science and data of carbon removal.
+          url: https://carbonplan.org
     driver: zarr
-    parameters:
-      variable:
-        description:
-        type: str
-        default: 'albedo' # TODO change this to biophysical
-      format:
-        description: Format of files
-        type: str
-        default: 'zarr'
-        allowed: [zarr]
-      x:
-        description: x (latitude) location in meters
-        type: int
-      y:
-        description: y (longitude) location in meters
-        type: int
     args:
-      urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/carbonplan-scratch/albedo'
+      urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/albedo/albedo.zarr'
+      consolidated: True
 
   fire:
     metadata:
       title: Modeled fire risk
       summary: Model results of fire risk from historical and future climate simulations.
       description: |
-        We developed a statistical model relating the probability of very large fires to climatic variables. Our work is inspired by and builds on that of Barbero et al. (2014). Many of the methods are similar, though updated with more recent data (through 2018 rather than 2010).
-
+        We developed a statistical model relating the probability of very large fires to climatic
+        variables. Our work is inspired by and builds on that of Barbero et al. (2014). Many of
+        the methods are similar, though updated with more recent data (through 2018 rather than
+        2010).
       tags: [forests]
       type: application/zarr
-      license: Public domain ## CHECK
+      license: Creative Commons Attribution 4.0 International
       providers:
         - name: CarbonPlan
-          description: Data created by CarbonPlan and collaborators
-          url: https://www.carbonplan.org
+          description: |
+            CarbonPlan is a registered non-profit public benefit corporation working on
+            the science and data of carbon removal.
+          url: https://carbonplan.org
     driver: zarr
-    parameters:
-      variable:
-        description:
-        type: str
-        default: 'fire'
-      format:
-        description: Format of files
-        type: str
-        default: 'zarr'
-        allowed: [zarr]
-      x:
-        description: x (latitude) location in meters
-        type: int
-      y:
-        description: y (longitude) location in meters
-        type: int
     args:
-      urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/carbonplan-scratch/results/fire.zarr'
-
+      urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/results/fire.zarr'
+      consolidated: True
 
   future_climate:
     metadata:
       title: Downscaled future climate
       summary: Downscaled climate (temperature and precipitation) forcings for the Continental US
       description: |
-        Data from climate models, like those included in CMIP6, frequently have significant biases that need to be corrected prior to use in impacts modeling studies like ours. These biases are due to both the models’ coarse spatial resolution and model errors. The downscaling and bias correction process is meant to correct the systemic biases in climate models, while preserving the underlying climate signals (e.g. warming or drying trends).
+        Data from climate models, like those included in CMIP6, frequently have significant biases
+        that need to be corrected prior to use in impacts modeling studies like ours. These biases
+        are due to both the models’ coarse spatial resolution and model errors. The downscaling and
+        bias correction process is meant to correct the systemic biases in climate models, while
+        preserving the underlying climate signals (e.g. warming or drying trends).
       tags: [forests]
       type: application/zarr
-      license: Public domain ## CHECK
+      license: Creative Commons Attribution 4.0 International
       providers:
         - name: CarbonPlan
-          description: Data created by CarbonPlan and collaborators
-          url: https://www.carbonplan.org
+          description: |
+            CarbonPlan is a registered non-profit public benefit corporation working on
+            the science and data of carbon removal.
+          url: https://carbonplan.org
     driver: zarr
     parameters:
       model:
@@ -211,12 +170,12 @@ sources:
       scenario:
         description: future socioeconomic pathway scenario
         type: str
-        default: 2-4.5
+        default: ssp245
         allowed:
           [
-            2-4.5,
-            3-7.0,
-            5-8.5
+            ssp245,
+            ssp370,
+            ssp585
           ]
       format:
         description: Format of files
@@ -228,22 +187,27 @@ sources:
         type: float
     args:
       urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/downscaling/bias-correction/ScenarioMIP.{{ model }}.{{ scenario }}.Amon.gn'
-
-
+      consolidated: True
 
   historical_climate:
     metadata:
       title: Downscaled historical climate
       summary: Downscaled climate (temperature and precipitation) forcings for the Continental US
       description: |
-        Data from climate models, like those included in CMIP6, frequently have significant biases that need to be corrected prior to use in impacts modeling studies like ours. These biases are due to both the models’ coarse spatial resolution and model errors. The downscaling and bias correction process is meant to correct the systemic biases in climate models, while preserving the underlying climate signals (e.g. warming or drying trends).
+        Data from climate models, like those included in CMIP6, frequently have significant biases
+        that need to be corrected prior to use in impacts modeling studies like ours. These biases
+        are due to both the models’ coarse spatial resolution and model errors. The downscaling
+        and bias correction process is meant to correct the systemic biases in climate models,
+        while preserving the underlying climate signals (e.g. warming or drying trends).
       tags: [forests]
       type: application/zarr
-      license: Public domain ## CHECK
+      license: Creative Commons Attribution 4.0 International
       providers:
         - name: CarbonPlan
-          description: Data created by CarbonPlan and collaborators
-          url: https://www.carbonplan.org
+          description: |
+            CarbonPlan is a registered non-profit public benefit corporation working on
+            the science and data of carbon removal.
+          url: https://carbonplan.org
     driver: zarr
     parameters:
       model:
@@ -265,21 +229,6 @@ sources:
             CSIRO.ACCESS-ESM1-5,
             MRI.MRI-ESM2-0
           ]
-      scenario:
-        description: simulation
-        type: str
-        default: historical
-        allowed:
-          [
-          historical
-          ]
-      format:
-        description: Format of files
-        type: str
-        default: 'zarr'
-        allowed: [zarr]
-      lat:
-        description: latitude
-        type: float
     args:
-      urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/downscaling/bias-correction/CMIP.{{ model }}.{{ scenario }}.historical.Amon.gn'
+      urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/downscaling/bias-correction/CMIP.{{ model }}.historical.Amon.gn'
+      consolidated: True
