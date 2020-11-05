@@ -177,14 +177,6 @@ sources:
             ssp370,
             ssp585
           ]
-      format:
-        description: Format of files
-        type: str
-        default: 'zarr'
-        allowed: [zarr]
-      lat:
-        description: latitude
-        type: float
     args:
       urlpath: 'https://carbonplan.blob.core.windows.net/carbonplan-scratch/downscaling/bias-correction/ScenarioMIP.{{ model }}.{{ scenario }}.Amon.gn'
       consolidated: True
