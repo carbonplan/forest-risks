@@ -87,6 +87,7 @@ def preprocess_state(state_abbr, save=True):
         'SICOND',
         'SISP',
         'OWNCD',
+        'SITECLCD',
         'FORTYPCD',
         'FLDTYPCD',
         'DSTRBCD1',
