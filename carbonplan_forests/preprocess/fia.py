@@ -105,7 +105,9 @@ def preprocess_state(state_abbr, save=True):
     ]
 
     cond_agg = cond_df.groupby(['PLT_CN', 'CONDID'])[cond_vars].max()
-    cond_agg = cond_agg.join(plot_df.set_index('CN')[['LAT', 'LON', 'ELEV']], on='PLT_CN')
+    cond_agg = cond_agg.join(
+        plot_df[plot_df['PLOT_STATUS_CD'] != 2].set_index('CN')[['LAT', 'LON', 'ELEV']], on='PLT_CN'
+    )
 
     def dstrbcd_to_disturb_class(dstrbcd):
         """
