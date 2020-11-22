@@ -1,4 +1,3 @@
-import os
 import warnings
 
 import fsspec
@@ -58,7 +57,6 @@ def cmip(
                 'carbonplan-scratch',
                 prefix=prefix,
                 account_name='carbonplan',
-                account_key=os.environ['BLOB_ACCOUNT_KEY'],
             )
         else:
             if annual:

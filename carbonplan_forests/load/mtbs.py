@@ -1,5 +1,3 @@
-import os
-
 import fsspec
 import numpy as np
 import xarray as xr
@@ -18,7 +16,6 @@ def mtbs(store='az', tlim=(1984, 2018), coarsen=None):
             'carbonplan-data',
             prefix=prefix,
             account_name='carbonplan',
-            account_key=os.environ['BLOB_ACCOUNT_KEY'],
         )
     else:
         prefix = (

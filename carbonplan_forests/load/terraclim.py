@@ -1,4 +1,3 @@
-import os
 import warnings
 
 import fsspec
@@ -37,7 +36,6 @@ def terraclim(
                 'carbonplan-data',
                 prefix=prefix,
                 account_name='carbonplan',
-                account_key=os.environ['BLOB_ACCOUNT_KEY'],
             )
         else:
             prefix = (
