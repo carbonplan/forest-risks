@@ -9,7 +9,7 @@ from .. import setup
 from ..utils import rowcol_to_latlon
 
 
-def mtbs(store='az', tlim=(1984, 2018), coarsen=None):
+def mtbs(store='az', tlim=(1984, 2018), mask=None, coarsen=None):
     path = setup.loading(store)
 
     if store == 'az':
@@ -41,6 +41,11 @@ def mtbs(store='az', tlim=(1984, 2018), coarsen=None):
     if tlim:
         tlim = list(map(str, tlim))
         mtbs = mtbs.sel(time=slice(*tlim))
+
+    if mask is not None:
+        vals = mask.values
+        vals[vals == 0] = np.NaN
+        mtbs = mtbs * vals
 
     if coarsen:
         mtbs = mtbs.coarsen(x=coarsen, y=coarsen, boundary='trim').mean()

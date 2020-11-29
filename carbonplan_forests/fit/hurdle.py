@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.linear_model import LogisticRegression, TweedieRegressor
+from sklearn.linear_model import LinearRegression, LogisticRegression, TweedieRegressor
 
 from ..utils import remove_nans
 
@@ -9,9 +9,13 @@ def hurdle(x, y, log=True):
     n_obs = len(x)
 
     clf = LogisticRegression(fit_intercept=True, penalty='none', max_iter=1000)
-    reg = TweedieRegressor(
-        fit_intercept=True, power=0, link='log', alpha=0, tol=1e-8, max_iter=1000
-    )
+
+    if log:
+        reg = TweedieRegressor(
+            fit_intercept=True, power=0, link='log', alpha=0, tol=1e-8, max_iter=1000
+        )
+    else:
+        reg = LinearRegression(fit_intercept=True)
 
     clf.fit(x, y > 0)
     reg.fit(x[y > 0], y[y > 0])
@@ -46,5 +50,19 @@ class HurdleModel:
         out = np.ones(len(x)) * np.NaN
         x, inds = remove_nans(x, return_inds=True)
         prediction = self.clf.predict_proba(x)[:, 1] * self.reg.predict(x)
+        out[inds] = prediction
+        return out
+
+    def predict_prob(self, x):
+        out = np.ones(len(x)) * np.NaN
+        x, inds = remove_nans(x, return_inds=True)
+        prediction = self.clf.predict_proba(x)[:, 1]
+        out[inds] = prediction
+        return out
+
+    def predict_linear(self, x):
+        out = np.ones(len(x)) * np.NaN
+        x, inds = remove_nans(x, return_inds=True)
+        prediction = self.reg.predict(x)
         out[inds] = prediction
         return out
