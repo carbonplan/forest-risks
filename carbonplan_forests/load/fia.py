@@ -288,7 +288,7 @@ def fia_state(store, state, clean):
             'SLOPE': 'slope',
             'ASPECT': 'aspect',
             'OWNCD': 'owner',
-            'PLT_CN': 'plot_id',
+            'PLT_CN': 'plot_cn',
         }
     ).filter(
         [
@@ -303,6 +303,7 @@ def fia_state(store, state, clean):
             'aspect',
             'mort',
             'owner',
+            'plot_cn'
         ]
     )
 
