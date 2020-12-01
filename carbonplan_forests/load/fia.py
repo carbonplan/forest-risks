@@ -280,9 +280,10 @@ def fia_state(store, state, clean):
             'LAT': 'lat',
             'LON': 'lon',
             'adj_ag_biomass': 'biomass',
-            'adj_mort': 'mort',
+            'adj_popmort': 'mort',
             'STDAGE': 'age',
-            'INVYR': 'year',
+            'MEASYEAR': 'year',
+            'INVYR': 'inventory_year',
             'FLDTYPCD': 'type_code',
             'ELEV': 'elevation',
             'SLOPE': 'slope',
@@ -303,7 +304,7 @@ def fia_state(store, state, clean):
             'aspect',
             'mort',
             'owner',
-            'plot_cn'
+            'plot_cn',
         ]
     )
 
@@ -329,16 +330,16 @@ def fia_state_grouped(store, state, clean):
             'LAT': 'lat',
             'LON': 'lon',
             'FLDTYPCD': 'type_code',
-            'INVYR': 'year',
+            'MEASYEAR': 'year',
+            'INVYR': 'inventory_year',
             'STDAGE': 'age',
             'ELEV': 'elevation',
             'SLOPE': 'slope',
             'ASPECT': 'aspect',
             'OWNCD': 'owner',
             'CONDPROP_UNADJ': 'condprop',
-            'mort': 'unadj_mort',
-            'balive': 'unadj_balive',
-            'adj_mort': 'mort',
+            'adj_popmort': 'mort',
+            'adj_removal': 'removal',
             'adj_balive': 'balive',
         }
     )
