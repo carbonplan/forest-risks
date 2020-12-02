@@ -17,6 +17,25 @@ def fia(states, save=True):
         return [preprocess_state(state, save=save) for state in states]
 
 
+def generate_uids(data, prev_cn_var='PREV_PLT_CN'):
+    """
+    Generate dict mapping ever CN to a unique group, allows tracking single plot/tree through time
+    Can change `prev_cn_var` to apply to tree (etc)
+    """
+    g = nx.Graph()
+    for _, row in data[['CN', prev_cn_var]].iterrows():
+        if ~np.isnan(row[prev_cn_var]):  # has ancestor, add nodes + edge
+            g.add_edge(row.CN, row[prev_cn_var])
+        else:
+            g.add_node(row.CN)  # no ancestor, potentially not resampled
+
+    uids = {}
+    for uid, subgraph in enumerate(nx.connected_components(g)):
+        for node in subgraph:
+            uids[node] = uid
+    return uids
+
+
 def tree_based_mortality(tree_df):
     """
     Roll tree-based mortality codes up to condition level.
@@ -35,11 +54,11 @@ def tree_based_mortality(tree_df):
     all_mort = per_agent_mort.join(total_mort, lsuffix='_agent', rsuffix='_total')
     all_mort['fraction'] = all_mort['TPAMORT_UNADJ_agent'] / all_mort['TPAMORT_UNADJ_total']
 
+    # doesnt include fraction_human because removals (codes in 80s) are handled separately, see preprocess_state
     bulk_agent_map = {
         1: 'fraction_insect',
         2: 'fraction_disease',
         3: 'fraction_fire',
-        8: 'fraction_human',
     }
     fraction_dist = all_mort[['bulk_agentcd', 'fraction']].pivot(columns='bulk_agentcd')['fraction']
     fraction_dist = fraction_dist.rename(columns=bulk_agent_map)[bulk_agent_map.values()]
@@ -54,11 +73,13 @@ def preprocess_state(state_abbr, save=True):
             'CN',
             'PLT_CN',
             'DIA',
+            'DIACALC',
             'STATUSCD',
             'CONDID',
             'TPA_UNADJ',
             'AGENTCD',
             'TPAMORT_UNADJ',
+            'TPAREMV_UNADJ',
             'DIACHECK',
             'CARBON_AG',
             'CARBON_BG',
@@ -66,9 +87,22 @@ def preprocess_state(state_abbr, save=True):
     )
     # calculate tree-level statistics that will sum later.
     tree_df['unadj_basal_area'] = math.pi * (tree_df['DIA'] / (2 * 12)) ** 2 * tree_df['TPA_UNADJ']
-    tree_df['unadj_mort_basal_area'] = tree_df['unadj_basal_area'] * (
-        tree_df['TPAMORT_UNADJ'] > 0
-    )  # evals 1 if TPAMORT > 0, 0 otherwise
+
+    # smaller-ish trees with agent code somtimes lack a DIA, but have a DIACALC -- back-fill. JS approved!
+    tree_df.loc[np.isnan(tree_df['DIA']), 'unadj_basal_area'] = (
+        math.pi
+        * (tree_df[np.isnan(tree_df['DIA'])]['DIACALC'] / (2 * 12)) ** 2
+        * tree_df[np.isnan(tree_df['DIA'])]['TPA_UNADJ']
+    )
+
+    tree_df['unadj_fullmort_basal_area'] = tree_df['unadj_basal_area'] * (tree_df['AGENTCD'] < 80)
+
+    tree_df['unadj_popmort_basal_area'] = tree_df['unadj_basal_area'] * (
+        (tree_df['TPAMORT_UNADJ'] > 0)
+        # & (tree_df['AGENTCD'] > 0) # allow cases where (TPAMORT_UNADJ) == True and (AGENTCD) == False?
+    )
+
+    tree_df['unadj_removal_basal_area'] = tree_df['unadj_basal_area'] * ((tree_df['AGENTCD'] == 80))
 
     # 892.179 converts lbs/acre to t/ha
     tree_df['unadj_ag_biomass'] = (
@@ -98,6 +132,7 @@ def preprocess_state(state_abbr, save=True):
         'TRTCD3',
         'CONDPROP_UNADJ',
         'COND_STATUS_CD',
+        'COND_NONSAMPLE_REASN_CD',
         'SLOPE',
         'ASPECT',
         'INVYR',
@@ -106,7 +141,10 @@ def preprocess_state(state_abbr, save=True):
 
     cond_agg = cond_df.groupby(['PLT_CN', 'CONDID'])[cond_vars].max()
     cond_agg = cond_agg.join(
-        plot_df[plot_df['PLOT_STATUS_CD'] != 2].set_index('CN')[['LAT', 'LON', 'ELEV']], on='PLT_CN'
+        plot_df[plot_df['PLOT_STATUS_CD'] != 2].set_index('CN')[
+            ['LAT', 'LON', 'ELEV', 'KINDCD', 'MEASYEAR', 'REMPER', 'RDDISTCD', 'ECOSUBCD']
+        ],
+        on='PLT_CN',
     )
 
     def dstrbcd_to_disturb_class(dstrbcd):
@@ -168,7 +206,9 @@ def preprocess_state(state_abbr, save=True):
         tree_df.loc[tree_df['STATUSCD'] == 1].groupby(['PLT_CN', 'CONDID'])[alive_vars].sum()
     )
 
-    condition_mortality = tree_df.groupby(['PLT_CN', 'CONDID'])['unadj_mort_basal_area'].sum()
+    condition_mortality = tree_df.groupby(['PLT_CN', 'CONDID'])[
+        'unadj_fullmort_basal_area', 'unadj_popmort_basal_area', 'unadj_removal_basal_area'
+    ].sum()
 
     tree_mortality_fractions = tree_based_mortality(tree_df)
 
@@ -179,10 +219,16 @@ def preprocess_state(state_abbr, save=True):
     full = full.join(tree_mortality_fractions)
     full = full.reset_index()
 
-    full.loc[:, 'adj_mort'] = full.unadj_mort_basal_area / full.CONDPROP_UNADJ
+    full.loc[:, 'adj_fullmort'] = full.unadj_fullmort_basal_area / full.CONDPROP_UNADJ
+    full.loc[:, 'adj_popmort'] = full.unadj_popmort_basal_area / full.CONDPROP_UNADJ
+    full.loc[:, 'adj_removal'] = full.unadj_removal_basal_area / full.CONDPROP_UNADJ
     full.loc[:, 'adj_balive'] = full.unadj_basal_area / full.CONDPROP_UNADJ
     full.loc[:, 'adj_bg_biomass'] = full.unadj_bg_biomass / full.CONDPROP_UNADJ
     full.loc[:, 'adj_ag_biomass'] = full.unadj_ag_biomass / full.CONDPROP_UNADJ
+
+    full['adj_sapling_mort'] = (
+        full[' adj_fullmort'] - full['adj_popmort']
+    )  # diff out mort due to saplings
 
     plt_uids = generate_uids(plot_df)
     full['plt_uid'] = full['PLT_CN'].map(plt_uids)
@@ -194,22 +240,3 @@ def preprocess_state(state_abbr, save=True):
             engine='fastparquet',
         )
     return full
-
-
-def generate_uids(data, prev_cn_var='PREV_PLT_CN'):
-    """
-    Generate dict mapping ever CN to a unique group, allows tracking single plot/tree through time
-    Can change `prev_cn_var` to apply to tree (etc)
-    """
-    g = nx.Graph()
-    for _, row in data[['CN', prev_cn_var]].iterrows():
-        if ~np.isnan(row[prev_cn_var]):  # has ancestor, add nodes + edge
-            g.add_edge(row.CN, row[prev_cn_var])
-        else:
-            g.add_node(row.CN)  # no ancestor, potentially not resampled
-
-    uids = {}
-    for uid, subgraph in enumerate(nx.connected_components(g)):
-        for node in subgraph:
-            uids[node] = uid
-    return uids
