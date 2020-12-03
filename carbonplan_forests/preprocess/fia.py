@@ -207,7 +207,7 @@ def preprocess_state(state_abbr, save=True):
     )
 
     condition_mortality = tree_df.groupby(['PLT_CN', 'CONDID'])[
-        'unadj_fullmort_basal_area', 'unadj_popmort_basal_area', 'unadj_removal_basal_area'
+        ['unadj_fullmort_basal_area', 'unadj_popmort_basal_area', 'unadj_removal_basal_area']
     ].sum()
 
     tree_mortality_fractions = tree_based_mortality(tree_df)
@@ -227,7 +227,7 @@ def preprocess_state(state_abbr, save=True):
     full.loc[:, 'adj_ag_biomass'] = full.unadj_ag_biomass / full.CONDPROP_UNADJ
 
     full['adj_sapling_mort'] = (
-        full[' adj_fullmort'] - full['adj_popmort']
+        full['adj_fullmort'] - full['adj_popmort']
     )  # diff out mort due to saplings
 
     plt_uids = generate_uids(plot_df)

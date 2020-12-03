@@ -270,6 +270,8 @@ def fia_state(store, state, clean):
             & (df['DSTRBCD1'] == 0)
             & (df['COND_STATUS_CD'] == 1)
             & (df['CONDPROP_UNADJ'] > 0.3)
+            & (df['MEASYEAR'] < 9999)
+            & (df['MEASYEAR'] > 2000)
             & (df['INVYR'] < 9999)
             & (df['INVYR'] > 2000)
         )
@@ -298,6 +300,7 @@ def fia_state(store, state, clean):
             'age',
             'biomass',
             'year',
+            'inventory_year',
             'type_code',
             'elevation',
             'slope',
