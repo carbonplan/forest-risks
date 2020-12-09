@@ -36,33 +36,41 @@ def generate_uids(data, prev_cn_var='PREV_PLT_CN'):
     return uids
 
 
-def tree_based_mortality(tree_df):
+def get_mort_removal_df(tree_df):
+    """Getting mortality requires a few extra steps -- we just generate a copy of the data here
+    and impute as needed!
     """
-    Roll tree-based mortality codes up to condition level.
-    TODO: raw agent codes contain per-state info that we might want to use
-    """
-    tree_df['bulk_agentcd'] = tree_df['AGENTCD'] // 10
-    per_agent_mort = (
-        tree_df[~np.isnan(tree_df['bulk_agentcd'])]
-        .groupby(['PLT_CN', 'CONDID', 'bulk_agentcd'])
-        .TPAMORT_UNADJ.sum()
+    mort_df = tree_df.copy()
+    mort_df = mort_df.reset_index(drop=True)
+
+    # TODO: Some states have 90 agent codes -- tossing for now.
+    # 10 is minimum code - 0s are legacy and we assume anything < 10 is legacy as well.
+    mort_df = mort_df[(mort_df['AGENTCD'] >= 10) & (mort_df['AGENTCD'] < 90)]
+
+    # fill in missing TPA_UNADJ with TPAGROW_UNADJ - this is totally off list but JS approved
+    mort_df.loc[np.isnan(mort_df['TPA_UNADJ']), 'TPA_UNADJ'] = mort_df['TPAGROW_UNADJ']
+    mort_df['unadj_basal_area'] = math.pi * (mort_df['DIA'] / (2 * 12)) ** 2 * mort_df['TPA_UNADJ']
+
+    # drop trees where TPA_UNADJ == 0 -- we have no way of using these data
+    # This is rare, but I interpret this to mean that tree cannot be reliably scaled to acre-1 measurement -- for whatever reason
+    mort_df = mort_df[mort_df['TPA_UNADJ'] > 0]
+
+    # smaller-ish trees with agent code somtimes lack a DIA, but have a DIACALC -- back-fill. JS approved!
+    mort_df.loc[np.isnan(mort_df['DIA']), 'unadj_basal_area'] = (
+        math.pi
+        * (mort_df[np.isnan(mort_df['DIA'])]['DIACALC'] / (2 * 12)) ** 2
+        * mort_df[np.isnan(mort_df['DIA'])]['TPA_UNADJ']
     )
-    total_mort = tree_df.groupby(['PLT_CN', 'CONDID']).TPAMORT_UNADJ.sum()
 
-    per_agent_mort = per_agent_mort.reset_index(level=2)
+    # TODO: There is another pot of trees we can access if we impute old diameters
+    # if a tree is dead (['STATUSCD'] == 2)
+    # it has no DIA or DIACAKCA (np.isnan(tree_df['DIA']) & (np.isnan(tree_df['DIACALC'])
+    # it has a PREV_TRE_CN (~np.isnan(tree_df['PREV_TRE_CN']))
+    # The current record either has a TPA_UNADJ or TPAGROW_UNADJ ((tree_df['TPA_UNADJ'] > 0 ) | (tree_df['TPAGROW_UNADJ'] > 0))
+    # These would allow recovery a handful of conditions, primarily in region 8 (i think)
 
-    all_mort = per_agent_mort.join(total_mort, lsuffix='_agent', rsuffix='_total')
-    all_mort['fraction'] = all_mort['TPAMORT_UNADJ_agent'] / all_mort['TPAMORT_UNADJ_total']
-
-    # doesnt include fraction_human because removals (codes in 80s) are handled separately, see preprocess_state
-    bulk_agent_map = {
-        1: 'fraction_insect',
-        2: 'fraction_disease',
-        3: 'fraction_fire',
-    }
-    fraction_dist = all_mort[['bulk_agentcd', 'fraction']].pivot(columns='bulk_agentcd')['fraction']
-    fraction_dist = fraction_dist.rename(columns=bulk_agent_map)[bulk_agent_map.values()]
-    return fraction_dist.replace(np.nan, 0).round(2)
+    # do not return records without unadj_basal_area -- see above TODO.
+    return mort_df[mort_df['unadj_basal_area'] > 0]
 
 
 def preprocess_state(state_abbr, save=True):
@@ -78,6 +86,7 @@ def preprocess_state(state_abbr, save=True):
             'CONDID',
             'TPA_UNADJ',
             'AGENTCD',
+            'TPAGROW_UNADJ',
             'TPAMORT_UNADJ',
             'TPAREMV_UNADJ',
             'DIACHECK',
@@ -87,22 +96,6 @@ def preprocess_state(state_abbr, save=True):
     )
     # calculate tree-level statistics that will sum later.
     tree_df['unadj_basal_area'] = math.pi * (tree_df['DIA'] / (2 * 12)) ** 2 * tree_df['TPA_UNADJ']
-
-    # smaller-ish trees with agent code somtimes lack a DIA, but have a DIACALC -- back-fill. JS approved!
-    tree_df.loc[np.isnan(tree_df['DIA']), 'unadj_basal_area'] = (
-        math.pi
-        * (tree_df[np.isnan(tree_df['DIA'])]['DIACALC'] / (2 * 12)) ** 2
-        * tree_df[np.isnan(tree_df['DIA'])]['TPA_UNADJ']
-    )
-
-    tree_df['unadj_fullmort_basal_area'] = tree_df['unadj_basal_area'] * (tree_df['AGENTCD'] < 80)
-
-    tree_df['unadj_popmort_basal_area'] = tree_df['unadj_basal_area'] * (
-        (tree_df['TPAMORT_UNADJ'] > 0)
-        # & (tree_df['AGENTCD'] > 0) # allow cases where (TPAMORT_UNADJ) == True and (AGENTCD) == False?
-    )
-
-    tree_df['unadj_removal_basal_area'] = tree_df['unadj_basal_area'] * ((tree_df['AGENTCD'] == 80))
 
     # 892.179 converts lbs/acre to t/ha
     tree_df['unadj_ag_biomass'] = (
@@ -206,28 +199,76 @@ def preprocess_state(state_abbr, save=True):
         tree_df.loc[tree_df['STATUSCD'] == 1].groupby(['PLT_CN', 'CONDID'])[alive_vars].sum()
     )
 
-    condition_mortality = tree_df.groupby(['PLT_CN', 'CONDID'])[
-        ['unadj_fullmort_basal_area', 'unadj_popmort_basal_area', 'unadj_removal_basal_area']
-    ].sum()
+    mort_removal_trees = get_mort_removal_df(tree_df)
 
-    tree_mortality_fractions = tree_based_mortality(tree_df)
+    # define queries -- we then subset mort_removal_trees and aggregate separately to prevent zeros from sneaking in
+    mort_removal_queries = {
+        'unadj_full_mort': (mort_removal_trees['AGENTCD'] < 80),
+        'unadj_pop_mort': (mort_removal_trees['TPAMORT_UNADJ'] > 0)
+        & (mort_removal_trees['AGENTCD'] >= 10)
+        & (mort_removal_trees['AGENTCD'] < 80),
+        'unadj_removal': (mort_removal_trees['AGENTCD'] == 80)
+        # & (mort_removal_trees['TPAREMV_UNADJ'] > 0),
+    }
+
+    condition_mort_removal = pd.concat(
+        [
+            mort_removal_trees[idx]
+            .groupby(['PLT_CN', 'CONDID'])['unadj_basal_area']
+            .sum()
+            .rename(k)
+            for k, idx in mort_removal_queries.items()
+        ],
+        axis=1,
+    )
+
+    # rerun aggregation with AGENTCD to get fraction mortality on pop estimates
+    pop_mort_trees = mort_removal_trees[mort_removal_queries['unadj_pop_mort']]
+    pop_mort_by_agent = (
+        pop_mort_trees.groupby(['PLT_CN', 'CONDID', pop_mort_trees['AGENTCD'] // 10])[
+            'unadj_basal_area'
+        ]
+        .sum()
+        .unstack(2)  # agents to col
+    )
+
+    BULK_AGENT_MAP = {
+        1: 'frac_pop_mort_insect',
+        2: 'frac_pop_mort_disease',
+        3: 'frac_pop_mort_fire',
+        4: 'frac_pop_mort_animal',
+        5: 'frac_pop_mort_weather',
+        6: 'frac_pop_mort_vegetation',
+        7: 'frac_pop_mort_unknown',
+    }
+
+    # convert to fraction
+    fraction_pop_mort = (
+        pop_mort_by_agent.div(
+            pop_mort_by_agent.sum(axis=1), axis=0
+        )  # invokes numpy broadcasting along each row.
+        .fillna(0)
+        .round(3)
+        .rename(columns=BULK_AGENT_MAP)
+    )
 
     full = cond_agg.join(condition_alive_stats)
     full = full.join(disturb_flags)
     full = full.join(treatment_flags)
-    full = full.join(condition_mortality)
-    full = full.join(tree_mortality_fractions)
+    full = full.join(condition_mort_removal)
+    full = full.join(fraction_pop_mort)
     full = full.reset_index()
 
-    full.loc[:, 'adj_fullmort'] = full.unadj_fullmort_basal_area / full.CONDPROP_UNADJ
-    full.loc[:, 'adj_popmort'] = full.unadj_popmort_basal_area / full.CONDPROP_UNADJ
-    full.loc[:, 'adj_removal'] = full.unadj_removal_basal_area / full.CONDPROP_UNADJ
+    full.loc[:, 'adj_full_mort'] = full.unadj_full_mort / full.CONDPROP_UNADJ
+    full.loc[:, 'adj_pop_mort'] = full.unadj_pop_mort / full.CONDPROP_UNADJ
+
+    full.loc[:, 'adj_removal'] = full.unadj_removal / full.CONDPROP_UNADJ
     full.loc[:, 'adj_balive'] = full.unadj_basal_area / full.CONDPROP_UNADJ
     full.loc[:, 'adj_bg_biomass'] = full.unadj_bg_biomass / full.CONDPROP_UNADJ
     full.loc[:, 'adj_ag_biomass'] = full.unadj_ag_biomass / full.CONDPROP_UNADJ
 
     full['adj_sapling_mort'] = (
-        full['adj_fullmort'] - full['adj_popmort']
+        full['adj_full_mort'] - full['adj_pop_mort']
     )  # diff out mort due to saplings
 
     plt_uids = generate_uids(plot_df)
