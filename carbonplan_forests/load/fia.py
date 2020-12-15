@@ -282,11 +282,15 @@ def fia_state(store, state, clean):
             'LAT': 'lat',
             'LON': 'lon',
             'adj_ag_biomass': 'biomass',
-            'adj_popmort': 'mort',
+            'adj_pop_mort': 'mort',
             'STDAGE': 'age',
+            'ACTUALHT': 'height',
             'MEASYEAR': 'year',
             'INVYR': 'inventory_year',
             'FLDTYPCD': 'type_code',
+            'PHYSCLCD': 'physiographic_code',
+            'ALSTKCD': 'all_stocking_code',
+            'GSSTKCD': 'grow_stocking_code',
             'ELEV': 'elevation',
             'SLOPE': 'slope',
             'ASPECT': 'aspect',
@@ -308,6 +312,10 @@ def fia_state(store, state, clean):
             'mort',
             'owner',
             'plot_cn',
+            'height',
+            'physiographic_code',
+            'all_stocking_code',
+            'grow_stocking_code',
         ]
     )
 
@@ -339,6 +347,9 @@ def fia_state_grouped(store, state, clean):
             'ELEV': 'elevation',
             'SLOPE': 'slope',
             'ACTUALHT': 'height',
+            'PHYSCLCD': 'physiographic_code',
+            'ALSTKCD': 'all_stocking_code',
+            'GSSTKCD': 'grow_stocking_code',
             'ASPECT': 'aspect',
             'OWNCD': 'owner',
             'CONDPROP_UNADJ': 'condprop',
@@ -397,6 +408,9 @@ def fia_state_grouped(store, state, clean):
             'condprop',
             'owner',
             'height',
+            'physiographic_code',
+            'all_stocking_code',
+            'grow_stocking_code',
         ]
     ].max()
 
