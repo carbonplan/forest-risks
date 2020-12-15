@@ -338,6 +338,7 @@ def fia_state_grouped(store, state, clean):
             'STDAGE': 'age',
             'ELEV': 'elevation',
             'SLOPE': 'slope',
+            'ACTUALHT': 'height',
             'ASPECT': 'aspect',
             'OWNCD': 'owner',
             'CONDPROP_UNADJ': 'condprop',
@@ -385,7 +386,18 @@ def fia_state_grouped(store, state, clean):
             wide[missing_var] = np.nan
 
     attrs = state_long.groupby(['plt_uid', 'CONDID'])[
-        ['lat', 'lon', 'age', 'type_code', 'elevation', 'slope', 'aspect', 'condprop', 'owner']
+        [
+            'lat',
+            'lon',
+            'age',
+            'type_code',
+            'elevation',
+            'slope',
+            'aspect',
+            'condprop',
+            'owner',
+            'height',
+        ]
     ].max()
 
     if 'year_1' not in wide.columns:
