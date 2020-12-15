@@ -81,6 +81,8 @@ def preprocess_state(state_abbr, save=True):
             'PLT_CN',
             'DIA',
             'DIACALC',
+            'HT',
+            'ACTUALHT',
             'STATUSCD',
             'CONDID',
             'TPA_UNADJ',
