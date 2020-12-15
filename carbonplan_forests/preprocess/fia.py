@@ -43,7 +43,6 @@ def get_mort_removal_df(tree_df):
     mort_df = tree_df.copy()
     mort_df = mort_df.reset_index(drop=True)
 
-    # TODO: Some states have 90 agent codes -- tossing for now.
     # 10 is minimum code - 0s are legacy and we assume anything < 10 is legacy as well.
     mort_df = mort_df[(mort_df['AGENTCD'] >= 10) & (mort_df['AGENTCD'] < 90)]
 
@@ -115,6 +114,11 @@ def preprocess_state(state_abbr, save=True):
         'SISP',
         'OWNCD',
         'SITECLCD',
+        'PHYSCLCD',
+        'ALSTK',
+        'ALSTKCD',
+        'GSSTK',
+        'GSSTKCD',
         'FORTYPCD',
         'FLDTYPCD',
         'DSTRBCD1',
@@ -194,9 +198,14 @@ def preprocess_state(state_abbr, save=True):
     )
 
     # per-tree variables that need to sum per condition
-    alive_vars = ['unadj_ag_biomass', 'unadj_bg_biomass', 'unadj_basal_area']
-    condition_alive_stats = (
-        tree_df.loc[tree_df['STATUSCD'] == 1].groupby(['PLT_CN', 'CONDID'])[alive_vars].sum()
+    alive_sum_vars = ['unadj_ag_biomass', 'unadj_bg_biomass', 'unadj_basal_area']
+    condition_alive_sums = (
+        tree_df.loc[tree_df['STATUSCD'] == 1].groupby(['PLT_CN', 'CONDID'])[alive_sum_vars].sum()
+    )
+
+    alive_mean_vars = ['HT', 'ACTUALHT']
+    condition_alive_means = (
+        tree_df.loc[tree_df['STATUSCD'] == 1].groupby(['PLT_CN', 'CONDID'])[alive_mean_vars].mean()
     )
 
     mort_removal_trees = get_mort_removal_df(tree_df)
@@ -252,7 +261,8 @@ def preprocess_state(state_abbr, save=True):
         .rename(columns=BULK_AGENT_MAP)
     )
 
-    full = cond_agg.join(condition_alive_stats)
+    full = cond_agg.join(condition_alive_sums)
+    full = full.join(condition_alive_means)
     full = full.join(disturb_flags)
     full = full.join(treatment_flags)
     full = full.join(condition_mort_removal)
