@@ -291,11 +291,15 @@ def fia_state(store, state, clean):
             'LAT': 'lat',
             'LON': 'lon',
             'adj_ag_biomass': 'biomass',
-            'adj_popmort': 'mort',
+            'adj_pop_mort': 'mort',
             'STDAGE': 'age',
+            'ACTUALHT': 'height',
             'MEASYEAR': 'year',
             'INVYR': 'inventory_year',
             'FLDTYPCD': 'type_code',
+            'PHYSCLCD': 'physiographic_code',
+            'ALSTKCD': 'all_stocking_code',
+            'GSSTKCD': 'grow_stocking_code',
             'ELEV': 'elevation',
             'SLOPE': 'slope',
             'ASPECT': 'aspect',
@@ -317,6 +321,10 @@ def fia_state(store, state, clean):
             'mort',
             'owner',
             'plot_cn',
+            'height',
+            'physiographic_code',
+            'all_stocking_code',
+            'grow_stocking_code',
         ]
     )
 
@@ -347,10 +355,14 @@ def fia_state_grouped(store, state, clean):
             'STDAGE': 'age',
             'ELEV': 'elevation',
             'SLOPE': 'slope',
+            'ACTUALHT': 'height',
+            'PHYSCLCD': 'physiographic_code',
+            'ALSTKCD': 'all_stocking_code',
+            'GSSTKCD': 'grow_stocking_code',
             'ASPECT': 'aspect',
             'OWNCD': 'owner',
             'CONDPROP_UNADJ': 'condprop',
-            'adj_popmort': 'mort',
+            'adj_pop_mort': 'mort',
             'adj_removal': 'removal',
             'adj_balive': 'balive',
         }
@@ -364,10 +376,13 @@ def fia_state_grouped(store, state, clean):
         'year',
         'balive',
         'mort',
-        'fraction_insect',
-        'fraction_disease',
-        'fraction_fire',
-        'fraction_human',
+        'frac_pop_mort_insect',
+        'frac_pop_mort_disease',
+        'frac_pop_mort_fire',
+        'frac_pop_mort_animal',
+        'frac_pop_mort_weather',
+        'frac_pop_mort_vegetation',
+        'frac_pop_mort_unknown',
         'disturb_animal',
         'disturb_insect',
         'disturb_disease',
@@ -391,7 +406,21 @@ def fia_state_grouped(store, state, clean):
             wide[missing_var] = np.nan
 
     attrs = state_long.groupby(['plt_uid', 'CONDID'])[
-        ['lat', 'lon', 'age', 'type_code', 'elevation', 'slope', 'aspect', 'condprop', 'owner']
+        [
+            'lat',
+            'lon',
+            'age',
+            'type_code',
+            'elevation',
+            'slope',
+            'aspect',
+            'condprop',
+            'owner',
+            'height',
+            'physiographic_code',
+            'all_stocking_code',
+            'grow_stocking_code',
+        ]
     ].max()
 
     if 'year_1' not in wide.columns:
