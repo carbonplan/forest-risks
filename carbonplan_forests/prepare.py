@@ -1,5 +1,41 @@
+import warnings
 import numpy as np
 
+def fire(mtbs, climate, nftd, eval_only=False):
+    """
+    Prepare x and y and group variables for fire model fitting
+    given an xarray dataset
+    """
+    shape = (len(mtbs.time), len(mtbs.y), len(mtbs.x))
+    x = np.asarray([climate[var].values.flatten() for var in climate.data_vars]).T
+    y = mtbs['monthly'].values.flatten()
+    # groups = np.argmax(nftd.values, axis=0).astype('float')
+    # groups[nftd.values.sum(axis=0) < 0.01] = 0
+    # groups = np.tile(groups.flatten(), [shape[0], 1, 1]).flatten()
+    f = np.asarray([np.tile(a, [shape[0], 1, 1]).flatten() for a in nftd.values]).T
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', category=RuntimeWarning)
+        f2 = np.asarray(
+            [
+                np.asarray(
+                    [
+                        np.tile(a.mean(), [12, shape[1], shape[2]])
+                        for a in climate['tavg'].groupby('time.year').max()
+                    ]
+                ).flatten(),
+                np.asarray(
+                    [
+                        np.tile(a.mean(), [12, shape[1], shape[2]])
+                        for a in climate['ppt'].groupby('time.year').max()
+                    ]
+                ).flatten(),
+            ]
+        ).T
+
+    x = np.concatenate([x, f, f2], axis=1)
+
+    return x, y
 
 def drought(df, eval_only=False, duration=10):
     """

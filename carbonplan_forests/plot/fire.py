@@ -3,7 +3,7 @@ import altair as alt
 from . import carto, line
 
 
-def monthly(data, data_var='vlf', projection='albersUsa', clim=None):
+def monthly(data, data_var='monthly', projection='albersUsa', clim=None):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
 
@@ -40,10 +40,10 @@ def monthly(data, data_var='vlf', projection='albersUsa', clim=None):
     return chart.configure_view(strokeOpacity=0)
 
 
-def summary(data, data_var='vlf', projection='albersUsa', clim=None):
+def summary(data, data_var='monthly', projection='albersUsa', clim=None):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
-    color = data[data_var].mean('time').values.flatten()
+    color = data[data_var].groupby('time.year').sum().mean('year').values.flatten()
     inds = color > clim[0]
 
     shape = data['lat'].shape

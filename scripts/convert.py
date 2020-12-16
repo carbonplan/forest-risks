@@ -5,8 +5,12 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
+from scipy.stats import binom
 
 from carbonplan_forests import utils
+
+def integrated_risk(p):
+    return (1 - binom.cdf(0, 10, p)) * 100
 
 args = sys.argv
 
@@ -31,6 +35,10 @@ if dataset in ['fire', 'biomass', 'drought', 'insects']:
     targets = ds['year'].values
 
     a = np.concatenate([ds[scenario].values for scenario in scenarios], axis=0)
+    
+    if dataset == 'fire':
+        a = integrated_risk(a)
+
     a[np.isnan(a)] = 0
     r, c = np.nonzero(a.max(axis=0))
     lat, lon = utils.rowcol_to_latlon(r, c, res=4000)
@@ -41,6 +49,10 @@ if dataset in ['fire', 'biomass', 'drought', 'insects']:
         for y, year in enumerate(targets):
             key = str(s) + '_' + str(y)
             a = ds[scenario].sel(year=year).values
+
+            if dataset == 'fire':
+                a = integrated_risk(a)
+
             a[np.isnan(a)] = 0
             df[key] = np.round(a[r, c], precision[dataset])
 

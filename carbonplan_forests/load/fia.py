@@ -276,6 +276,15 @@ def fia_state(store, state, clean):
             & (df['INVYR'] > 2000)
         )
         df = df[inds]
+    else:
+        inds = (
+            (df['MEASYEAR'] < 9999)
+            & (df['INVYR'] < 9999)
+            & (df['FLDTYPCD'] != 999)
+            & (df['FLDTYPCD'] != 950)
+            & (df['FLDTYPCD'] <= 983)
+        )
+        df = df[inds]
 
     df = df.rename(
         columns={

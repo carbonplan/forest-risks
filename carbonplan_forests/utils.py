@@ -90,9 +90,9 @@ def zscore_2d(x, mean=None, std=None):
     if mean is None or std is None:
         recomputing = True
     if mean is None:
-        mean = x.mean(axis=0)
+        mean = np.nanmean(x, axis=0)
     if std is None:
-        std = x.std(axis=0)
+        std = np.nanstd(x, axis=0)
     if recomputing:
         return (
             (x - mean) / std,

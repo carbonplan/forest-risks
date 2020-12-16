@@ -32,16 +32,16 @@ def terraclim(
         path = setup.loading(store)
 
         if store == 'az':
-            prefix = 'processed/terraclimate/conus/4000m/raster.zarr'
+            prefix = 'obs/conus/4000m/monthly/terraclimate_plus.zarr'
             mapper = zarr.storage.ABSStore(
-                'carbonplan-data',
+                'carbonplan-downscaling',
                 prefix=prefix,
                 account_name='carbonplan',
                 account_key=os.environ['BLOB_ACCOUNT_KEY'],
             )
         else:
             prefix = (
-                path / 'carbonplan-data/processed/terraclimate/conus/4000m/raster.zarr'
+                path / 'carbonplan-downscaling/obs/conus/4000m/monthly/terraclimate_plus.zarr'
             ).as_uri()
             mapper = fsspec.get_mapper(prefix)
 
@@ -49,6 +49,7 @@ def terraclim(
 
         ds['cwd'] = ds['pet'] - ds['aet']
         ds['tavg'] = (ds['tmin'] + ds['tmax']) / 2
+        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -10, 0)
 
         X = xr.Dataset()
 
@@ -128,7 +129,7 @@ def terraclim(
                         ]
 
                         def get_stats(a, t):
-                            if len(t) > 0:
+                            if (len(t) > 0) and (t.sum() > 0):
                                 selection = a[t]
                                 return {
                                     'min': selection.min(),
