@@ -1,5 +1,7 @@
 import warnings
+
 import numpy as np
+
 
 def scramble_2d(img, phase=None):
     """
@@ -14,8 +16,8 @@ def scramble_2d(img, phase=None):
     if phase is not None:
         Fnew_phase = phase
     else:
-        Fnew_phase = 2.0*np.pi*np.random.rand(F_phase.shape[0], F_phase.shape[1])
-    Fnew = F_mag*np.exp(1j*Fnew_phase)
+        Fnew_phase = 2.0 * np.pi * np.random.rand(F_phase.shape[0], F_phase.shape[1])
+    Fnew = F_mag * np.exp(1j * Fnew_phase)
     fnew = np.fft.ifft2(np.fft.ifftshift(Fnew))
     fnew = np.real(fnew)
     fnew[nan_inds] = np.NaN
@@ -25,9 +27,9 @@ def scramble_2d(img, phase=None):
 def scramble_3d(data):
     """
     Scramble a 3d time x space dataset
-    """  
+    """
     data = data.copy()
-    phase = 2.0 * np.pi * np.random.rand(data.shape[1], data.shape[2]) 
+    phase = 2.0 * np.pi * np.random.rand(data.shape[1], data.shape[2])
     nt = data.shape[0]
     for t in range(nt):
         data[t] = scramble_2d(data[t])
@@ -70,6 +72,7 @@ def fire(mtbs, climate, nftd, eval_only=False, scramble=False):
     x = np.concatenate([x, f, f2], axis=1)
 
     return x, y
+
 
 def drought(df, eval_only=False, duration=10):
     """

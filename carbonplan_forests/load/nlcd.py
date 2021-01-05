@@ -1,7 +1,8 @@
-import xarray as xr
 import numpy as np
+import xarray as xr
 
 from .. import setup
+
 
 def nlcd(store='az', classes='all', year=2001, coarsen=None, mask=None):
     path = setup.loading(store)

@@ -1,9 +1,10 @@
 import numpy as np
+
 from carbonplan_forests import load
 
 # parameters
 
-variables = ['ppt','tmean','pdsi','cwd','pet','vpd']
+variables = ['ppt', 'tmean', 'pdsi', 'cwd', 'pet', 'vpd']
 targets = list(map(lambda x: str(x), np.arange(2020, 2120, 20)))
 models = ['CanESM5']
 states = 'conus'
@@ -20,7 +21,7 @@ df = load.terraclim(
     variables=variables,
     df=df,
     group_repeats=True,
-    sampling='annual'
+    sampling='annual',
 )
 df.to_csv(f'FIA-TerraClim-Wide-{version}-{date}.csv', index=False)
 
@@ -28,11 +29,7 @@ df.to_csv(f'FIA-TerraClim-Wide-{version}-{date}.csv', index=False)
 
 df = load.fia(store='local', states=states, clean=False)
 df = load.terraclim(
-    store='local',
-    tlim=(int(df['year'].min()), 2020),
-    variables=variables,
-    df=df,
-    sampling='annual'
+    store='local', tlim=(int(df['year'].min()), 2020), variables=variables, df=df, sampling='annual'
 )
 df.to_csv(f'FIA-TerraClim-Long-{version}-{date}.csv', index=False)
 
@@ -40,10 +37,10 @@ df.to_csv(f'FIA-TerraClim-Long-{version}-{date}.csv', index=False)
 
 df = load.fia(store='local', states=states, clean=False)
 keep_vars = (
-    ['lat','lon','plot_cn'] +
-    [var + '_min' for var in variables] +
-    [var + '_mean' for var in variables] +
-    [var + '_max' for var in variables]
+    ['lat', 'lon', 'plot_cn']
+    + [var + '_min' for var in variables]
+    + [var + '_mean' for var in variables]
+    + [var + '_max' for var in variables]
 )
 
 for target in targets:
@@ -57,7 +54,10 @@ for target in targets:
                 df=df,
                 model='CanESM5',
                 scenario='ssp245',
-                sampling='annual'
+                sampling='annual',
             )
             df = df[keep_vars]
-            df.to_csv(f'FIA-CMIP6-Long-{model}.{scenario}-{tlim[0]}.{tlim[1]}-{version}-{date}.csv', index=False)
+            df.to_csv(
+                f'FIA-CMIP6-Long-{model}.{scenario}-{tlim[0]}.{tlim[1]}-{version}-{date}.csv',
+                index=False,
+            )

@@ -22,9 +22,7 @@ def mtbs(store='az', tlim=(1984, 2018), mask=None, coarsen=None):
             account_key=os.environ['BLOB_ACCOUNT_KEY'],
         )
     else:
-        prefix = (
-            path / 'carbonplan-data/processed/mtbs/conus/4000m/monthly.zarr'
-        ).as_uri()
+        prefix = (path / 'carbonplan-data/processed/mtbs/conus/4000m/monthly.zarr').as_uri()
         mapper = fsspec.get_mapper(prefix)
 
     with warnings.catch_warnings():

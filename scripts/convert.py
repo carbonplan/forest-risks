@@ -9,8 +9,10 @@ from scipy.stats import binom
 
 from carbonplan_forests import utils
 
+
 def integrated_risk(p):
     return (1 - binom.cdf(0, 10, p)) * 100
+
 
 args = sys.argv
 
@@ -35,7 +37,7 @@ if dataset in ['fire', 'biomass', 'drought', 'insects']:
     targets = ds['year'].values
 
     a = np.concatenate([ds[scenario].values for scenario in scenarios], axis=0)
-    
+
     if dataset == 'fire':
         a = integrated_risk(a)
 

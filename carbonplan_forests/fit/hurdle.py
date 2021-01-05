@@ -31,8 +31,8 @@ class HurdleModel:
         self.log = log
         self.n_obs = n_obs
         if x is not None and y is not None:
-            self.train_r2 = np.corrcoef(self.predict_linear(x)[y > 0], y[y > 0])[0,1] ** 2
-            self.train_roc = roc_auc_score(y>0, self.predict_prob(x))
+            self.train_r2 = np.corrcoef(self.predict_linear(x)[y > 0], y[y > 0])[0, 1] ** 2
+            self.train_roc = roc_auc_score(y > 0, self.predict_prob(x))
 
     def __repr__(self):
         return f"HurdleModel(link='{self.log}', train_r2='{self.train_r2:.3f}', train_roc='{self.train_roc:.3f}')"

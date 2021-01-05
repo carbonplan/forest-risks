@@ -33,9 +33,7 @@ def terraclim(
 
         if store == 'az':
             mapper = zarr.storage.ABSStore(
-                'carbonplan-downscaling',
-                prefix=prefix,
-                account_name='carbonplan'
+                'carbonplan-downscaling', prefix=prefix, account_name='carbonplan'
             )
         else:
             mapper = fsspec.get_mapper((path / 'carbonplan-downscaling' / prefix).as_uri())

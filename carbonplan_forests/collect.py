@@ -1,6 +1,7 @@
 import numpy as np
 import xarray as xr
 
+
 def fire(y, src, inds=None):
     da = xr.Dataset()
     da['x'] = src.x
