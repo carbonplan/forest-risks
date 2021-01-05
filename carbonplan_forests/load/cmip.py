@@ -20,6 +20,7 @@ def cmip(
     member='r10i1p1f1',
     coarsen=None,
     variables=['ppt', 'tmean'],
+    mask=None,
     sampling='annual',
     remove_nans=False,
 ):
@@ -61,6 +62,11 @@ def cmip(
         if tlim is not None:
             tlim = list(map(str, tlim))
             X = X.sel(time=slice(*tlim))
+
+        if mask is not None:
+            vals = mask.values
+            vals[vals == 0] = np.NaN
+            X = X * vals
 
         if coarsen:
             X_coarse = xr.Dataset()

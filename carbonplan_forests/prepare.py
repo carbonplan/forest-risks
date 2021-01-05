@@ -36,19 +36,18 @@ def scramble_3d(data):
     return data
 
 
-def fire(mtbs, climate, nftd, eval_only=False, scramble=False):
+def fire(climate, nftd, mtbs=None, eval_only=False, scramble=False):
     """
     Prepare x and y and group variables for fire model fitting
     given an xarray dataset
     """
-    shape = (len(mtbs.time), len(mtbs.y), len(mtbs.x))
+    shape = (len(climate.time), len(climate.y), len(climate.x))
     if scramble:
         x = np.asarray([scramble_3d(climate[var].values).flatten() for var in climate.data_vars]).T
         f = np.asarray([np.tile(scramble_2d(a), [shape[0], 1, 1]).flatten() for a in nftd.values]).T
     else:
         x = np.asarray([climate[var].values.flatten() for var in climate.data_vars]).T
         f = np.asarray([np.tile(a, [shape[0], 1, 1]).flatten() for a in nftd.values]).T
-    y = mtbs['monthly'].values.flatten()
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', category=RuntimeWarning)
@@ -71,7 +70,12 @@ def fire(mtbs, climate, nftd, eval_only=False, scramble=False):
 
     x = np.concatenate([x, f, f2], axis=1)
 
-    return x, y
+    if eval_only:
+        return x
+
+    else:
+        y = mtbs['monthly'].values.flatten()
+        return x, y
 
 
 def drought(df, eval_only=False, duration=10):
