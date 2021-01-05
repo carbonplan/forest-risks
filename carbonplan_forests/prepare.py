@@ -1,18 +1,52 @@
 import warnings
 import numpy as np
 
-def fire(mtbs, climate, nftd, eval_only=False):
+def scramble_2d(img, phase=None):
+    """
+    Scramble a 2d dataset
+    """
+    img = img.copy()
+    nan_inds = np.isnan(img)
+    img[nan_inds] = 0
+    F = np.fft.fft2(img)
+    F_mag = np.abs(np.fft.fftshift(F))
+    F_phase = np.angle(np.fft.fftshift(F))
+    if phase is not None:
+        Fnew_phase = phase
+    else:
+        Fnew_phase = 2.0*np.pi*np.random.rand(F_phase.shape[0], F_phase.shape[1])
+    Fnew = F_mag*np.exp(1j*Fnew_phase)
+    fnew = np.fft.ifft2(np.fft.ifftshift(Fnew))
+    fnew = np.real(fnew)
+    fnew[nan_inds] = np.NaN
+    return fnew
+
+
+def scramble_3d(data):
+    """
+    Scramble a 3d time x space dataset
+    """  
+    data = data.copy()
+    phase = 2.0 * np.pi * np.random.rand(data.shape[1], data.shape[2]) 
+    nt = data.shape[0]
+    for t in range(nt):
+        data[t] = scramble_2d(data[t])
+    return data
+
+
+def fire(mtbs, climate, nftd, eval_only=False, scramble=False):
     """
     Prepare x and y and group variables for fire model fitting
     given an xarray dataset
     """
     shape = (len(mtbs.time), len(mtbs.y), len(mtbs.x))
-    x = np.asarray([climate[var].values.flatten() for var in climate.data_vars]).T
+    if scramble:
+        x = np.asarray([scramble_3d(climate[var].values).flatten() for var in climate.data_vars]).T
+        f = np.asarray([np.tile(scramble_2d(a), [shape[0], 1, 1]).flatten() for a in nftd.values]).T
+    else:
+        x = np.asarray([climate[var].values.flatten() for var in climate.data_vars]).T
+        f = np.asarray([np.tile(a, [shape[0], 1, 1]).flatten() for a in nftd.values]).T
     y = mtbs['monthly'].values.flatten()
-    # groups = np.argmax(nftd.values, axis=0).astype('float')
-    # groups[nftd.values.sum(axis=0) < 0.01] = 0
-    # groups = np.tile(groups.flatten(), [shape[0], 1, 1]).flatten()
-    f = np.asarray([np.tile(a, [shape[0], 1, 1]).flatten() for a in nftd.values]).T
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', category=RuntimeWarning)
@@ -21,7 +55,7 @@ def fire(mtbs, climate, nftd, eval_only=False):
                 np.asarray(
                     [
                         np.tile(a.mean(), [12, shape[1], shape[2]])
-                        for a in climate['tavg'].groupby('time.year').max()
+                        for a in climate['tmean'].groupby('time.year').max()
                     ]
                 ).flatten(),
                 np.asarray(
