@@ -1,15 +1,10 @@
-import rasterio
+import numpy as np
 import xarray as xr
 
 from .. import setup
 
 
-def load_rio(f):
-    src = rasterio.open(f)
-    return src.read(1)
-
-
-def nlcd(store='az', classes=[41, 42, 43, 90], year=2001, coarsen=None):
+def nlcd(store='az', classes='all', year=2001, coarsen=None, mask=None):
     path = setup.loading(store)
 
     if classes == 'all':
@@ -24,10 +19,14 @@ def nlcd(store='az', classes=[41, 42, 43, 90], year=2001, coarsen=None):
         ],
         dim=xr.Variable('band', classes),
     )
-    mask = bands.sum('band', keep_attrs=True)
 
-    if coarsen:
-        mask = mask.coarsen(x=coarsen, y=coarsen, boundary='trim').mean()
+    if mask is not None:
+        vals = mask.values
+        vals[vals == 0] = np.NaN
+        bands = bands * vals
 
-    mask.load()
-    return mask
+    if coarsen is not None:
+        bands = bands.coarsen(x=coarsen, y=coarsen, boundary='trim').mean()
+
+    bands.load()
+    return bands

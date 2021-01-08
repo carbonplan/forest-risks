@@ -84,7 +84,7 @@ def nftd(store='az', groups='all', coarsen=None, append_all=False, mask=None, ar
         vals[vals == 0] = np.NaN
         bands = bands * vals
 
-    if coarsen:
+    if coarsen is not None:
         bands = bands.coarsen(x=coarsen, y=coarsen, boundary='trim').mean()
 
     bands.load()

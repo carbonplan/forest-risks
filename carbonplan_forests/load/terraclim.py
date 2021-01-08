@@ -1,4 +1,3 @@
-import os
 import warnings
 
 import fsspec
@@ -17,8 +16,8 @@ def terraclim(
     df=None,
     tlim=None,
     coarsen=None,
-    data_vars=['ppt', 'tmax'],
-    data_aggs=None,
+    sampling='annual',
+    variables=['ppt', 'tmean'],
     mask=None,
     group_repeats=False,
     remove_nans=False,
@@ -30,47 +29,27 @@ def terraclim(
         warnings.simplefilter('ignore', category=RuntimeWarning)
 
         path = setup.loading(store)
+        prefix = f'obs/conus/4000m/{sampling}/terraclimate_plus.zarr'
 
         if store == 'az':
-            prefix = 'processed/terraclimate/conus/4000m/raster.zarr'
             mapper = zarr.storage.ABSStore(
-                'carbonplan-data',
-                prefix=prefix,
-                account_name='carbonplan',
-                account_key=os.environ['BLOB_ACCOUNT_KEY'],
+                'carbonplan-downscaling', prefix=prefix, account_name='carbonplan'
             )
         else:
-            prefix = (
-                path / 'carbonplan-data/processed/terraclimate/conus/4000m/raster.zarr'
-            ).as_uri()
-            mapper = fsspec.get_mapper(prefix)
+            mapper = fsspec.get_mapper((path / 'carbonplan-downscaling' / prefix).as_uri())
 
         ds = xr.open_zarr(mapper, consolidated=True)
 
         ds['cwd'] = ds['pet'] - ds['aet']
-        ds['tavg'] = (ds['tmin'] + ds['tmax']) / 2
+        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -999, 0)
+        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -4, -4)
+        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] < 4, 4)
 
         X = xr.Dataset()
+        keys = variables
 
-        if data_aggs is not None:
-            keys = [var + '_' + agg for var, agg in zip(data_vars, data_aggs)]
-            for key in keys:
-                var, agg = key.split('_')
-                base = ds[var].resample(time='AS')
-                if agg == 'sum':
-                    X[key] = base.sum('time')
-                elif agg == 'mean':
-                    X[key] = base.map(utils.weighted_mean, dim='time')
-                elif agg == 'max':
-                    X[key] = base.max('time')
-                elif agg == 'min':
-                    X[key] = base.min('time')
-                else:
-                    raise ValueError(f'agg method {agg} not supported')
-        else:
-            keys = data_vars
-            for key in keys:
-                X[key] = ds[key]
+        for key in keys:
+            X[key] = ds[key]
 
         if tlim:
             tlim = list(map(str, tlim))
@@ -128,7 +107,7 @@ def terraclim(
                         ]
 
                         def get_stats(a, t):
-                            if len(t) > 0:
+                            if (len(t) > 0) and (t.sum() > 0):
                                 selection = a[t]
                                 return {
                                     'min': selection.min(),

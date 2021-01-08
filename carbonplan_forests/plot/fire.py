@@ -3,7 +3,7 @@ import altair as alt
 from . import carto, line
 
 
-def monthly(data, data_var='vlf', projection='albersUsa', clim=None):
+def monthly(data, data_var='monthly', projection='albersUsa', clim=None):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
 
@@ -40,10 +40,10 @@ def monthly(data, data_var='vlf', projection='albersUsa', clim=None):
     return chart.configure_view(strokeOpacity=0)
 
 
-def summary(data, data_var='vlf', projection='albersUsa', clim=None):
+def summary(data, data_var='monthly', projection='albersUsa', clim=None):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
-    color = data[data_var].mean('time').values.flatten()
+    color = data[data_var].groupby('time.year').sum().mean('year').values.flatten()
     inds = color > clim[0]
 
     shape = data['lat'].shape
@@ -51,8 +51,8 @@ def summary(data, data_var='vlf', projection='albersUsa', clim=None):
 
     column = alt.vconcat()
 
-    x = data.groupby('time.year').mean()['year'].values
-    y = data.groupby('time.year').mean().mean(['x', 'y'])[data_var].values
+    x = data.groupby('time.year').sum()['year'].values
+    y = data.groupby('time.year').sum().mean(['x', 'y'])[data_var].values
 
     column &= line(x=x, y=y, width=300, height=122, strokeWidth=2, color='rgb(175,91,92)')
 
@@ -84,7 +84,7 @@ def summary(data, data_var='vlf', projection='albersUsa', clim=None):
 def evaluation(data, model, data_var='vlf', model_var='prob', projection='albersUsa', clim=None):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
-    color = model[model_var].mean('time').values.flatten()
+    color = model[model_var].groupby('time.year').sum().mean('year').values.flatten()
     inds = color > clim[0]
 
     shape = data['lat'].shape
@@ -92,9 +92,9 @@ def evaluation(data, model, data_var='vlf', model_var='prob', projection='albers
 
     column = alt.vconcat()
 
-    x = data.groupby('time.year').mean()['year'].values
-    y = data.groupby('time.year').mean().mean(['x', 'y'])[data_var].values
-    yhat = model.groupby('time.year').mean().mean(['x', 'y'])[model_var].values
+    x = data.groupby('time.year').sum()['year'].values
+    y = data.groupby('time.year').sum().mean(['x', 'y'])[data_var].values
+    yhat = model.groupby('time.year').sum().mean(['x', 'y'])[model_var].values
 
     column &= line(
         x=x, y=y, width=300, height=122, strokeWidth=2, opacity=0.5, color='rgb(175,91,92)'
