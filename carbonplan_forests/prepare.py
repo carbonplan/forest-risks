@@ -93,16 +93,10 @@ def fire(
             f3 = np.asarray(
                 [
                     np.asarray(
-                        [  # so i want to change this to instead casting the mean, just pass the values
-                            np.tile(a, [12, 1, 1])
-                            for a in climate['tmean'].groupby('time.year').max()
-                        ]
+                        [climate['tmean'].rolling(dim={'time': 12}, center=False).max()]
                     ).flatten(),
                     np.asarray(
-                        [  # and i want to do the same here but using sum instead of max (which i've already changed)
-                            np.tile(a, [12, 1, 1])
-                            for a in climate['ppt'].groupby('time.year').sum()
-                        ]
+                        [climate['ppt'].rolling(dim={'time': 12}, center=False).sum()]
                     ).flatten(),
                 ]
             ).T

@@ -5,7 +5,7 @@ import scipy as sp
 from . import carto, line
 
 
-def monthly(data, data_var='monthly', projection='albersUsa', clim=None):
+def monthly(data, data_var='monthly', projection='albersUsa', clim=None, cmap='reds'):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
 
@@ -28,7 +28,7 @@ def monthly(data, data_var='monthly', projection='albersUsa', clim=None):
                 lon=lon[inds],
                 color=color[inds],
                 clim=clim,
-                cmap='reds',
+                cmap=cmap,
                 clabel=data_var,
                 size=size,
                 width=270,
@@ -110,11 +110,37 @@ def summary(data, data_var='monthly', projection='albersUsa', clim=None):
     return row
 
 
-def evaluation(data, model, data_var='vlf', model_var='prob', projection='albersUsa', clim=None):
+def performance(model, obs, percentage=True):
+    if percentage:
+        return (model - obs) / obs * 100
+    else:
+        return model - obs
+
+
+def evaluation(
+    data,
+    model,
+    data_var='vlf',
+    model_var='prob',
+    projection='albersUsa',
+    clim=None,
+    cmap='reds',
+    percentage=True,
+    comparison=True,
+):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
-    color = model[model_var].groupby('time.year').sum().mean('year').values.flatten()
-    inds = color > clim[0]
+
+    color = performance(
+        model[model_var].groupby('time.year').sum().mean('year').values,
+        data[data_var].groupby('time.year').sum().mean('year').values,
+        percentage=percentage,
+    ).flatten()
+    if comparison:
+        # hacky!!!! WARNINGGGGGG THIS IS HORRIBLEEEE just want to make all inds active
+        inds = color > -99999
+    else:
+        inds = color > clim[0]
 
     shape = data['lat'].shape
     size = (300 / shape[0]) * (500 / shape[1]) * 0.85
@@ -146,7 +172,7 @@ def evaluation(data, model, data_var='vlf', model_var='prob', projection='albers
         lon=lon[inds],
         color=color[inds],
         clim=clim,
-        cmap='reds',
+        cmap=cmap,
         clabel=data_var,
         size=size,
         width=500,
@@ -158,18 +184,24 @@ def evaluation(data, model, data_var='vlf', model_var='prob', projection='albers
 
 
 def package_for_altair(fire, climate, label='value'):
-    data = fire.mean(dim=['x', 'y']).monthly.to_dataframe().rename(columns={'monthly': 'fire'})
-    data['temp'] = climate['tmax'].mean(dim=['x', 'y']).values
+    data = (
+        fire.mean(dim=['x', 'y']).monthly.to_dataframe().rename(columns={'monthly': 'fire (mtbs)'})
+    )
+
+    # data['tmean'] = climate['tmean'].mean(dim=['x', 'y']).values
     data['ppt'] = climate['ppt'].mean(dim=['x', 'y']).values
+    data['cwd'] = climate['cwd'].mean(dim=['x', 'y']).values
+    data['pdsi'] = climate['pdsi'].mean(dim=['x', 'y']).values
     for variable in data.columns:
-        data[variable] = sp.stats.zscore(data[variable])
+        if variable != 'pdsi':
+            data[variable] = sp.stats.zscore(data[variable])
     data['year'] = data.index.year
     data['month'] = data.index.month
     data = data.reset_index().drop(['time'], axis=1)
     data = pd.melt(
         data,
         id_vars=['year', 'month'],
-        value_vars=['fire', 'temp', 'ppt'],
+        value_vars=['fire (mtbs)', 'ppt', 'cwd', 'pdsi'],
         value_name=label,
         ignore_index=False,
     )
@@ -180,7 +212,7 @@ def multipanel_slider(data, year_limits, region_labels):
 
     if len(region_labels) != 4:
         raise Exception('SO SORRY! Four is the magic number- we only accept four regions right now')
-    slider = alt.binding_range(min=year_limits[0], max=year_limits[0], step=1)
+    slider = alt.binding_range(min=year_limits[0], max=year_limits[1], step=1)
     select_year = alt.selection_single(
         name="year", fields=['year'], bind=slider, init={'year': year_limits[0]}
     )
