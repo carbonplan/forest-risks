@@ -42,15 +42,12 @@ def fire(
     eval_only=False,
     scramble=False,
     add_local_climate_trends=False,
-    pdsi_shift=False,
-    rolling_aggregation=False,
 ):
     """
     Prepare x and y and group variables for fire model fitting
     given an xarray dataset
     """
     shape = (len(climate.time), len(climate.y), len(climate.x))
-    print(shape)
     if scramble:
         x = np.asarray([scramble_3d(climate[var].values).flatten() for var in climate.data_vars]).T
         f = np.asarray([np.tile(scramble_2d(a), [shape[0], 1, 1]).flatten() for a in nftd.values]).T
@@ -60,34 +57,22 @@ def fire(
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', category=RuntimeWarning)
-        if rolling_aggregation:
-            f2 = np.asarray(
-                [
-                    np.asarray(
-                        [climate['tmean'].rolling(dim={'time': 12}, center=False).max()]
-                    ).flatten(),
-                    np.asarray(
-                        [climate['ppt'].rolling(dim={'time': 12}, center=False).sum()]
-                    ).flatten(),
-                ]
-            ).T
-        else:
-            f2 = np.asarray(
-                [
-                    np.asarray(
-                        [  # so i want to change this to instead casting the mean, just pass the values
-                            np.tile(a.mean(), [12, shape[1], shape[2]])
-                            for a in climate['tmean'].groupby('time.year').max()
-                        ]
-                    ).flatten(),
-                    np.asarray(
-                        [  # and i want to do the same here but using sum instead of max (which i've already changed)
-                            np.tile(a.mean(), [12, shape[1], shape[2]])
-                            for a in climate['ppt'].groupby('time.year').sum()
-                        ]
-                    ).flatten(),
-                ]
-            ).T
+        f2 = np.asarray(
+            [
+                np.asarray(
+                    [  # so i want to change this to instead casting the mean, just pass the values
+                        np.tile(a.mean(), [12, shape[1], shape[2]])
+                        for a in climate['tmean'].rolling(dim={'time': 12}, center=False).max()
+                    ]
+                ).flatten(),
+                np.asarray(
+                    [  # and i want to do the same here but using sum instead of max (which i've already changed)
+                        np.tile(a.mean(), [12, shape[1], shape[2]])
+                        for a in climate['ppt'].groupby('time.year').sum()
+                    ]
+                ).flatten(),
+            ]
+        ).T
 
         if add_local_climate_trends:
             f3 = np.asarray(
@@ -100,14 +85,9 @@ def fire(
                     ).flatten(),
                 ]
             ).T
-        if pdsi_shift:
-            f4 = np.asarray([np.roll(climate['pdsi'].values, axis=0, shift=pdsi_shift).flatten()]).T
-    print(x.shape, f.shape, f2.shape)
     x = np.concatenate([x, f, f2], axis=1)
     if add_local_climate_trends:
         x = np.concatenate([x, f3], axis=1)
-    if pdsi_shift:
-        x = np.concatenate([x, f4], axis=1)
 
     if eval_only:
         return x
