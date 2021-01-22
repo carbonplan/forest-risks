@@ -1,6 +1,9 @@
 import altair as alt
-import pandas as pd
-import scipy as sp
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import numpy as np
+import regionmask as rm
+from scipy.stats import binom
 
 from . import carto, line
 
@@ -183,55 +186,81 @@ def evaluation(
     return chart
 
 
-def package_for_altair(fire, climate, label='value'):
-    data = (
-        fire.mean(dim=['x', 'y']).monthly.to_dataframe().rename(columns={'monthly': 'fire (mtbs)'})
-    )
+def full_eval(
+    data,
+    model,
+    data_var='vlf',
+    model_var='prediction',
+    projection='albersUsa',
+    clim=None,
+    cmap='reds',
+    percentage=True,
+    comparison=True,
+):
 
-    # data['tmean'] = climate['tmean'].mean(dim=['x', 'y']).values
-    data['ppt'] = climate['ppt'].mean(dim=['x', 'y']).values
-    data['cwd'] = climate['cwd'].mean(dim=['x', 'y']).values
-    data['pdsi'] = climate['pdsi'].mean(dim=['x', 'y']).values
-    for variable in data.columns:
-        if variable != 'pdsi':
-            data[variable] = sp.stats.zscore(data[variable])
-    data['year'] = data.index.year
-    data['month'] = data.index.month
-    data = data.reset_index().drop(['time'], axis=1)
-    data = pd.melt(
+    a = data["monthly"].mean("time").values.flatten()
+    b = model["prediction"].mean("time").values.flatten()
+    inds = ~np.isnan(a) & ~np.isnan(b)
+    spatial_corr = np.corrcoef(a[inds], b[inds])[0, 1] ** 2
+
+    eval_metrics = {
+        'seasonal': np.corrcoef(
+            data["monthly"].groupby("time.month").mean().mean(["x", "y"]),
+            model["prediction"].groupby("time.month").mean().mean(["x", "y"]),
+        )[0, 1]
+        ** 2,
+        'annual': np.corrcoef(
+            data["monthly"].groupby("time.year").mean().mean(["x", "y"]),
+            model["prediction"].groupby("time.year").mean().mean(["x", "y"]),
+        )[0, 1]
+        ** 2,
+        'spatial': spatial_corr,
+    }
+
+    for metric, performance in eval_metrics.items():
+        print('performance at {} scale is: {}'.format(metric, performance))
+
+    return evaluation(
         data,
-        id_vars=['year', 'month'],
-        value_vars=['fire (mtbs)', 'ppt', 'cwd', 'pdsi'],
-        value_name=label,
-        ignore_index=False,
-    )
-    return data
-
-
-def multipanel_slider(data, year_limits, region_labels):
-
-    if len(region_labels) != 4:
-        raise Exception('SO SORRY! Four is the magic number- we only accept four regions right now')
-    slider = alt.binding_range(min=year_limits[0], max=year_limits[1], step=1)
-    select_year = alt.selection_single(
-        name="year", fields=['year'], bind=slider, init={'year': year_limits[0]}
+        model,
+        data_var=data_var,
+        model_var=model_var,
+        projection=projection,
+        clim=clim,
+        cmap=cmap,
+        percentage=percentage,
+        comparison=comparison,
     )
 
-    base = (
-        alt.Chart(data)
-        .mark_line()
-        .encode(x='month:O', color='variable:N')
-        .add_selection(select_year)
-        .properties(width=200, height=100)
-        .transform_filter(select_year)
+
+def integrated_risk(p):
+    return (1 - binom.cdf(0, 100, p)) * 100
+
+
+def supersection(data, varname, store='az'):
+    from palettable.colorbrewer.sequential import YlOrRd_9
+
+    cmap = YlOrRd_9.mpl_colormap
+    regions = gpd.read_file(
+        "https://storage.googleapis.com/carbonplan-data/raw/ecoregions/supersections.geojson"
     )
-    charts = {}
-    for region in region_labels:
-        charts[region] = base.encode(y='{}:Q'.format(region))
-    full_chart = (
-        charts[region_labels[0]]
-        | charts[region_labels[1]]
-        | charts[region_labels[2]]
-        | charts[region_labels[3]]
+    masks = rm.mask_3D_geopandas(regions, data)
+
+    groupby = data.groupby('time.year').sum().mean('year')
+    risks = np.asarray(
+        [
+            groupby[varname].where(masks.sel(region=i)).mean(['x', 'y']).values.item()
+            for i in masks['region']
+        ]
     )
-    return full_chart
+    regions.to_crs('EPSG:5070').plot(
+        integrated_risk(risks),
+        figsize=[15, 8],
+        cmap=cmap,
+        edgecolor=[0, 0, 0],
+        linewidth=0.3,
+        vmin=0,
+        vmax=25,
+        legend=True,
+    )
+    plt.axis('off')

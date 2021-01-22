@@ -68,7 +68,7 @@ def fire(
                 np.asarray(
                     [  # and i want to do the same here but using sum instead of max (which i've already changed)
                         np.tile(a.mean(), [12, shape[1], shape[2]])
-                        for a in climate['ppt'].groupby('time.year').sum()
+                        for a in climate['ppt'].rolling(dim={'time': 12}, center=False).sum()
                     ]
                 ).flatten(),
             ]
