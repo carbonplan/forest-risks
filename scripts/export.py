@@ -8,9 +8,9 @@ variables = ['ppt', 'tmean', 'pdsi', 'cwd', 'pet', 'vpd']
 targets = list(map(lambda x: str(x), np.arange(2020, 2120, 20)))
 models = ['CanESM5']
 states = 'conus'
-scenarios = ['ssp245', 'ssp585']
-version = 'v8'
-date = '12-16-20'
+scenarios = ['ssp245', 'ssp370']
+version = 'v10'
+date = '01-19-20'
 
 # generate wide data w/ terraclim
 
@@ -52,8 +52,8 @@ for target in targets:
                 tlim=(int(tlim[0]), int(tlim[1])),
                 variables=variables,
                 df=df,
-                model='CanESM5',
-                scenario='ssp245',
+                model=model,
+                scenario=scenario,
                 sampling='annual',
             )
             df = df[keep_vars]
