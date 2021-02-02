@@ -29,14 +29,20 @@ def scramble_3d(data):
     Scramble a 3d time x space dataset
     """
     data = data.copy()
-    phase = 2.0 * np.pi * np.random.rand(data.shape[1], data.shape[2])
     nt = data.shape[0]
     for t in range(nt):
         data[t] = scramble_2d(data[t])
     return data
 
 
-def fire(climate, nftd, mtbs=None, eval_only=False, scramble=False):
+def fire(
+    climate,
+    nftd,
+    mtbs=None,
+    eval_only=False,
+    scramble=False,
+    add_local_climate_trends=False,
+):
     """
     Prepare x and y and group variables for fire model fitting
     given an xarray dataset
@@ -56,19 +62,32 @@ def fire(climate, nftd, mtbs=None, eval_only=False, scramble=False):
                 np.asarray(
                     [
                         np.tile(a.mean(), [12, shape[1], shape[2]])
-                        for a in climate['tmean'].groupby('time.year').max()
+                        for a in climate['tmean'].rolling(dim={'time': 12}, center=False).max()
                     ]
                 ).flatten(),
                 np.asarray(
                     [
                         np.tile(a.mean(), [12, shape[1], shape[2]])
-                        for a in climate['ppt'].groupby('time.year').max()
+                        for a in climate['ppt'].rolling(dim={'time': 12}, center=False).sum()
                     ]
                 ).flatten(),
             ]
         ).T
 
+        if add_local_climate_trends:
+            f3 = np.asarray(
+                [
+                    np.asarray(
+                        [climate['tmean'].rolling(dim={'time': 12}, center=False).max()]
+                    ).flatten(),
+                    np.asarray(
+                        [climate['ppt'].rolling(dim={'time': 12}, center=False).sum()]
+                    ).flatten(),
+                ]
+            ).T
     x = np.concatenate([x, f, f2], axis=1)
+    if add_local_climate_trends:
+        x = np.concatenate([x, f3], axis=1)
 
     if eval_only:
         return x

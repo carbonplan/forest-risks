@@ -5,15 +5,15 @@ from sklearn.metrics import roc_auc_score
 from ..utils import remove_nans
 
 
-def hurdle(x, y, log=True):
+def hurdle(x, y, log=True, max_iter=1000):
     x, y = remove_nans(x, y)
     n_obs = len(x)
 
-    clf = LogisticRegression(fit_intercept=True, penalty='none', max_iter=1000)
+    clf = LogisticRegression(fit_intercept=True, penalty='none', max_iter=max_iter)
 
     if log:
         reg = TweedieRegressor(
-            fit_intercept=True, power=0, link='log', alpha=0, tol=1e-8, max_iter=1000
+            fit_intercept=True, power=0, link='log', alpha=0, tol=1e-8, max_iter=max_iter
         )
     else:
         reg = LinearRegression(fit_intercept=True)
