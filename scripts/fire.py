@@ -6,7 +6,8 @@ import numpy as np
 import xarray as xr
 from tqdm import tqdm
 
-from carbonplan_forests import fit, load
+from carbonplan_forests import collect, fit, load, prepare, utils
+from carbonplan_forests.utils import get_store
 
 warnings.simplefilter('ignore', category=RuntimeWarning)
 
@@ -21,8 +22,8 @@ coarsen_fit = 4
 coarsen_predict = None
 coarsen_scale = 1 / coarsen_fit
 tlim = (1984, 2018)
-data_vars = ['ppt', 'tavg']
-fit_vars = ['ppt', 'tavg']
+data_vars = ['tmean', "cwd", "pdsi", 'ppt']
+fit_vars = ['tmean', "cwd", "pdsi", 'ppt']
 
 
 def integrated_risk(da):
@@ -32,17 +33,29 @@ def integrated_risk(da):
 
 
 print('[fire] loading data')
-mask = load.nlcd(store=store, classes='all', year=2001)
-groups = load.nftd(store=store, groups='all', coarsen=coarsen_fit, mask=mask, area_threshold=1500)
+mask = load.mask(store=store, year=2001)
+nftd = load.nftd(store=store, groups='all', area_threshold=1500, coarsen=coarsen_fit, mask=mask)
 climate = load.terraclim(
-    store=store, tlim=tlim, coarsen=coarsen_fit, data_vars=data_vars, mask=mask
+    store=store,
+    tlim=tlim,
+    coarsen=coarsen_fit,
+    variables=data_vars,
+    mask=mask,
+    sampling="monthly",
 )
 mtbs = load.mtbs(store=store, coarsen=coarsen_fit, tlim=tlim)
-mtbs['vlf'] = mtbs['vlf'] > 0
+mtbs = mtbs.assign_coords({'x': nftd.x, 'y': nftd.y})
+# do we still need this line?
+# mtbs['vlf'] = mtbs['vlf'] > 0
 
 print('[fire] fitting model')
-model = fit.fire(x=climate[fit_vars], y=mtbs['vlf'], f=groups)
+x, y = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=True)
+x_z, x_mean, x_std = utils.zscore_2d(x)
+model = fit.hurdle(x_z, y, log=True)
+yhat = model.predict(x_z)
+prediction = collect.fire(yhat, mtbs)
 
+# what does this do?
 print('[fire] setting up evaluation')
 final_mask = load.nlcd(store=store, year=2016, coarsen=coarsen_predict, classes=[41, 42, 43, 90])
 final_mask.values = final_mask.values > 0.5
@@ -53,11 +66,17 @@ groups = load.nftd(
     store=store, groups='all', mask=mask, coarsen=coarsen_predict, area_threshold=1500
 )
 climate = load.terraclim(
-    store=store, tlim=(2005, 2014), coarsen=coarsen_predict, data_vars=data_vars, mask=mask
+    store=store,
+    tlim=(2005, 2014),
+    coarsen=coarsen_predict,
+    variables=data_vars,
+    mask=mask,
+    sampling='monthly',
 )
-prediction = model.predict(x=climate[fit_vars], f=groups)
+prediction = model.predict(x_z)
 ds['historical'] = integrated_risk(prediction['prob'] * coarsen_scale) * final_mask.values
-
+store = get_store('carbonplan-scratch', 'data/fire.zarr')
+ds.to_zarr(store, mode='w')
 print('[fire] evaluating on future climate')
 targets = list(map(lambda x: str(x), np.arange(2020, 2120, 20)))
 cmip_models = ['BCC-CSM2-MR', 'ACCESS-ESM1-5', 'CanESM5', 'MIROC6', 'MPI-ESM1-2-LR']
@@ -79,4 +98,8 @@ for cmip_model in cmip_models:
             results.append(integrated_risk(prediction['prob'] * coarsen_scale) * final_mask.values)
         da = xr.concat(results, dim=xr.Variable('year', targets))
         ds[cmip_model + '_' + scenario] = da
-        ds.to_zarr('data/fire.zarr', mode='w')
+        if store == 'local':
+            ds.to_zarr('data/fire.zarr', mode='w')
+        elif store == 'az':
+            store = get_store('carbonplan-scratch', 'data/fire.zarr')
+            ds.to_zarr(store, mode='w')
