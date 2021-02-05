@@ -19,7 +19,7 @@ else:
     store = args[1]
 
 coarsen_fit = 4
-coarsen_predict = None
+coarsen_predict = 4
 coarsen_scale = 1 / coarsen_fit
 tlim = (1984, 2018)
 data_vars = ['tmean', "cwd", "pdsi", 'ppt']
@@ -74,7 +74,9 @@ climate = load.terraclim(
     sampling='monthly',
 )
 prediction = model.predict(x_z)
-ds['historical'] = integrated_risk(prediction['prob'] * coarsen_scale) * final_mask.values
+ds['historical'] = (['time', 'x', 'y'], prediction['prediction'])
+# Not doing integrated risk
+# ds['historical'] = integrated_risk(prediction['prob'] * coarsen_scale) * final_mask.values
 store = get_store('carbonplan-scratch', 'data/fire.zarr')
 ds.to_zarr(store, mode='w')
 print('[fire] evaluating on future climate')
@@ -85,6 +87,7 @@ for cmip_model in cmip_models:
     for scenario in tqdm(scenarios):
         results = []
         for target in targets:
+            print('[fire] predicting for {} {} {}'.format(cmip_model, scenario, target))
             tlim = (int(target) - 5, int(target) + 4)
             climate = load.cmip(
                 store=store,
@@ -93,13 +96,18 @@ for cmip_model in cmip_models:
                 scenario=scenario,
                 tlim=tlim,
                 data_vars=data_vars,
+                sampling='monthly',
             )
-            prediction = model.predict(x=climate[fit_vars], f=groups)
-            results.append(integrated_risk(prediction['prob'] * coarsen_scale) * final_mask.values)
+            x, y = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=True)
+            x_z, x_mean, x_std = utils.zscore_2d(x)
+            y_hat = model.predict(x_z)
+            prediction = collect.fire(y_hat, climate)
+            results.append(prediction)
+            # results.append(integrated_risk(prediction['prob'] * coarsen_scale) * final_mask.values)
         da = xr.concat(results, dim=xr.Variable('year', targets))
         ds[cmip_model + '_' + scenario] = da
-        if store == 'local':
-            ds.to_zarr('data/fire.zarr', mode='w')
-        elif store == 'az':
-            store = get_store('carbonplan-scratch', 'data/fire.zarr')
-            ds.to_zarr(store, mode='w')
+if store == 'local':
+    ds.to_zarr('data/fire.zarr', mode='w')
+elif store == 'az':
+    store = get_store('carbonplan-scratch', 'data/fire.zarr')
+    ds.to_zarr(store, mode='w')
