@@ -73,9 +73,13 @@ climate = load.terraclim(
     mask=mask,
     sampling='monthly',
 )
+x, y = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=True)
+x_z, x_mean, x_std = utils.zscore_2d(x)
 prediction = model.predict(x_z)
 ds['historical'] = (['time', 'x', 'y'], prediction['prediction'])
-# Not doing integrated risk
+ds = ds.assign_coords({'x': climate.x, 'y': climate.y, 'time': climate.time})
+
+# Not doing integrated risk right now
 # ds['historical'] = integrated_risk(prediction['prob'] * coarsen_scale) * final_mask.values
 store = get_store('carbonplan-scratch', 'data/fire.zarr')
 ds.to_zarr(store, mode='w')
