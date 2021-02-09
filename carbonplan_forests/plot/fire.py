@@ -45,7 +45,7 @@ def monthly(data, data_var='monthly', projection='albersUsa', clim=None, cmap='r
     return chart.configure_view(strokeOpacity=0)
 
 
-def simple_map(data, clabel=None, projection='albersUsa', clim=None, cmap='reds'):
+def simple_map(data, data2=None, clabel=None, projection='albersUsa', clim=None, cmap='reds'):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
     color = data.values.flatten()
@@ -68,7 +68,22 @@ def simple_map(data, clabel=None, projection='albersUsa', clim=None, cmap='reds'
         height=300,
         projection=projection,
     )
+    if data2 is not None:
+        color = data2.values.flatten()
+        inds = color > clim[0]
 
+        row |= carto(
+            lat=lat[inds],
+            lon=lon[inds],
+            color=color[inds],
+            clim=clim,
+            cmap=cmap,
+            clabel=clabel,
+            size=size,
+            width=500,
+            height=300,
+            projection=projection,
+        )
     return row
 
 
@@ -130,6 +145,7 @@ def evaluation(
     cmap='reds',
     percentage=True,
     comparison=True,
+    add_map=True,
 ):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
@@ -155,33 +171,64 @@ def evaluation(
     yhat = model.groupby('time.year').sum().mean(['x', 'y'])[model_var].values
 
     column &= line(
-        x=x, y=y, width=300, height=122, strokeWidth=2, opacity=0.5, color='rgb(175,91,92)'
-    ) + line(x=x, y=yhat, width=300, height=122, strokeWidth=2, color='rgb(175,91,92)')
+        x=x,
+        y=y,
+        width=300,
+        height=122,
+        strokeWidth=2,
+        opacity=0.5,
+        color='rgb(175,91,92)',
+        ylabel='Probability',
+    ) + line(
+        x=x,
+        y=yhat,
+        width=300,
+        height=122,
+        strokeWidth=2,
+        color='rgb(175,91,92)',
+        ylabel='Probability',
+    )
 
     x = data.groupby('time.month').mean()['month'].values
     y = data.groupby('time.month').mean().mean(['x', 'y'])[data_var].values
     yhat = model.groupby('time.month').mean().mean(['x', 'y'])[model_var].values
 
     column &= line(
-        x=x, y=y, width=300, height=122, strokeWidth=2, opacity=0.5, color='rgb(175,91,92)'
-    ) + line(x=x, y=yhat, width=300, height=122, strokeWidth=2, color='rgb(175,91,92)')
+        x=x,
+        y=y,
+        width=300,
+        height=122,
+        strokeWidth=2,
+        opacity=0.5,
+        color='rgb(175,91,92)',
+        ylabel='Probability',
+    ) + line(
+        x=x,
+        y=yhat,
+        width=300,
+        height=122,
+        strokeWidth=2,
+        color='rgb(175,91,92)',
+        ylabel='Probability',
+    )
 
     chart = alt.hconcat()
-
     chart |= column
 
-    chart |= carto(
-        lat=lat[inds],
-        lon=lon[inds],
-        color=color[inds],
-        clim=clim,
-        cmap=cmap,
-        clabel=data_var,
-        size=size,
-        width=500,
-        height=300,
-        projection=projection,
-    )
+    if add_map:
+
+        chart |= carto(
+            lat=lat[inds],
+            lon=lon[inds],
+            color=color[inds],
+            clim=clim,
+            cmap=cmap,
+            clabel=data_var,
+            size=size,
+            width=500,
+            height=300,
+            projection=projection,
+        )
 
     return chart
 
@@ -198,23 +245,23 @@ def full_eval(
     comparison=True,
 ):
 
-    a = data["monthly"].mean("time").values.flatten()
-    b = model["prediction"].mean("time").values.flatten()
-    inds = ~np.isnan(a) & ~np.isnan(b)
-    spatial_corr = np.corrcoef(a[inds], b[inds])[0, 1] ** 2
+    # a = data[data_var].mean("time").values.flatten()
+    # b = model[model_var].mean("time").values.flatten()
+    # inds = ~np.isnan(a) & ~np.isnan(b)
+    # spatial_corr = np.corrcoef(a[inds], b[inds])[0, 1] ** 2
 
     eval_metrics = {
         'seasonal': np.corrcoef(
-            data["monthly"].groupby("time.month").mean().mean(["x", "y"]),
-            model["prediction"].groupby("time.month").mean().mean(["x", "y"]),
+            data[data_var].groupby("time.month").mean().mean(["x", "y"]),
+            model[model_var].groupby("time.month").mean().mean(["x", "y"]),
         )[0, 1]
         ** 2,
         'annual': np.corrcoef(
-            data["monthly"].groupby("time.year").mean().mean(["x", "y"]),
-            model["prediction"].groupby("time.year").mean().mean(["x", "y"]),
+            data[data_var].groupby("time.year").mean().mean(["x", "y"]),
+            model[model_var].groupby("time.year").mean().mean(["x", "y"]),
         )[0, 1]
         ** 2,
-        'spatial': spatial_corr,
+        # 'spatial': spatial_corr,
     }
 
     for metric, performance in eval_metrics.items():
