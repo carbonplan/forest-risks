@@ -37,8 +37,9 @@ def scramble_3d(data):
 
 def fire(
     climate,
-    nftd,
+    nftd=None,
     mtbs=None,
+    wind=None,
     eval_only=False,
     scramble=False,
     add_local_climate_trends=False,
@@ -62,13 +63,13 @@ def fire(
                 np.asarray(
                     [
                         np.tile(a.mean(), [12, shape[1], shape[2]])
-                        for a in climate['tmean'].rolling(dim={'time': 12}, center=False).max()
+                        for a in climate['tmean'].groupby('time.year').max()
                     ]
                 ).flatten(),
                 np.asarray(
                     [
                         np.tile(a.mean(), [12, shape[1], shape[2]])
-                        for a in climate['ppt'].rolling(dim={'time': 12}, center=False).sum()
+                        for a in climate['ppt'].groupby('time.year').max()
                     ]
                 ).flatten(),
             ]
@@ -85,10 +86,18 @@ def fire(
                     ).flatten(),
                 ]
             ).T
+        if wind is not None:
+            f4 = np.asarray(
+                [
+                    # wind.values.flatten()
+                    np.tile(wind.values, [int(shape[0] / 12), 1, 1]).flatten()
+                ]
+            ).T
     x = np.concatenate([x, f, f2], axis=1)
     if add_local_climate_trends:
         x = np.concatenate([x, f3], axis=1)
-
+    if wind is not None:
+        x = np.concatenate([x, f4], axis=1)
     if eval_only:
         return x
 

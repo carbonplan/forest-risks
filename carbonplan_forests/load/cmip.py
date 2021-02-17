@@ -50,8 +50,8 @@ def cmip(
 
         ds['cwd'] = ds['pet'] - ds['aet']
         ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -999, 0)
-        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -4, -4)
-        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] < 4, 4)
+        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -16, -16)
+        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] < 16, 16)
 
         X = xr.Dataset()
         keys = variables
