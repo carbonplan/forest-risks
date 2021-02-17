@@ -1,8 +1,8 @@
 import functools
+import os
 import sys
 import warnings
 
-import numpy as np
 import xarray as xr
 from tqdm import tqdm
 
@@ -17,6 +17,9 @@ if len(args) < 2:
     store = 'local'
 else:
     store = args[1]
+    run_historical = True
+    run_future = True
+
 
 coarsen_fit = 4
 coarsen_predict = 4
@@ -67,7 +70,7 @@ groups = load.nftd(
 )
 climate = load.terraclim(
     store=store,
-    tlim=(2005, 2014),
+    tlim=(1984, 2014),
     coarsen=coarsen_predict,
     variables=data_vars,
     mask=mask,
@@ -75,43 +78,63 @@ climate = load.terraclim(
 )
 x, y = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=True)
 x_z, x_mean, x_std = utils.zscore_2d(x)
-prediction = model.predict(x_z)
-ds['historical'] = (['time', 'x', 'y'], prediction['prediction'])
+yhat = model.predict(x_z)
+prediction = collect.fire(yhat, climate)
+ds['historical'] = (['time', 'y', 'x'], prediction['prediction'])
 ds = ds.assign_coords({'x': climate.x, 'y': climate.y, 'time': climate.time})
-
+account_key = os.environ.get('BLOB_ACCOUNT_KEY')
+if store == 'local':
+    ds.to_zarr('data/fire.zarr', mode='w')
+elif store == 'az':
+    store = get_store('carbonplan-scratch', 'data/fire.zarr', account_key=account_key)
+    ds.to_zarr(store, mode='w')
 # Not doing integrated risk right now
 # ds['historical'] = integrated_risk(prediction['prob'] * coarsen_scale) * final_mask.values
 store = get_store('carbonplan-scratch', 'data/fire.zarr')
 ds.to_zarr(store, mode='w')
 print('[fire] evaluating on future climate')
-targets = list(map(lambda x: str(x), np.arange(2020, 2120, 20)))
-cmip_models = ['BCC-CSM2-MR', 'ACCESS-ESM1-5', 'CanESM5', 'MIROC6', 'MPI-ESM1-2-LR']
+cmip_models = [
+    ('CanESM5', 'r10i1p1f1'),
+    ('UKESM1-0-LL', 'r10i1p1f2'),
+    ('MRI-ESM2-0', 'r1i1p1f1'),
+    ('MIROC-ES2L', 'r1i1p1f2'),
+    ('MIROC6', 'r10i1p1f1'),
+    ('FGOALS-g3', 'r1i1p1f1'),
+    ('HadGEM3-GC31-LL', 'r1i1p1f3'),
+]
 scenarios = ['ssp245', 'ssp370', 'ssp585']
-for cmip_model in cmip_models:
+ds_future = xr.Dataset()
+for (cmip_model, member) in cmip_models:
     for scenario in tqdm(scenarios):
-        results = []
-        for target in targets:
-            print('[fire] predicting for {} {} {}'.format(cmip_model, scenario, target))
-            tlim = (int(target) - 5, int(target) + 4)
+        try:
+            store = 'az'
+            results = []
             climate = load.cmip(
                 store=store,
                 model=cmip_model,
                 coarsen=coarsen_predict,
                 scenario=scenario,
-                tlim=tlim,
-                data_vars=data_vars,
+                tlim=('2015', '2099'),
+                variables=data_vars,
                 sampling='monthly',
+                member=member,
             )
             x, y = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=True)
             x_z, x_mean, x_std = utils.zscore_2d(x)
             y_hat = model.predict(x_z)
             prediction = collect.fire(y_hat, climate)
-            results.append(prediction)
-            # results.append(integrated_risk(prediction['prob'] * coarsen_scale) * final_mask.values)
-        da = xr.concat(results, dim=xr.Variable('year', targets))
-        ds[cmip_model + '_' + scenario] = da
+            ds_future[cmip_model + '_' + scenario] = prediction['prediction']
+
+        except:
+            print(
+                "some things just don't work out in life, and {}-{} is one such example".format(
+                    cmip_model, scenario
+                )
+            )
+# assigning the coords as below makes it easier for follow-on analysis when binning by forest group type
+ds_future = ds_future.assign_coords({'x': nftd.x, 'y': nftd.y})
 if store == 'local':
-    ds.to_zarr('data/fire.zarr', mode='w')
+    ds_future.to_zarr('data/fire_future.zarr', mode='w')
 elif store == 'az':
-    store = get_store('carbonplan-scratch', 'data/fire.zarr')
-    ds.to_zarr(store, mode='w')
+    store = get_store('carbonplan-scratch', 'data/fire_future.zarr', account_key=account_key)
+    ds_future.to_zarr(store, mode='w')
