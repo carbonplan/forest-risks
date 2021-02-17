@@ -87,7 +87,7 @@ def simple_map(data, data2=None, clabel=None, projection='albersUsa', clim=None,
     return row
 
 
-def summary(data, data_var='monthly', projection='albersUsa', clim=None):
+def summary(data, data_var='monthly', projection='albersUsa', clim=None, clabel=None):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
     color = data[data_var].groupby('time.year').sum().mean('year').values.flatten()
@@ -118,7 +118,7 @@ def summary(data, data_var='monthly', projection='albersUsa', clim=None):
         color=color[inds],
         clim=clim,
         cmap='reds',
-        clabel=data_var,
+        clabel=clabel,
         size=size,
         width=500,
         height=300,
@@ -146,6 +146,7 @@ def evaluation(
     percentage=True,
     comparison=True,
     add_map=True,
+    clabel=None,
 ):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
@@ -173,19 +174,19 @@ def evaluation(
     column &= line(
         x=x,
         y=y,
-        width=300,
+        width=500,
         height=122,
         strokeWidth=2,
         opacity=0.5,
-        color='rgb(175,91,92)',
+        color='#ea9755',
         ylabel='Probability',
     ) + line(
         x=x,
         y=yhat,
-        width=300,
+        width=500,
         height=122,
         strokeWidth=2,
-        color='rgb(175,91,92)',
+        color='#ea9755',
         ylabel='Probability',
     )
 
@@ -196,34 +197,57 @@ def evaluation(
     column &= line(
         x=x,
         y=y,
-        width=300,
+        width=500,
         height=122,
         strokeWidth=2,
         opacity=0.5,
-        color='rgb(175,91,92)',
+        color='#ea9755',
         ylabel='Probability',
     ) + line(
         x=x,
         y=yhat,
-        width=300,
+        width=500,
         height=122,
         strokeWidth=2,
-        color='rgb(175,91,92)',
+        color='#ea9755',
         ylabel='Probability',
     )
 
-    chart = alt.hconcat()
-    chart |= column
+    x = data['time'].values
+    y = data.mean(['x', 'y'])[data_var].values
+    yhat = model.mean(['x', 'y'])[model_var].values
+
+    column &= line(
+        x=x,
+        y=y,
+        width=500,
+        height=122,
+        strokeWidth=2,
+        opacity=0.5,
+        color='#ea9755',
+        ylabel='Probability',
+    ) + line(
+        x=x,
+        y=yhat,
+        width=500,
+        height=122,
+        strokeWidth=2,
+        color='#ea9755',
+        ylabel='Probability',
+    )
+
+    chart = column
 
     if add_map:
-
+        chart = alt.hconcat()
+        chart |= column
         chart |= carto(
             lat=lat[inds],
             lon=lon[inds],
             color=color[inds],
             clim=clim,
             cmap=cmap,
-            clabel=data_var,
+            clabel=clabel,
             size=size,
             width=500,
             height=300,
@@ -243,12 +267,13 @@ def full_eval(
     cmap='reds',
     percentage=True,
     comparison=True,
+    clabel=None,
 ):
 
-    # a = data[data_var].mean("time").values.flatten()
-    # b = model[model_var].mean("time").values.flatten()
-    # inds = ~np.isnan(a) & ~np.isnan(b)
-    # spatial_corr = np.corrcoef(a[inds], b[inds])[0, 1] ** 2
+    a = data[data_var].mean("time").values.flatten()
+    b = model[model_var].mean("time").values.flatten()
+    inds = ~np.isnan(a) & ~np.isnan(b)
+    spatial_corr = np.corrcoef(a[inds], b[inds])[0, 1] ** 2
 
     eval_metrics = {
         'seasonal': np.corrcoef(
@@ -261,13 +286,13 @@ def full_eval(
             model[model_var].groupby("time.year").mean().mean(["x", "y"]),
         )[0, 1]
         ** 2,
-        # 'spatial': spatial_corr,
+        'spatial': spatial_corr,
     }
 
     for metric, performance in eval_metrics.items():
         print('performance at {} scale is: {}'.format(metric, performance))
 
-    return evaluation(
+    return eval_metrics, evaluation(
         data,
         model,
         data_var=data_var,
@@ -277,6 +302,7 @@ def full_eval(
         cmap=cmap,
         percentage=percentage,
         comparison=comparison,
+        clabel=clabel,
     )
 
 
@@ -311,3 +337,44 @@ def supersection(data, varname, store='az'):
         legend=True,
     )
     plt.axis('off')
+
+
+def calc_decadal_averages(simulation):
+    decadal_averages = (
+        simulation.sel(time=slice('2020', '2099')).coarsen(time=120).sum().load() / 10
+    )
+    return decadal_averages
+
+
+def future_ts(decadal_averages, historical=None):
+    df = decadal_averages.mean(dim=['x', 'y']).to_dataframe()
+
+    df['time'] = df.index
+    df_toplot = df.melt('time', var_name='gcm_scenario', value_name='probability')
+
+    if historical is not None:
+        # historical_df = historical.mean(dim=['x', 'y']).groupby('time.year').sum().to_dataframe()
+        # historical_df['time'] = pd.date_range('1984', '2019', freq='Y')
+        historical['time'] = historical.index
+        # the historical_historical is a hack to make the gcm/scenario splitting below not fail
+
+        historical_df = historical.rename(columns={'historical': 'historical_historical'})
+        df_toplot = df_toplot.append(
+            historical_df.melt('time', var_name='gcm_scenario', value_name='probability'),
+            ignore_index=True,
+        )
+
+    df_toplot['gcm'] = df_toplot.apply(lambda row: row.gcm_scenario.split('_')[0], axis=1)
+    df_toplot['scenario'] = df_toplot.apply(lambda row: row.gcm_scenario.split('_')[1], axis=1)
+    domain = ['historical', 'ssp245', 'ssp370', 'ssp585']
+    range_ = ['black', '#7eb36a', '#ea9755', '#f07071']
+    # range_ = ['black', 'darkseagreen', 'gold', 'darksalmon']
+
+    base = alt.Chart(df_toplot).properties(width=550)
+    line = base.mark_line().encode(
+        alt.Y('probability:Q', scale=alt.Scale(domain=(0.000, 0.0012))),
+        x='time',
+        color=alt.Color('scenario', scale=alt.Scale(domain=domain, range=range_)),
+        strokeDash='gcm',
+    )
+    return line
