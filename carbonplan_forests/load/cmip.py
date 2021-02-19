@@ -13,7 +13,11 @@ from .. import setup, utils
 members = {
     'CanESM5': 'r10i1p1f1',
     'MIROC-ES2L': 'r1i1p1f2',
-    'FGOALS-g3': 'r1i1p1f1'
+    'FGOALS-g3': 'r1i1p1f1',
+    'HadGEM3-GC31-LL': 'r1i1p1f3',
+    'MIROC6': 'r10i1p1f1',
+    'MRI-ESM2-0': 'r1i1p1f1',
+    'UKESM1-0-LL': 'r10i1p1f2'
 }
 
 def cmip(
