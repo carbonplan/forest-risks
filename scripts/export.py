@@ -5,12 +5,13 @@ from carbonplan_forests import load
 # parameters
 
 variables = ['ppt', 'tmean', 'pdsi', 'cwd', 'pet', 'vpd']
-targets = list(map(lambda x: str(x), np.arange(2020, 2120, 20)))
-models = ['CanESM5']
+targets = list(map(lambda x: str(x), np.arange(2015, 2105, 10)))
+targets_historical = list(map(lambda x: str(x), np.arange(1955, 2015, 10)))
+models = ['CanESM5','MIROC-ES2L','FGOALS-g3']
 states = 'conus'
-scenarios = ['ssp245', 'ssp370']
-version = 'v10'
-date = '01-19-20'
+scenarios = ['ssp245', 'ssp370', 'ssp585']
+version = 'v11'
+date = '02-07-21'
 
 # generate wide data w/ terraclim
 
@@ -44,6 +45,7 @@ keep_vars = (
 )
 
 for target in targets:
+    historical = True if target == '2015' else False
     tlim = (str(int(target) - 5), str(int(target) + 4))
     for model in models:
         for scenario in scenarios:
@@ -54,6 +56,7 @@ for target in targets:
                 df=df,
                 model=model,
                 scenario=scenario,
+                historical=historical,
                 sampling='annual',
             )
             df = df[keep_vars]
@@ -61,3 +64,22 @@ for target in targets:
                 f'FIA-CMIP6-Long-{model}.{scenario}-{tlim[0]}.{tlim[1]}-{version}-{date}.csv',
                 index=False,
             )
+
+for target in targets_historical:
+    tlim = (str(int(target) - 5), str(int(target) + 4))
+    for model in models:
+        df = load.cmip(
+            store='local',
+            tlim=(int(tlim[0]), int(tlim[1])),
+            variables=variables,
+            df=df,
+            model=model,
+            scenario='historical',
+            historical=False,
+            sampling='annual',
+        )
+        df = df[keep_vars]
+        df.to_csv(
+            f'FIA-CMIP6-Long-{model}.{scenario}-{tlim[0]}.{tlim[1]}-{version}-{date}.csv',
+            index=False,
+        )

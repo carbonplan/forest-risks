@@ -10,6 +10,11 @@ from rasterio.transform import rowcol
 
 from .. import setup, utils
 
+members = {
+    'CanESM5': 'r10i1p1f1',
+    'MIROC-ES2L': 'r1i1p1f2',
+    'FGOALS-g3': 'r1i1p1f1'
+}
 
 def cmip(
     store='az',
@@ -17,11 +22,12 @@ def cmip(
     tlim=None,
     model=None,
     scenario=None,
-    member='r10i1p1f1',
     coarsen=None,
     variables=['ppt', 'tmean'],
     mask=None,
+    member=None,
     sampling='annual',
+    historical=False,
     remove_nans=False,
 ):
 
@@ -35,6 +41,9 @@ def cmip(
         if model is None:
             raise ValueError('must specify model')
 
+        if member is None:
+            member = members[model]
+
         path = setup.loading(store)
 
         prefix = f'cmip6/bias-corrected/conus/4000m/{sampling}/{model}.{scenario}.{member}.zarr'
@@ -47,6 +56,20 @@ def cmip(
             mapper = fsspec.get_mapper((path / 'carbonplan-downscaling' / prefix).as_uri())
 
         ds = xr.open_zarr(mapper, consolidated=True)
+
+        if historical:
+            prefix = f'cmip6/bias-corrected/conus/4000m/{sampling}/{model}.historical.{member}.zarr'
+            
+            if store == 'az':
+                mapper = zarr.storage.ABSStore(
+                    'carbonplan-downscaling', prefix=prefix, account_name='carbonplan'
+                )
+            else:
+                mapper = fsspec.get_mapper((path / 'carbonplan-downscaling' / prefix).as_uri())
+
+            ds_historical = xr.open_zarr(mapper, consolidated=True)
+
+            ds = xr.concat([ds_historical, ds], 'time')
 
         ds['cwd'] = ds['pet'] - ds['aet']
         #ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -999, 0)

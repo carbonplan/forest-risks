@@ -62,13 +62,13 @@ def fire(
                 np.asarray(
                     [
                         np.tile(a.mean(), [12, shape[1], shape[2]])
-                        for a in climate['tmean'].rolling(dim={'time': 12}, center=False).max()
+                        for a in climate['tmean'].groupby('time.year').max()
                     ]
                 ).flatten(),
                 np.asarray(
                     [
                         np.tile(a.mean(), [12, shape[1], shape[2]])
-                        for a in climate['ppt'].rolling(dim={'time': 12}, center=False).sum()
+                        for a in climate['ppt'].groupby('time.year').sum()
                     ]
                 ).flatten(),
             ]
