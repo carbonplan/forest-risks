@@ -87,10 +87,10 @@ def simple_map(data, data2=None, clabel=None, projection='albersUsa', clim=None,
     return row
 
 
-def summary(data, data_var='monthly', projection='albersUsa', clim=None, clabel=None):
+def summary(data, data_var='monthly', projection='albersUsa', clim=None, clabel=None, title=None):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
-    color = data[data_var].groupby('time.year').sum().mean('year').values.flatten()
+    color = data.groupby('time.year').sum().mean('year').values.flatten()
     inds = color > clim[0]
 
     shape = data['lat'].shape
@@ -99,12 +99,12 @@ def summary(data, data_var='monthly', projection='albersUsa', clim=None, clabel=
     column = alt.vconcat()
 
     x = data.groupby('time.year').sum()['year'].values
-    y = data.groupby('time.year').sum().mean(['x', 'y'])[data_var].values
+    y = data.groupby('time.year').sum().mean(['x', 'y']).values
 
     column &= line(x=x, y=y, width=300, height=122, strokeWidth=2, color='rgb(175,91,92)')
 
     x = data.groupby('time.month').mean()['month'].values
-    y = data.groupby('time.month').mean().mean(['x', 'y'])[data_var].values
+    y = data.groupby('time.month').mean().mean(['x', 'y']).values
 
     column &= line(x=x, y=y, width=300, height=122, strokeWidth=2, color='rgb(175,91,92)')
 
@@ -123,6 +123,7 @@ def summary(data, data_var='monthly', projection='albersUsa', clim=None, clabel=
         width=500,
         height=300,
         projection=projection,
+        title=title,
     )
 
     return row
@@ -346,7 +347,7 @@ def calc_decadal_averages(simulation):
     return decadal_averages
 
 
-def future_ts(decadal_averages, historical=None):
+def future_ts(decadal_averages, historical=None, domain=(0.0, 0.05)):
     df = decadal_averages.mean(dim=['x', 'y']).to_dataframe()
 
     df['time'] = df.index
@@ -366,15 +367,14 @@ def future_ts(decadal_averages, historical=None):
 
     df_toplot['gcm'] = df_toplot.apply(lambda row: row.gcm_scenario.split('_')[0], axis=1)
     df_toplot['scenario'] = df_toplot.apply(lambda row: row.gcm_scenario.split('_')[1], axis=1)
-    domain = ['historical', 'ssp245', 'ssp370', 'ssp585']
-    range_ = ['black', '#7eb36a', '#ea9755', '#f07071']
-    # range_ = ['black', 'darkseagreen', 'gold', 'darksalmon']
+    scenarios = ['historical', 'ssp245', 'ssp370', 'ssp585']
+    colors_ = ['black', '#7eb36a', '#ea9755', '#f07071']
 
     base = alt.Chart(df_toplot).properties(width=550)
     line = base.mark_line().encode(
-        alt.Y('probability:Q', scale=alt.Scale(domain=(0.000, 0.0012))),
+        alt.Y('probability:Q', scale=alt.Scale(domain=domain)),
         x='time',
-        color=alt.Color('scenario', scale=alt.Scale(domain=domain, range=range_)),
+        color=alt.Color('scenario', scale=alt.Scale(domain=scenarios, range=colors_)),
         strokeDash='gcm',
     )
     return line
