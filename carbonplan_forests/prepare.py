@@ -78,13 +78,20 @@ def fire(
             f3 = np.asarray(
                 [
                     np.asarray(
-                        [climate['tmean'].rolling(dim={'time': 12}, center=False).max()]
+                        [
+                            np.tile(a, [12, 1, 1])
+                            for a in climate['tmean'].groupby('time.year').max()
+                        ]
                     ).flatten(),
                     np.asarray(
-                        [climate['ppt'].rolling(dim={'time': 12}, center=False).sum()]
+                        [
+                            np.tile(a, [12, 1, 1])
+                            for a in climate['ppt'].groupby('time.year').sum()
+                        ]
                     ).flatten(),
                 ]
             ).T
+            
     x = np.concatenate([x, f, f2], axis=1)
     if add_local_climate_trends:
         x = np.concatenate([x, f3], axis=1)
