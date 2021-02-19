@@ -21,8 +21,8 @@ else:
     run_future = True
 
 
-coarsen_fit = 4
-coarsen_predict = 4
+coarsen_fit = 8
+coarsen_predict = 8
 coarsen_scale = 1 / coarsen_fit
 tlim = (1984, 2018)
 data_vars = ['tmean', "cwd", "pdsi", 'ppt']
@@ -52,7 +52,7 @@ mtbs = mtbs.assign_coords({'x': nftd.x, 'y': nftd.y})
 # mtbs['vlf'] = mtbs['vlf'] > 0
 
 print('[fire] fitting model')
-x, y = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=True)
+x, y = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=False)
 x_z, x_mean, x_std = utils.zscore_2d(x)
 model = fit.hurdle(x_z, y, log=True)
 yhat = model.predict(x_z)
@@ -70,14 +70,14 @@ groups = load.nftd(
 )
 climate = load.terraclim(
     store=store,
-    tlim=(1984, 2014),
+    tlim=tlim,
     coarsen=coarsen_predict,
     variables=data_vars,
     mask=mask,
     sampling='monthly',
 )
-x, y = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=True)
-x_z, x_mean, x_std = utils.zscore_2d(x)
+x, y = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=False)
+x_z = utils.zscore_2d(x, mean=x_mean, std=x_std)
 yhat = model.predict(x_z)
 prediction = collect.fire(yhat, climate)
 ds['historical'] = (['time', 'y', 'x'], prediction['prediction'])
@@ -88,10 +88,7 @@ if store == 'local':
 elif store == 'az':
     store = get_store('carbonplan-scratch', 'data/fire.zarr', account_key=account_key)
     ds.to_zarr(store, mode='w')
-# Not doing integrated risk right now
-# ds['historical'] = integrated_risk(prediction['prob'] * coarsen_scale) * final_mask.values
-store = get_store('carbonplan-scratch', 'data/fire.zarr')
-ds.to_zarr(store, mode='w')
+
 print('[fire] evaluating on future climate')
 cmip_models = [
     ('CanESM5', 'r10i1p1f1'),
@@ -119,8 +116,8 @@ for (cmip_model, member) in cmip_models:
                 sampling='monthly',
                 member=member,
             )
-            x, y = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=True)
-            x_z, x_mean, x_std = utils.zscore_2d(x)
+            x, y = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=False)
+            x_z = utils.zscore_2d(x, mean=x_mean, std=x_std)
             y_hat = model.predict(x_z)
             prediction = collect.fire(y_hat, climate)
             ds_future[cmip_model + '_' + scenario] = prediction['prediction']
