@@ -92,7 +92,6 @@ ds_future = xr.Dataset()
 for (cmip_model, member) in cmip_models:
     for scenario in tqdm(scenarios):
         try:
-            store = 'az'
             results = []
             climate = load.cmip(
                 store=store,
@@ -104,7 +103,7 @@ for (cmip_model, member) in cmip_models:
                 sampling='monthly',
                 member=member,
             )
-            x, y = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=False)
+            x, y = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=True)
             x_z = utils.zscore_2d(x, mean=x_mean, std=x_std)
             y_hat = model.predict(x_z)
             prediction = collect.fire(y_hat, climate)
@@ -122,5 +121,5 @@ ds_future = ds_future.assign_coords({'x': nftd.x, 'y': nftd.y})
 if store == 'local':
     ds_future.to_zarr('data/fire_future.zarr', mode='w')
 elif store == 'az':
-    store = get_store('carbonplan-scratch', 'data/fire_future.zarr', account_key=account_key)
-    ds_future.to_zarr(store, mode='w')
+    path = get_store('carbonplan-scratch', 'data/fire_future.zarr', account_key=account_key)
+    ds_future.to_zarr(path, mode='w')
