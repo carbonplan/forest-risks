@@ -17,8 +17,9 @@ members = {
     'HadGEM3-GC31-LL': 'r1i1p1f3',
     'MIROC6': 'r10i1p1f1',
     'MRI-ESM2-0': 'r1i1p1f1',
-    'UKESM1-0-LL': 'r10i1p1f2'
+    'UKESM1-0-LL': 'r10i1p1f2',
 }
+
 
 def cmip(
     store='az',
@@ -63,7 +64,7 @@ def cmip(
 
         if historical:
             prefix = f'cmip6/bias-corrected/conus/4000m/{sampling}/{model}.historical.{member}.zarr'
-            
+
             if store == 'az':
                 mapper = zarr.storage.ABSStore(
                     'carbonplan-downscaling', prefix=prefix, account_name='carbonplan'
@@ -76,9 +77,9 @@ def cmip(
             ds = xr.concat([ds_historical, ds], 'time')
 
         ds['cwd'] = ds['pet'] - ds['aet']
-        #ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -999, 0)
-        #ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -4, -4)
-        #ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] < 4, 4)
+        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -999, 0)
+        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -16, -16)
+        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] < 16, 16)
 
         X = xr.Dataset()
         keys = variables
