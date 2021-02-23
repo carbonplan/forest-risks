@@ -45,7 +45,7 @@ def monthly(data, data_var='monthly', projection='albersUsa', clim=None, cmap='r
     return chart.configure_view(strokeOpacity=0)
 
 
-def simple_map(data, clabel=None, projection='albersUsa', clim=None, cmap='reds'):
+def simple_map(data, data2=None, clabel=None, projection='albersUsa', clim=None, cmap='reds'):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
     color = data.values.flatten()
@@ -68,14 +68,29 @@ def simple_map(data, clabel=None, projection='albersUsa', clim=None, cmap='reds'
         height=300,
         projection=projection,
     )
+    if data2 is not None:
+        color = data2.values.flatten()
+        inds = color > clim[0]
 
+        row |= carto(
+            lat=lat[inds],
+            lon=lon[inds],
+            color=color[inds],
+            clim=clim,
+            cmap=cmap,
+            clabel=clabel,
+            size=size,
+            width=500,
+            height=300,
+            projection=projection,
+        )
     return row
 
 
-def summary(data, data_var='monthly', projection='albersUsa', clim=None):
+def summary(data, data_var='monthly', projection='albersUsa', clim=None, clabel=None, title=None):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
-    color = data[data_var].groupby('time.year').sum().mean('year').values.flatten()
+    color = data.groupby('time.year').sum().mean('year').values.flatten()
     inds = color > clim[0]
 
     shape = data['lat'].shape
@@ -84,12 +99,12 @@ def summary(data, data_var='monthly', projection='albersUsa', clim=None):
     column = alt.vconcat()
 
     x = data.groupby('time.year').sum()['year'].values
-    y = data.groupby('time.year').sum().mean(['x', 'y'])[data_var].values
+    y = data.groupby('time.year').sum().mean(['x', 'y']).values
 
     column &= line(x=x, y=y, width=300, height=122, strokeWidth=2, color='rgb(175,91,92)')
 
     x = data.groupby('time.month').mean()['month'].values
-    y = data.groupby('time.month').mean().mean(['x', 'y'])[data_var].values
+    y = data.groupby('time.month').mean().mean(['x', 'y']).values
 
     column &= line(x=x, y=y, width=300, height=122, strokeWidth=2, color='rgb(175,91,92)')
 
@@ -103,11 +118,12 @@ def summary(data, data_var='monthly', projection='albersUsa', clim=None):
         color=color[inds],
         clim=clim,
         cmap='reds',
-        clabel=data_var,
+        clabel=clabel,
         size=size,
         width=500,
         height=300,
         projection=projection,
+        title=title,
     )
 
     return row
@@ -130,6 +146,8 @@ def evaluation(
     cmap='reds',
     percentage=True,
     comparison=True,
+    add_map=True,
+    clabel=None,
 ):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
@@ -155,33 +173,87 @@ def evaluation(
     yhat = model.groupby('time.year').sum().mean(['x', 'y'])[model_var].values
 
     column &= line(
-        x=x, y=y, width=300, height=122, strokeWidth=2, opacity=0.5, color='rgb(175,91,92)'
-    ) + line(x=x, y=yhat, width=300, height=122, strokeWidth=2, color='rgb(175,91,92)')
+        x=x,
+        y=y,
+        width=500,
+        height=122,
+        strokeWidth=2,
+        opacity=0.5,
+        color='#ea9755',
+        ylabel='Probability',
+    ) + line(
+        x=x,
+        y=yhat,
+        width=500,
+        height=122,
+        strokeWidth=2,
+        color='#ea9755',
+        ylabel='Probability',
+    )
 
     x = data.groupby('time.month').mean()['month'].values
     y = data.groupby('time.month').mean().mean(['x', 'y'])[data_var].values
     yhat = model.groupby('time.month').mean().mean(['x', 'y'])[model_var].values
 
     column &= line(
-        x=x, y=y, width=300, height=122, strokeWidth=2, opacity=0.5, color='rgb(175,91,92)'
-    ) + line(x=x, y=yhat, width=300, height=122, strokeWidth=2, color='rgb(175,91,92)')
-
-    chart = alt.hconcat()
-
-    chart |= column
-
-    chart |= carto(
-        lat=lat[inds],
-        lon=lon[inds],
-        color=color[inds],
-        clim=clim,
-        cmap=cmap,
-        clabel=data_var,
-        size=size,
+        x=x,
+        y=y,
         width=500,
-        height=300,
-        projection=projection,
+        height=122,
+        strokeWidth=2,
+        opacity=0.5,
+        color='#ea9755',
+        ylabel='Probability',
+    ) + line(
+        x=x,
+        y=yhat,
+        width=500,
+        height=122,
+        strokeWidth=2,
+        color='#ea9755',
+        ylabel='Probability',
     )
+
+    x = data['time'].values
+    y = data.mean(['x', 'y'])[data_var].values
+    yhat = model.mean(['x', 'y'])[model_var].values
+
+    column &= line(
+        x=x,
+        y=y,
+        width=500,
+        height=122,
+        strokeWidth=2,
+        opacity=0.5,
+        color='#ea9755',
+        ylabel='Probability',
+    ) + line(
+        x=x,
+        y=yhat,
+        width=500,
+        height=122,
+        strokeWidth=2,
+        color='#ea9755',
+        ylabel='Probability',
+    )
+
+    chart = column
+
+    if add_map:
+        chart = alt.hconcat()
+        chart |= column
+        chart |= carto(
+            lat=lat[inds],
+            lon=lon[inds],
+            color=color[inds],
+            clim=clim,
+            cmap=cmap,
+            clabel=clabel,
+            size=size,
+            width=500,
+            height=300,
+            projection=projection,
+        )
 
     return chart
 
@@ -196,22 +268,23 @@ def full_eval(
     cmap='reds',
     percentage=True,
     comparison=True,
+    clabel=None,
 ):
 
-    a = data["monthly"].mean("time").values.flatten()
-    b = model["prediction"].mean("time").values.flatten()
+    a = data[data_var].mean("time").values.flatten()
+    b = model[model_var].mean("time").values.flatten()
     inds = ~np.isnan(a) & ~np.isnan(b)
     spatial_corr = np.corrcoef(a[inds], b[inds])[0, 1] ** 2
 
     eval_metrics = {
         'seasonal': np.corrcoef(
-            data["monthly"].groupby("time.month").mean().mean(["x", "y"]),
-            model["prediction"].groupby("time.month").mean().mean(["x", "y"]),
+            data[data_var].groupby("time.month").mean().mean(["x", "y"]),
+            model[model_var].groupby("time.month").mean().mean(["x", "y"]),
         )[0, 1]
         ** 2,
         'annual': np.corrcoef(
-            data["monthly"].groupby("time.year").mean().mean(["x", "y"]),
-            model["prediction"].groupby("time.year").mean().mean(["x", "y"]),
+            data[data_var].groupby("time.year").mean().mean(["x", "y"]),
+            model[model_var].groupby("time.year").mean().mean(["x", "y"]),
         )[0, 1]
         ** 2,
         'spatial': spatial_corr,
@@ -220,7 +293,7 @@ def full_eval(
     for metric, performance in eval_metrics.items():
         print('performance at {} scale is: {}'.format(metric, performance))
 
-    return evaluation(
+    return eval_metrics, evaluation(
         data,
         model,
         data_var=data_var,
@@ -230,6 +303,7 @@ def full_eval(
         cmap=cmap,
         percentage=percentage,
         comparison=comparison,
+        clabel=clabel,
     )
 
 
@@ -264,3 +338,43 @@ def supersection(data, varname, store='az'):
         legend=True,
     )
     plt.axis('off')
+
+
+def calc_decadal_averages(simulation):
+    decadal_averages = (
+        simulation.sel(time=slice('2020', '2099')).coarsen(time=120).sum().load() / 10
+    )
+    return decadal_averages
+
+
+def future_ts(decadal_averages, historical=None, domain=(0.0, 0.05)):
+    df = decadal_averages.mean(dim=['x', 'y']).to_dataframe()
+
+    df['time'] = df.index
+    df_toplot = df.melt('time', var_name='gcm_scenario', value_name='probability')
+
+    if historical is not None:
+        # historical_df = historical.mean(dim=['x', 'y']).groupby('time.year').sum().to_dataframe()
+        # historical_df['time'] = pd.date_range('1984', '2019', freq='Y')
+        historical['time'] = historical.index
+        # the historical_historical is a hack to make the gcm/scenario splitting below not fail
+
+        historical_df = historical.rename(columns={'historical': 'historical_historical'})
+        df_toplot = df_toplot.append(
+            historical_df.melt('time', var_name='gcm_scenario', value_name='probability'),
+            ignore_index=True,
+        )
+
+    df_toplot['gcm'] = df_toplot.apply(lambda row: row.gcm_scenario.split('_')[0], axis=1)
+    df_toplot['scenario'] = df_toplot.apply(lambda row: row.gcm_scenario.split('_')[1], axis=1)
+    scenarios = ['historical', 'ssp245', 'ssp370', 'ssp585']
+    colors_ = ['black', '#7eb36a', '#ea9755', '#f07071']
+
+    base = alt.Chart(df_toplot).properties(width=550)
+    line = base.mark_line().encode(
+        alt.Y('probability:Q', scale=alt.Scale(domain=domain)),
+        x='time',
+        color=alt.Color('scenario', scale=alt.Scale(domain=scenarios, range=colors_)),
+        strokeDash='gcm',
+    )
+    return line
