@@ -1,4 +1,7 @@
+import os
+
 import numpy as np
+import zarr
 from pyproj import Proj, transform
 from rasterio import Affine
 from rasterio.crs import CRS
@@ -121,3 +124,18 @@ def remove_nans(x, y=None, return_inds=False):
 def weighted_mean(ds, *args, **kwargs):
     weights = ds.time.dt.days_in_month
     return ds.weighted(weights).mean(dim='time')
+
+
+def get_store(bucket, prefix, account_key=None):
+    ''' helper function to create a zarr store'''
+
+    if account_key is None:
+        account_key = os.environ.get('BLOB_ACCOUNT_KEY', None)
+
+    store = zarr.storage.ABSStore(
+        bucket,
+        prefix=prefix,
+        account_name="carbonplan",
+        account_key=account_key,
+    )
+    return store
