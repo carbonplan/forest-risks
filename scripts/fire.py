@@ -39,7 +39,7 @@ climate = load.terraclim(
 )
 mtbs = load.mtbs(store=store, coarsen=coarsen_fit, tlim=tlim)
 mtbs = mtbs.assign_coords({'x': nftd.x, 'y': nftd.y})
-mtbs_test = mtbs * (nlcd.sel(band=[41, 42, 43, 90]).sum('band') > 0.1).values
+mtbs *= (nlcd.sel(band=[41, 42, 43, 90]).sum('band') > 0.1).values
 # @jeremy - do we still want this line?
 # mtbs['monthly'] = mtbs['monthly'] > 0
 
