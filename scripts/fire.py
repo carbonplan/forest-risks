@@ -16,13 +16,15 @@ if len(args) < 2:
     store = 'local'
 else:
     store = args[1]
+    run_name = args[2]
+    data_vars = args[3].strip('[]').split(',')
+    coarsen_fit = int(args[4])
+    premask = args[5]
 
-coarsen_fit = 4
 coarsen_predict = 4
 tlim = (1984, 2018)
-data_vars = ['tmean', 'ppt']  # "cwd", "pdsi", ]
-fit_vars = ['tmean', 'ppt']  # "cwd", "pdsi", ]
-
+# data_vars = ['tmean', 'ppt']  # "cwd", "pdsi", ]
+# fit_vars = ['tmean', 'ppt']  # "cwd", "pdsi", ]
 
 print('[fire] loading data')
 mask = load.mask(store=store, year=2001)
@@ -39,7 +41,8 @@ climate = load.terraclim(
 )
 mtbs = load.mtbs(store=store, coarsen=coarsen_fit, tlim=tlim)
 mtbs = mtbs.assign_coords({'x': nftd.x, 'y': nftd.y})
-mtbs *= (nlcd.sel(band=[41, 42, 43, 90]).sum('band') > 0.1).values
+if premask:
+    mtbs *= (nlcd.sel(band=[41, 42, 43, 90]).sum('band') > 0.1).values
 # @jeremy - do we still want this line?
 # mtbs['monthly'] = mtbs['monthly'] > 0
 
@@ -74,7 +77,11 @@ account_key = os.environ.get('BLOB_ACCOUNT_KEY')
 if store == 'local':
     ds.to_zarr('data/fire_historical.zarr', mode='w')
 elif store == 'az':
-    path = get_store('carbonplan-scratch', 'data/fire_historical.zarr', account_key=account_key)
+    path = get_store(
+        'carbonplan-scratch',
+        'data/fire_historical_{}.zarr'.format(run_name),
+        account_key=account_key,
+    )
     ds.to_zarr(path, mode='w')
 
 print('[fire] evaluating on future climate')
@@ -121,5 +128,7 @@ ds_future = ds_future.assign_coords({'x': nftd.x, 'y': nftd.y})
 if store == 'local':
     ds_future.to_zarr('data/fire_future.zarr', mode='w')
 elif store == 'az':
-    path = get_store('carbonplan-scratch', 'data/fire_future.zarr', account_key=account_key)
+    path = get_store(
+        'carbonplan-scratch', 'data/fire_future_{}.zarr'.format(run_name), account_key=account_key
+    )
     ds_future.to_zarr(path, mode='w')
