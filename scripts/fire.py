@@ -19,17 +19,17 @@ else:
     run_name = args[2]
     data_vars = args[3].strip('[]').split(',')
     coarsen_fit = int(args[4])
-    premask = args[5]
 
-coarsen_predict = 4
+coarsen_predict = coarsen_fit
 tlim = (1984, 2018)
 # data_vars = ['tmean', 'ppt']  # "cwd", "pdsi", ]
 # fit_vars = ['tmean', 'ppt']  # "cwd", "pdsi", ]
 
 print('[fire] loading data')
-mask = load.mask(store=store, year=2001)
+mask = (load.nlcd(store=store, year=2001).sel(band=[41, 42, 43, 90]).sum('band') > 0.25).astype(
+    'float'
+)
 nftd = load.nftd(store=store, groups='all', coarsen=coarsen_fit, mask=mask, area_threshold=1500)
-nlcd = load.nlcd(store=store, year=2001, coarsen=coarsen_fit, mask=mask)
 
 climate = load.terraclim(
     store=store,
@@ -39,12 +39,8 @@ climate = load.terraclim(
     mask=mask,
     sampling="monthly",
 )
-mtbs = load.mtbs(store=store, coarsen=coarsen_fit, tlim=tlim)
+mtbs = load.mtbs(store=store, coarsen=coarsen_fit, tlim=tlim, mask=mask)
 mtbs = mtbs.assign_coords({'x': nftd.x, 'y': nftd.y})
-if premask:
-    mtbs *= (nlcd.sel(band=[41, 42, 43, 90]).sum('band') > 0.1).values
-# @jeremy - do we still want this line?
-# mtbs['monthly'] = mtbs['monthly'] > 0
 
 print('[fire] fitting model')
 x, y = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=True)
@@ -72,7 +68,9 @@ x_z = utils.zscore_2d(x, mean=x_mean, std=x_std)
 yhat = model.predict(x_z)
 prediction = collect.fire(yhat, climate)
 ds['historical'] = (['time', 'y', 'x'], prediction['prediction'])
-ds = ds.assign_coords({'x': climate.x, 'y': climate.y, 'time': climate.time})
+ds = ds.assign_coords(
+    {'x': climate.x, 'y': climate.y, 'time': climate.time, 'lat': climate.lat, 'lon': climate.lon}
+)
 account_key = os.environ.get('BLOB_ACCOUNT_KEY')
 if store == 'local':
     ds.to_zarr('data/fire_historical.zarr', mode='w')
@@ -83,7 +81,6 @@ elif store == 'az':
         account_key=account_key,
     )
     ds.to_zarr(path, mode='w')
-
 print('[fire] evaluating on future climate')
 cmip_models = [
     ('CanESM5', 'r10i1p1f1'),
@@ -105,12 +102,14 @@ for (cmip_model, member) in cmip_models:
                 model=cmip_model,
                 coarsen=coarsen_predict,
                 scenario=scenario,
-                tlim=('2015', '2099'),
+                tlim=('1970', '2099'),
                 variables=data_vars,
                 sampling='monthly',
                 member=member,
+                historical=True,
+                mask=mask,
             )
-            x, y = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=True)
+            x = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=True, eval_only=True)
             x_z = utils.zscore_2d(x, mean=x_mean, std=x_std)
             y_hat = model.predict(x_z)
             prediction = collect.fire(y_hat, climate)

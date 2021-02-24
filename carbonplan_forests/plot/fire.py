@@ -67,6 +67,7 @@ def simple_map(data, data2=None, clabel=None, projection='albersUsa', clim=None,
         width=500,
         height=300,
         projection=projection,
+        opacity=1,
     )
     if data2 is not None:
         color = data2.values.flatten()
@@ -83,6 +84,7 @@ def simple_map(data, data2=None, clabel=None, projection='albersUsa', clim=None,
             width=500,
             height=300,
             projection=projection,
+            opacity=1.0,
         )
     return row
 
@@ -180,7 +182,7 @@ def evaluation(
         strokeWidth=2,
         opacity=0.5,
         color='#ea9755',
-        ylabel='Probability',
+        ylabel='burn area [fraction/year]',
     ) + line(
         x=x,
         y=yhat,
@@ -188,7 +190,7 @@ def evaluation(
         height=122,
         strokeWidth=2,
         color='#ea9755',
-        ylabel='Probability',
+        ylabel='burn area [fraction/year]',
     )
 
     x = data.groupby('time.month').mean()['month'].values
@@ -203,7 +205,7 @@ def evaluation(
         strokeWidth=2,
         opacity=0.5,
         color='#ea9755',
-        ylabel='Probability',
+        ylabel='burn area [fraction/month]',
     ) + line(
         x=x,
         y=yhat,
@@ -211,11 +213,12 @@ def evaluation(
         height=122,
         strokeWidth=2,
         color='#ea9755',
-        ylabel='Probability',
+        ylabel='burn area [fraction/month]',
     )
 
     x = data['time'].values
     y = data.mean(['x', 'y'])[data_var].values
+    print(model)
     yhat = model.mean(['x', 'y'])[model_var].values
 
     column &= line(
@@ -226,7 +229,7 @@ def evaluation(
         strokeWidth=2,
         opacity=0.5,
         color='#ea9755',
-        ylabel='Probability',
+        ylabel='burn area [fraction/month]',
     ) + line(
         x=x,
         y=yhat,
@@ -234,7 +237,7 @@ def evaluation(
         height=122,
         strokeWidth=2,
         color='#ea9755',
-        ylabel='Probability',
+        ylabel='burn area [fraction/month]',
     )
 
     chart = column
