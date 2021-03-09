@@ -10,13 +10,15 @@
 _Note: This project is under active development. We expect to make many breaking changes to the utilities and APIs included in this repository. Feel free to look around, but use at your own risk._
 
 [![GitHub][github-badge]][github]
-![Build Status][]
+[![Build Status]][actions]
 ![MIT License][]
 
 [github]: https://github.com/carbonplan/forests
-[github-badge]: https://flat.badgen.net/badge/-/github?icon=github&label
-[build status]: https://flat.badgen.net/github/checks/carbonplan/forests
-[mit license]: https://flat.badgen.net/badge/license/MIT/blue
+[github-badge]: https://badgen.net/badge/-/github?icon=github&label
+[build status]: https://github.com/carbonplan/forests/actions/workflows/main.yaml/badge.svg
+[actions]: https://github.com/carbonplan/forests/actions/workflows/main.yaml
+[mit license]: https://badgen.net/badge/license/MIT/blue
+
 
 This repository includes our libraries and scripts for mapping forest carbon potential and risks.
 
