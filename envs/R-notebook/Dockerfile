@@ -71,7 +71,7 @@ RUN conda install --quiet --yes \
     fix-permissions "/home/${NB_USER}"
 
 RUN R -e "remotes::install_github('hunter-stanke/rFIA@aaa0ff429696a1c94f81525d142d269f6f7676a5')"
-RUN R -e "install.packages('rworldmap', dependencies=TRUE)"
+# RUN R -e "install.packages('rworldmap', dependencies=TRUE)"
 
 # Install e1071 R package (dependency of the caret R package)
 RUN conda install --quiet --yes r-e1071
