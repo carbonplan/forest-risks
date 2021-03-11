@@ -7,7 +7,7 @@ from carbonplan_forests import load
 variables = ['ppt', 'tmean', 'pdsi', 'cwd', 'pet', 'vpd']
 targets = list(map(lambda x: str(x), np.arange(2015, 2105, 10)))
 targets_historical = list(map(lambda x: str(x), np.arange(1955, 2015, 10)))
-models = ['CanESM5','MIROC-ES2L','FGOALS-g3']
+models = ['CanESM5', 'MIROC-ES2L', 'FGOALS-g3']
 states = 'conus'
 scenarios = ['ssp245', 'ssp370', 'ssp585']
 version = 'v11'

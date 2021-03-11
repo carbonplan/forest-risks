@@ -7,7 +7,6 @@ import xarray as xr
 import zarr
 
 from .. import setup
-from ..utils import rowcol_to_latlon
 
 
 def mtbs(store='az', tlim=(1984, 2018), mask=None, coarsen=None):

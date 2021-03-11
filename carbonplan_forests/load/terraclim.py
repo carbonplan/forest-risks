@@ -41,9 +41,9 @@ def terraclim(
         ds = xr.open_zarr(mapper, consolidated=True)
 
         ds['cwd'] = ds['pet'] - ds['aet']
-        #ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -999, 0)
-        #ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -4, -4)
-        #ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] < 4, 4)
+        # ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -999, 0)
+        # ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -4, -4)
+        # ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] < 4, 4)
 
         X = xr.Dataset()
         keys = variables
