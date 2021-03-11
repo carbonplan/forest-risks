@@ -81,8 +81,8 @@ dependencies:
       - carbonplan-styles
       - numbagg
       - showit
-      - git+https://github.com/jhamman/scikit-downscale.git@a502557f322cf6a8cd2e34008b31f1b89b7e8190 --no-deps
-      - git+https://github.com/jhamman/zarr.git@fix/absstore --no-deps  # for current version of azure api
-      - git+https://github.com/jhamman/climate_indices.git@39bbf038c77922f8f0a46bb69704d6aace4179f9 --no-deps  # for no-nco deps, expanded range of pdsi
-      - git+https://github.com/altair-viz/altair_data_server.git --no-deps  # for remote hosting
-      - git+https://github.com/carbonplan/cmip6-downscaling.git@e8cc4ad89ed3da47a1e46ccc441cdda8eebbc152 --no-deps
+      - git+https://github.com/jhamman/scikit-downscale.git@a502557f322cf6a8cd2e34008b31f1b89b7e8190
+      - git+https://github.com/jhamman/zarr.git@fix/absstore  # for current version of azure api
+      - git+https://github.com/jhamman/climate_indices.git@39bbf038c77922f8f0a46bb69704d6aace4179f9  # for no-nco deps, expanded range of pdsi
+      - git+https://github.com/altair-viz/altair_data_server.git  # for remote hosting
+      - git+https://github.com/carbonplan/cmip6-downscaling.git@e8cc4ad89ed3da47a1e46ccc441cdda8eebbc152
