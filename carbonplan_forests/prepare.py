@@ -35,6 +35,22 @@ def scramble_3d(data):
     return data
 
 
+def smooth(da, spatial_smoothing_window):
+    """
+    Smooth in space a data array according
+    to box with height and width of `spatial_smoothing_window`
+    """
+    coarsened = da.coarsen(
+        x=spatial_smoothing_window, y=spatial_smoothing_window, boundary='pad'
+    ).max()
+    # then interpolate the coarsened array to the desired grid (but only the extent of your coarsened coords)
+    interpolated = coarsened.interp(
+        x=da.x, y=da.y, method='linear', kwargs={'fill_value': 'extrapolate'}
+    )
+    # # finally reassign the full index and interpolate to fill with the nearest neighbor along 'x' dimension
+    return interpolated.interpolate_na(dim='x', method='nearest', fill_value='extrapolate')
+
+
 def fire(
     full_climate,
     nftd,
@@ -43,6 +59,7 @@ def fire(
     scramble=False,
     add_local_climate_trends=False,
     rolling_period=None,
+    spatial_smoothing_window=None,
 ):
     """
     Prepare x and y and group variables for fire model fitting
@@ -51,6 +68,7 @@ def fire(
     if rolling_period is not None:
         climate = full_climate.sel(time=rolling_period)
     else:
+        print('here we define climate')
         climate = full_climate
     shape = (len(climate.time), len(climate.y), len(climate.x))
     if scramble:
@@ -63,6 +81,8 @@ def fire(
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', category=RuntimeWarning)
         if rolling_period is not None:
+            print('Doing the global averages on a rolling basis')
+
             # if rolling_period is set, you'll exchange out the `climate` variable
             # with a new rolling_averaged one for this part
             # climate is not called again after this
@@ -92,6 +112,8 @@ def fire(
             ).T
 
         else:
+            print('Doing the global averages on a groupby basis')
+
             f2 = np.asarray(
                 [
                     np.asarray(
@@ -110,7 +132,23 @@ def fire(
             ).T
 
         if add_local_climate_trends:
+
+            # if spatial_smoothing_window is not None:
+            #     print('Using spatial smoothing window of {}-fold'.format(spatial_smoothing_window))
+            #     # if you're smoothing then you can just use this one and no global signal
+            #     coarsened = climate.coarsen(x=spatial_smoothing_window,
+            #                                 y=spatial_smoothing_window, boundary='pad').max()
+            #     # then interpolate the coarsened array to the desired grid (but only the extent of your coarsened coords)
+            #     interpolated = coarsened.interp(x=climate.x,
+            #                                 y=climate.y,
+            #                                     method='linear',
+            #                                 kwargs={'fill_value': 'extrapolate'})
+            #     # # finally reassign the full index and interpolate to fill with the nearest neighbor along 'x' dimension
+            #     climate = interpolated.interpolate_na(dim='x', method='nearest',
+            #                                     fill_value='extrapolate')
+
             if rolling_period is not None:
+                print('Doing the local averages on a rolling basis')
                 f3 = np.asarray(
                     # if we want to do some coarsening/smoothing we'll add that here
                     [
@@ -123,25 +161,58 @@ def fire(
                     ]
                 ).T
             else:
-                f3 = np.asarray(
-                    [
-                        np.asarray(
-                            [
-                                np.tile(a, [12, 1, 1])
-                                for a in climate['tmean'].groupby('time.year').max()
-                            ]
-                        ).flatten(),
-                        np.asarray(
-                            [
-                                np.tile(a, [12, 1, 1])
-                                for a in climate['ppt'].groupby('time.year').sum()
-                            ]
-                        ).flatten(),
-                    ]
-                ).T
+                print('Doing the local averages on a groupby basis')
+                if spatial_smoothing_window is not None:
+                    print(
+                        'Using spatial smoothing window of {}-fold'.format(spatial_smoothing_window)
+                    )
+                    print(climate)
+                    f3 = np.asarray(
+                        [
+                            np.asarray(
+                                [
+                                    np.tile(smooth(a, spatial_smoothing_window), [12, 1, 1])
+                                    for a in climate['tmean'].groupby('time.year').max()
+                                ]
+                            ).flatten(),
+                            np.asarray(
+                                [
+                                    np.tile(smooth(a, spatial_smoothing_window), [12, 1, 1])
+                                    for a in climate['ppt'].groupby('time.year').sum()
+                                ]
+                            ).flatten(),
+                        ]
+                    ).T
+                    print(f3.shape)
+                else:
+                    print('Using local info')
 
-    x = np.concatenate([x, f, f2], axis=1)
-    if add_local_climate_trends:
+                    f3 = np.asarray(
+                        [
+                            np.asarray(
+                                [
+                                    np.tile(a, [12, 1, 1])
+                                    for a in climate['tmean'].groupby('time.year').max()
+                                ]
+                            ).flatten(),
+                            np.asarray(
+                                [
+                                    np.tile(a, [12, 1, 1])
+                                    for a in climate['ppt'].groupby('time.year').sum()
+                                ]
+                            ).flatten(),
+                        ]
+                    ).T
+    if spatial_smoothing_window:
+        print('Tacking together x, f')
+
+        x = np.concatenate([x, f], axis=1)
+    else:
+        print('Tacking together x, f, f2')
+
+        x = np.concatenate([x, f, f2], axis=1)
+    if add_local_climate_trends and spatial_smoothing_window:
+        print('Tacking on f3 to everything')
         x = np.concatenate([x, f3], axis=1)
 
     if eval_only:
@@ -149,7 +220,7 @@ def fire(
 
     else:
         y = mtbs['monthly'].values.flatten()
-        return x, y
+        return x, y, f3
 
 
 def drought(df, eval_only=False, duration=10):
