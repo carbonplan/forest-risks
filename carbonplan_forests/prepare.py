@@ -36,17 +36,22 @@ def scramble_3d(data):
 
 
 def fire(
-    climate,
+    full_climate,
     nftd,
     mtbs=None,
     eval_only=False,
     scramble=False,
     add_local_climate_trends=False,
+    rolling_period=None,
 ):
     """
     Prepare x and y and group variables for fire model fitting
     given an xarray dataset
     """
+    if rolling_period is not None:
+        climate = full_climate.sel(time=rolling_period)
+    else:
+        climate = full_climate
     shape = (len(climate.time), len(climate.y), len(climate.x))
     if scramble:
         x = np.asarray([scramble_3d(climate[var].values).flatten() for var in climate.data_vars]).T
@@ -57,41 +62,84 @@ def fire(
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', category=RuntimeWarning)
-        f2 = np.asarray(
-            [
-                np.asarray(
-                    [
-                        np.tile(a.mean(), [12, shape[1], shape[2]])
-                        for a in climate['tmean'].groupby('time.year').max()
-                    ]
-                ).flatten(),
-                np.asarray(
-                    [
-                        np.tile(a.mean(), [12, shape[1], shape[2]])
-                        for a in climate['ppt'].groupby('time.year').sum()
-                    ]
-                ).flatten(),
-            ]
-        ).T
-
-        if add_local_climate_trends:
-            f3 = np.asarray(
+        if rolling_period is not None:
+            # if rolling_period is set, you'll exchange out the `climate` variable
+            # with a new rolling_averaged one for this part
+            # climate is not called again after this
+            f2 = np.asarray(
                 [
                     np.asarray(
                         [
-                            np.tile(a, [12, 1, 1])
+                            np.tile(a, [shape[1], shape[2]])
+                            for a in climate['tmean']
+                            .rolling(dim={'time': 12}, min_periods=12, center=False)
+                            .max()
+                            .sel(time=rolling_period)
+                            .mean(dim=['x', 'y'])
+                        ]
+                    ).flatten(),
+                    np.asarray(
+                        [
+                            np.tile(a, [shape[1], shape[2]])
+                            for a in climate['ppt']
+                            .rolling(dim={'time': 12}, min_periods=12, center=False)
+                            .sum()
+                            .sel(time=rolling_period)
+                            .mean(dim=['x', 'y'])
+                        ]
+                    ).flatten(),
+                ]
+            ).T
+
+        else:
+            f2 = np.asarray(
+                [
+                    np.asarray(
+                        [
+                            np.tile(a.mean(), [12, shape[1], shape[2]])
                             for a in climate['tmean'].groupby('time.year').max()
                         ]
                     ).flatten(),
                     np.asarray(
                         [
-                            np.tile(a, [12, 1, 1])
+                            np.tile(a.mean(), [12, shape[1], shape[2]])
                             for a in climate['ppt'].groupby('time.year').sum()
                         ]
                     ).flatten(),
                 ]
             ).T
-            
+
+        if add_local_climate_trends:
+            if rolling_period is not None:
+                f3 = np.asarray(
+                    # if we want to do some coarsening/smoothing we'll add that here
+                    [
+                        np.asarray(
+                            [climate['tmean'].rolling(dim={'time': 12}, center=False).max()]
+                        ).flatten(),
+                        np.asarray(
+                            [climate['ppt'].rolling(dim={'time': 12}, center=False).sum()]
+                        ).flatten(),
+                    ]
+                ).T
+            else:
+                f3 = np.asarray(
+                    [
+                        np.asarray(
+                            [
+                                np.tile(a, [12, 1, 1])
+                                for a in climate['tmean'].groupby('time.year').max()
+                            ]
+                        ).flatten(),
+                        np.asarray(
+                            [
+                                np.tile(a, [12, 1, 1])
+                                for a in climate['ppt'].groupby('time.year').sum()
+                            ]
+                        ).flatten(),
+                    ]
+                ).T
+
     x = np.concatenate([x, f, f2], axis=1)
     if add_local_climate_trends:
         x = np.concatenate([x, f3], axis=1)
