@@ -1,6 +1,8 @@
 import warnings
 
 import numpy as np
+import xarray as xr
+from astropy.convolution import Gaussian2DKernel, convolve
 
 
 def scramble_2d(img, phase=None):
@@ -35,20 +37,16 @@ def scramble_3d(data):
     return data
 
 
-def smooth(da, spatial_smoothing_window):
+def smooth(da, gaussian_stddev=1):
     """
     Smooth in space a data array according
     to box with height and width of `spatial_smoothing_window`
     """
-    coarsened = da.coarsen(
-        x=spatial_smoothing_window, y=spatial_smoothing_window, boundary='pad'
-    ).max()
-    # then interpolate the coarsened array to the desired grid (but only the extent of your coarsened coords)
-    interpolated = coarsened.interp(
-        x=da.x, y=da.y, method='linear', kwargs={'fill_value': 'extrapolate'}
-    )
-    # # finally reassign the full index and interpolate to fill with the nearest neighbor along 'x' dimension
-    return interpolated.interpolate_na(dim='x', method='nearest', fill_value='extrapolate')
+    # define kernel size
+    kernel = Gaussian2DKernel(x_stddev=gaussian_stddev)
+    # blur your maps according to that kernel
+    blur = convolve(da.values, kernel)
+    return xr.DataArray(blur, coords=da.coords)
 
 
 def fire(
@@ -59,7 +57,7 @@ def fire(
     scramble=False,
     add_local_climate_trends=False,
     rolling_period=None,
-    spatial_smoothing_window=None,
+    gaussian_kernel_size=None,
 ):
     """
     Prepare x and y and group variables for fire model fitting
@@ -132,21 +130,6 @@ def fire(
             ).T
 
         if add_local_climate_trends:
-
-            # if spatial_smoothing_window is not None:
-            #     print('Using spatial smoothing window of {}-fold'.format(spatial_smoothing_window))
-            #     # if you're smoothing then you can just use this one and no global signal
-            #     coarsened = climate.coarsen(x=spatial_smoothing_window,
-            #                                 y=spatial_smoothing_window, boundary='pad').max()
-            #     # then interpolate the coarsened array to the desired grid (but only the extent of your coarsened coords)
-            #     interpolated = coarsened.interp(x=climate.x,
-            #                                 y=climate.y,
-            #                                     method='linear',
-            #                                 kwargs={'fill_value': 'extrapolate'})
-            #     # # finally reassign the full index and interpolate to fill with the nearest neighbor along 'x' dimension
-            #     climate = interpolated.interpolate_na(dim='x', method='nearest',
-            #                                     fill_value='extrapolate')
-
             if rolling_period is not None:
                 print('Doing the local averages on a rolling basis')
                 f3 = np.asarray(
@@ -162,28 +145,28 @@ def fire(
                 ).T
             else:
                 print('Doing the local averages on a groupby basis')
-                if spatial_smoothing_window is not None:
-                    print(
-                        'Using spatial smoothing window of {}-fold'.format(spatial_smoothing_window)
-                    )
-                    print(climate)
+                if gaussian_kernel_size is not None:
+                    print('Using gaussian kernel of width {} std dev'.format(gaussian_kernel_size))
                     f3 = np.asarray(
                         [
                             np.asarray(
                                 [
-                                    np.tile(smooth(a, spatial_smoothing_window), [12, 1, 1])
+                                    np.tile(
+                                        smooth(a, gaussian_stddev=gaussian_kernel_size), [12, 1, 1]
+                                    )
                                     for a in climate['tmean'].groupby('time.year').max()
                                 ]
                             ).flatten(),
                             np.asarray(
                                 [
-                                    np.tile(smooth(a, spatial_smoothing_window), [12, 1, 1])
+                                    np.tile(
+                                        smooth(a, gaussian_stddev=gaussian_kernel_size), [12, 1, 1]
+                                    )
                                     for a in climate['ppt'].groupby('time.year').sum()
                                 ]
                             ).flatten(),
                         ]
                     ).T
-                    print(f3.shape)
                 else:
                     print('Using local info')
 
@@ -203,7 +186,7 @@ def fire(
                             ).flatten(),
                         ]
                     ).T
-    if spatial_smoothing_window:
+    if gaussian_kernel_size:
         print('Tacking together x, f')
 
         x = np.concatenate([x, f], axis=1)
@@ -211,7 +194,7 @@ def fire(
         print('Tacking together x, f, f2')
 
         x = np.concatenate([x, f, f2], axis=1)
-    if add_local_climate_trends and spatial_smoothing_window:
+    if add_local_climate_trends and gaussian_kernel_size:
         print('Tacking on f3 to everything')
         x = np.concatenate([x, f3], axis=1)
 
