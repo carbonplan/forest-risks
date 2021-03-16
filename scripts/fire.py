@@ -123,7 +123,9 @@ for (cmip_model, member) in cmip_models:
                 )
             )
 # assigning the coords as below makes it easier for follow-on analysis when binning by forest group type
-ds_future = ds_future.assign_coords({'x': nftd.x, 'y': nftd.y})
+ds_future = ds_future.assign_coords(
+    {'x': climate.x, 'y': climate.y, 'time': climate.time, 'lat': climate.lat, 'lon': climate.lon}
+)
 if store == 'local':
     ds_future.to_zarr('data/fire_future.zarr', mode='w')
 elif store == 'az':
