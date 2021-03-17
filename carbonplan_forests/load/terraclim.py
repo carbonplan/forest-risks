@@ -46,9 +46,8 @@ def terraclim(
         # ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] < 4, 4)
 
         X = xr.Dataset()
-        keys = variables
 
-        for key in keys:
+        for key in variables:
             X[key] = ds[key]
 
         if tlim:
@@ -62,7 +61,7 @@ def terraclim(
 
         if coarsen:
             X_coarse = xr.Dataset()
-            for key in keys:
+            for key in variables:
                 X_coarse[key] = X[key].coarsen(x=coarsen, y=coarsen, boundary='trim').mean()
             X = X_coarse
 
@@ -76,19 +75,19 @@ def terraclim(
             ind_c = xr.DataArray(rc[1], dims=['c'])
 
             if not group_repeats:
-                base = X[keys].isel(y=ind_r, x=ind_c).load()
-                for key in keys:
+                base = X[variables].isel(y=ind_r, x=ind_c).load()
+                for key in variables:
                     df[key + '_mean'] = base[key].mean('time').values
                     df[key + '_min'] = base[key].min('time').values
                     df[key + '_max'] = base[key].max('time').values
                 if remove_nans:
-                    for key in keys:
+                    for key in variables:
                         df = df[~np.isnan(df[key + '_mean'])]
                 df = df.reset_index(drop=True)
                 return df
             else:
-                base = X[keys].isel(y=ind_r, x=ind_c).load()
-                for key in keys:
+                base = X[variables].isel(y=ind_r, x=ind_c).load()
+                for key in variables:
                     array = base[key].values.T
                     time = np.arange(X['time.year'].min(), X['time.year'].max() + 1)
                     maxyear = max(
@@ -124,7 +123,7 @@ def terraclim(
                         df[key + '_mean_' + pair[1]] = [d['mean'] for d in stats]
 
                 if remove_nans:
-                    for key in keys:
+                    for key in variables:
                         df = df[~np.isnan(df[key + '_mean_1'])]
                 df = df.reset_index(drop=True)
                 return df

@@ -10,16 +10,6 @@ from rasterio.transform import rowcol
 
 from .. import setup, utils
 
-members = {
-    'CanESM5': 'r10i1p1f1',
-    'MIROC-ES2L': 'r1i1p1f2',
-    'FGOALS-g3': 'r1i1p1f1',
-    'HadGEM3-GC31-LL': 'r1i1p1f3',
-    'MIROC6': 'r10i1p1f1',
-    'MRI-ESM2-0': 'r1i1p1f1',
-    'UKESM1-0-LL': 'r10i1p1f2',
-}
-
 
 def cmip(
     store='az',
@@ -31,6 +21,7 @@ def cmip(
     variables=['ppt', 'tmean'],
     mask=None,
     member=None,
+    method='bias-corrected',
     sampling='annual',
     historical=False,
     remove_nans=False,
@@ -46,12 +37,9 @@ def cmip(
         if model is None:
             raise ValueError('must specify model')
 
-        if member is None:
-            member = members[model]
-
         path = setup.loading(store)
 
-        prefix = f'cmip6/bias-corrected/conus/4000m/{sampling}/{model}.{scenario}.{member}.zarr'
+        prefix = f'cmip6/{method}/conus/4000m/{sampling}/{model}.{scenario}.{member}.zarr'
 
         if store == 'az':
             mapper = zarr.storage.ABSStore(
@@ -63,7 +51,7 @@ def cmip(
         ds = xr.open_zarr(mapper, consolidated=True)
 
         if historical:
-            prefix = f'cmip6/bias-corrected/conus/4000m/{sampling}/{model}.historical.{member}.zarr'
+            prefix = f'cmip6/{method}/conus/4000m/{sampling}/{model}.historical.{member}.zarr'
 
             if store == 'az':
                 mapper = zarr.storage.ABSStore(
