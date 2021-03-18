@@ -42,14 +42,10 @@ def smooth(da, gaussian_stddev=1):
     Smooth in space a data array according
     to box with height and width of `spatial_smoothing_window`
     """
-    print('smoothed one slice with window of size {}'.format(gaussian_stddev))
     # define kernel size
     kernel = Gaussian2DKernel(x_stddev=gaussian_stddev)
     # blur your maps according to that kernel
     blur = convolve(da.values, kernel, boundary='extend')
-    # nan_treatment='fill',
-    # fill_value=da.mean(dim=['x', 'y']),
-    # preserve_nan=True)
     return xr.DataArray(blur, coords=da.coords)
 
 
@@ -57,13 +53,10 @@ def fire(
     full_climate,
     nftd,
     mtbs=None,
+    rolling_period=None,
     eval_only=False,
     scramble=False,
-    add_global_climate_trends=False,
-    add_local_climate_trends=False,
-    rolling_period=None,
     gaussian_kernel_size=None,
-    test_synthetic_local=False,
 ):
     """
     Prepare x and y and group variables for fire model fitting
@@ -84,153 +77,31 @@ def fire(
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', category=RuntimeWarning)
-        if add_global_climate_trends:
-            if rolling_period is not None:
-                print('Doing the global averages on a rolling basis')
-
-                # if rolling_period is set, you'll exchange out the `climate` variable
-                # with a new rolling_averaged one for this part
-                # climate is not called again after this
-                f2 = np.asarray(
+        print('Doing the global averages on a rolling basis')
+        f2 = np.asarray(
+            [
+                np.asarray(
                     [
-                        np.asarray(
-                            [
-                                np.tile(a.mean(), [shape[1], shape[2]])
-                                for a in climate['tmean']
-                                .rolling(dim={'time': 12}, min_periods=12, center=False)
-                                .max()
-                                .sel(time=rolling_period)
-                            ]
-                        ).flatten(),
-                        np.asarray(
-                            [
-                                np.tile(a.mean(), [shape[1], shape[2]])
-                                for a in climate['ppt']
-                                .rolling(dim={'time': 12}, min_periods=12, center=False)
-                                .sum()
-                                .sel(time=rolling_period)
-                            ]
-                        ).flatten(),
+                        np.tile(a.mean(), [shape[1], shape[2]])
+                        for a in climate['tmean']
+                        .rolling(dim={'time': 12}, min_periods=12, center=False)
+                        .max()
+                        .sel(time=rolling_period)
                     ]
-                ).T
-
-            else:
-                print('Doing the global averages on a groupby basis')
-
-                f2 = np.asarray(
+                ).flatten(),
+                # keep this one for sure
+                np.asarray(
                     [
-                        np.asarray(
-                            [
-                                np.tile(a.mean(), [12, shape[1], shape[2]])
-                                for a in climate['tmean'].groupby('time.year').max()
-                            ]
-                        ).flatten(),
-                        np.asarray(
-                            [
-                                np.tile(a.mean(), [12, shape[1], shape[2]])
-                                for a in climate['ppt'].groupby('time.year').sum()
-                            ]
-                        ).flatten(),
+                        smooth(a, gaussian_stddev=gaussian_kernel_size)
+                        for a in climate['ppt']
+                        .rolling(dim={'time': 12}, center=False)
+                        .sum()
+                        .sel(time=rolling_period)
                     ]
-                ).T
-
-        if add_local_climate_trends:
-            if test_synthetic_local is not None:
-                (synthetic_temp, synthetic_precip) = test_synthetic_local
-                f3 = np.asarray(
-                    [
-                        np.asarray(
-                            [
-                                np.tile(a, [12, 1, 1])
-                                for a in synthetic_temp.groupby('time.year').mean()
-                            ]
-                        ).flatten(),
-                        np.asarray(
-                            [
-                                np.tile(a, [12, 1, 1])
-                                for a in synthetic_precip.groupby('time.year').mean()
-                            ]
-                        ).flatten(),
-                    ]
-                ).T
-            else:
-                if rolling_period is not None:
-                    print('Doing the local averages on a rolling basis')
-                    f3 = np.asarray(
-                        # if we want to do some coarsening/smoothing we'll add that here
-                        [
-                            np.asarray(
-                                [
-                                    climate['tmean']
-                                    .rolling(dim={'time': 12}, center=False)
-                                    .max()
-                                    .sel(rolling_period)
-                                ]
-                            ).flatten(),
-                            np.asarray(
-                                [
-                                    climate['ppt']
-                                    .rolling(dim={'time': 12}, center=False)
-                                    .sum()
-                                    .sel(rolling_period)
-                                ]
-                            ).flatten(),
-                        ]
-                    ).T
-                else:
-                    print('Doing the local averages on a groupby basis')
-                    if gaussian_kernel_size is not None:
-                        print(
-                            'Using gaussian kernel of width {} std dev'.format(gaussian_kernel_size)
-                        )
-                        f3 = np.asarray(
-                            [
-                                np.asarray(
-                                    [
-                                        np.tile(
-                                            smooth(a, gaussian_stddev=gaussian_kernel_size),
-                                            [12, 1, 1],
-                                        )
-                                        for a in climate['tmean'].groupby('time.year').max()
-                                    ]
-                                ).flatten(),
-                                np.asarray(
-                                    [
-                                        np.tile(
-                                            smooth(a, gaussian_stddev=gaussian_kernel_size),
-                                            [12, 1, 1],
-                                        )
-                                        for a in climate['ppt'].groupby('time.year').sum()
-                                    ]
-                                ).flatten(),
-                            ]
-                        ).T
-                    else:
-                        print('Using raw local info')
-
-                        f3 = np.asarray(
-                            [
-                                np.asarray(
-                                    [
-                                        np.tile(a, [12, 1, 1])
-                                        for a in climate['tmean'].groupby('time.year').max()
-                                    ]
-                                ).flatten(),
-                                np.asarray(
-                                    [
-                                        np.tile(a, [12, 1, 1])
-                                        for a in climate['ppt'].groupby('time.year').sum()
-                                    ]
-                                ).flatten(),
-                            ]
-                        ).T
-    x = np.concatenate([x, f], axis=1)
-    if add_global_climate_trends:
-        print('Tacking on f2')
-        x = np.concatenate([x, f2], axis=1)
-    if add_local_climate_trends:
-        print('Tacking on f3')
-        x = np.concatenate([x, f3], axis=1)
+                ).flatten(),
+            ]
+        ).T
+    x = np.concatenate([x, f, f2], axis=1)
 
     if eval_only:
         return x
