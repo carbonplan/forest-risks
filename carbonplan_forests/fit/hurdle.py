@@ -37,6 +37,14 @@ class HurdleModel:
     def __repr__(self):
         return f"HurdleModel(link='{self.log}', train_r2='{self.train_r2:.3f}', train_roc='{self.train_roc:.3f}')"
 
+    def score_roc(self, x, y):
+        x, y = remove_nans(x, y)
+        return roc_auc_score(y > 0, self.predict_prob(x))
+
+    def score_r2(self, x, y):
+        x, y = remove_nans(x, y)
+        return np.corrcoef(self.predict_linear(x)[y > 0], y[y > 0])[0, 1] ** 2
+
     def predict_binary(self, x):
         out = np.ones(len(x)) * np.NaN
         x, inds = remove_nans(x, return_inds=True)
