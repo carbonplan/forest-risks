@@ -21,7 +21,7 @@ else:
     coarsen_fit = int(args[4])
 
 coarsen_predict = coarsen_fit
-tlim = (1984, 2018)
+tlim = (1983, 2018)
 # data_vars = ['tmean', 'ppt']  # "cwd", "pdsi", ]
 # fit_vars = ['tmean', 'ppt']  # "cwd", "pdsi", ]
 
@@ -43,7 +43,9 @@ mtbs = load.mtbs(store=store, coarsen=coarsen_fit, tlim=tlim, mask=mask)
 mtbs = mtbs.assign_coords({'x': nftd.x, 'y': nftd.y})
 
 print('[fire] fitting model')
-x, y = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=True)
+x, y = prepare.fire(
+    climate, nftd, mtbs, rolling_period=slice('1984', '2018'), gaussian_kernel_size=5
+)
 x_z, x_mean, x_std = utils.zscore_2d(x)
 model = fit.hurdle(x_z, y, log=False)
 yhat = model.predict(x_z)
@@ -63,13 +65,21 @@ climate = load.terraclim(
     mask=mask,
     sampling='monthly',
 )
-x, y = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=True)
+x, y = prepare.fire(
+    climate, nftd, mtbs, rolling_period=slice('1984', '2018'), gaussian_kernel_size=5
+)
 x_z = utils.zscore_2d(x, mean=x_mean, std=x_std)
 yhat = model.predict(x_z)
-prediction = collect.fire(yhat, climate)
+prediction = collect.fire(yhat, climate.sel(time=slice('1984', '2018')))
 ds['historical'] = (['time', 'y', 'x'], prediction['prediction'])
 ds = ds.assign_coords(
-    {'x': climate.x, 'y': climate.y, 'time': climate.time, 'lat': climate.lat, 'lon': climate.lon}
+    {
+        'x': climate.x,
+        'y': climate.y,
+        'time': climate.sel(time=slice('1984', '2018')).time,
+        'lat': climate.lat,
+        'lon': climate.lon,
+    }
 )
 account_key = os.environ.get('BLOB_ACCOUNT_KEY')
 if store == 'local':
@@ -83,13 +93,12 @@ elif store == 'az':
     ds.to_zarr(path, mode='w')
 print('[fire] evaluating on future climate')
 cmip_models = [
-    ('CanESM5', 'r10i1p1f1'),
-    ('UKESM1-0-LL', 'r10i1p1f2'),
-    ('MRI-ESM2-0', 'r1i1p1f1'),
+    ('CanESM5-CanOE', 'r3i1p2f1'),
     ('MIROC-ES2L', 'r1i1p1f2'),
-    ('MIROC6', 'r10i1p1f1'),
-    ('FGOALS-g3', 'r1i1p1f1'),
-    ('HadGEM3-GC31-LL', 'r1i1p1f3'),
+    ('ACCESS-CM2', 'r1i1p1f1'),
+    ('ACCESS-ESM1-5', 'r10i1p1f1'),
+    ('MRI-ESM2-0', 'r1i1p1f1'),
+    ('MPI-ESM1-2-LR', 'r10i1p1f1'),
 ]
 scenarios = ['ssp245', 'ssp370', 'ssp585']
 ds_future = xr.Dataset()
@@ -101,18 +110,26 @@ for (cmip_model, member) in cmip_models:
                 store=store,
                 model=cmip_model,
                 coarsen=coarsen_predict,
+                downscaling='quantile-mapping',
                 scenario=scenario,
-                tlim=('1970', '2099'),
+                tlim=('1969', '2099'),
                 variables=data_vars,
                 sampling='monthly',
                 member=member,
                 historical=True,
                 mask=mask,
             )
-            x = prepare.fire(climate, nftd, mtbs, add_local_climate_trends=True, eval_only=True)
+            x = prepare.fire(
+                climate,
+                nftd,
+                mtbs,
+                rolling_period=slice('1970', '2099'),
+                gaussian_kernel_size=5,
+                eval_only=True,
+            )
             x_z = utils.zscore_2d(x, mean=x_mean, std=x_std)
             y_hat = model.predict(x_z)
-            prediction = collect.fire(y_hat, climate)
+            prediction = collect.fire(y_hat, climate.sel(time=slice('1970', '2099')))
             ds_future[cmip_model + '_' + scenario] = prediction['prediction']
             print('[fire] completed future run for {}-{}'.format(cmip_model, scenario))
 
@@ -124,7 +141,13 @@ for (cmip_model, member) in cmip_models:
             )
 # assigning the coords as below makes it easier for follow-on analysis when binning by forest group type
 ds_future = ds_future.assign_coords(
-    {'x': climate.x, 'y': climate.y, 'time': climate.time, 'lat': climate.lat, 'lon': climate.lon}
+    {
+        'x': climate.x,
+        'y': climate.y,
+        'time': climate.sel(time=slice('1970', '2099')).time,
+        'lat': climate.lat,
+        'lon': climate.lon,
+    }
 )
 if store == 'local':
     ds_future.to_zarr('data/fire_future.zarr', mode='w')
