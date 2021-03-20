@@ -11,13 +11,12 @@ from rasterio.transform import rowcol
 from .. import setup, utils
 
 members = {
-    'CanESM5': 'r10i1p1f1',
+    'CanESM5-CanOE': 'r3i1p2f1',
     'MIROC-ES2L': 'r1i1p1f2',
-    'FGOALS-g3': 'r1i1p1f1',
-    'HadGEM3-GC31-LL': 'r1i1p1f3',
-    'MIROC6': 'r10i1p1f1',
+    'ACCESS-CM2': 'r1i1p1f1',
+    'ACCESS-ESM1-5': 'r10i1p1f1',
     'MRI-ESM2-0': 'r1i1p1f1',
-    'UKESM1-0-LL': 'r10i1p1f2',
+    'MPI-ESM1-2-LR': 'r10i1p1f1',
 }
 
 
@@ -27,6 +26,7 @@ def cmip(
     tlim=None,
     model=None,
     scenario=None,
+    downscaling=None,
     coarsen=None,
     variables=['ppt', 'tmean'],
     mask=None,
@@ -51,7 +51,7 @@ def cmip(
 
         path = setup.loading(store)
 
-        prefix = f'cmip6/bias-corrected/conus/4000m/{sampling}/{model}.{scenario}.{member}.zarr'
+        prefix = f'cmip6/{downscaling}/conus/4000m/{sampling}/{model}.{scenario}.{member}.zarr'
 
         if store == 'az':
             mapper = zarr.storage.ABSStore(
@@ -63,7 +63,7 @@ def cmip(
         ds = xr.open_zarr(mapper, consolidated=True)
 
         if historical:
-            prefix = f'cmip6/bias-corrected/conus/4000m/{sampling}/{model}.historical.{member}.zarr'
+            prefix = f'cmip6/{downscaling}/conus/4000m/{sampling}/{model}.historical.{member}.zarr'
 
             if store == 'az':
                 mapper = zarr.storage.ABSStore(
@@ -75,7 +75,7 @@ def cmip(
             ds_historical = xr.open_zarr(mapper, consolidated=True)
 
             ds = xr.concat([ds_historical, ds], 'time')
-
+        # any reason we still want to calculate it here and not just use def?
         ds['cwd'] = ds['pet'] - ds['aet']
         ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -999, 0)
         ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -16, -16)
