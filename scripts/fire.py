@@ -22,8 +22,7 @@ else:
 
 coarsen_predict = coarsen_fit
 tlim = (1983, 2018)
-# data_vars = ['tmean', 'ppt']  # "cwd", "pdsi", ]
-# fit_vars = ['tmean', 'ppt']  # "cwd", "pdsi", ]
+analysis_tlim = slice('1984', '2018')
 
 print('[fire] loading data')
 mask = (load.nlcd(store=store, year=2001).sel(band=[41, 42, 43, 90]).sum('band') > 0.25).astype(
@@ -65,9 +64,18 @@ climate = load.terraclim(
     mask=mask,
     sampling='monthly',
 )
+climate_prepend = climate.sel(time=slice('1983', '1983'))
 x, y = prepare.fire(
-    climate, nftd, mtbs, rolling_period=slice('1984', '2018'), gaussian_kernel_size=5
+    climate.sel(time=analysis_tlim),
+    nftd,
+    mtbs,
+    add_global_climate_trends={
+        'tmean': {'climate_prepend': climate_prepend},
+        'ppt': {'climate_prepend': climate_prepend},
+    },
+    add_local_climate_trends=None,
 )
+
 x_z = utils.zscore_2d(x, mean=x_mean, std=x_std)
 yhat = model.predict(x_z)
 prediction = collect.fire(yhat, climate.sel(time=slice('1984', '2018')))
@@ -120,11 +128,14 @@ for (cmip_model, member) in cmip_models:
                 mask=mask,
             )
             x = prepare.fire(
-                climate,
+                climate.sel(time=analysis_tlim),
                 nftd,
                 mtbs,
-                rolling_period=slice('1970', '2099'),
-                gaussian_kernel_size=5,
+                add_global_climate_trends={
+                    'tmean': {'climate_prepend': climate_prepend},
+                    'ppt': {'climate_prepend': climate_prepend},
+                },
+                add_local_climate_trends=None,
                 eval_only=True,
             )
             x_z = utils.zscore_2d(x, mean=x_mean, std=x_std)
