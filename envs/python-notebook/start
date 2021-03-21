@@ -1,0 +1,11 @@
+#!/bin/bash -l
+
+# ==== ONLY EDIT WITHIN THIS BLOCK =====
+
+export PANGEO_ENV="carbonplan-az-us-west2"
+export SCRATCH="az://carbonplan-scratch"
+export CARBONPLAN_DATA="https://carbonplan.blob.core.windows.net/carbonplan-data"
+
+# ==== ONLY EDIT WITHIN THIS BLOCK =====
+
+exec "$@"
