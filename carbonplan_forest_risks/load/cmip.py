@@ -10,6 +10,14 @@ from rasterio.transform import rowcol
 
 from .. import setup, utils
 
+members = {
+    'CanESM5-CanOE': 'r3i1p2f1',
+    'MIROC-ES2L': 'r1i1p1f2',
+    'ACCESS-CM2': 'r1i1p1f1',
+    'ACCESS-ESM1-5': 'r10i1p1f1',
+    'MRI-ESM2-0': 'r1i1p1f1',
+    'MPI-ESM1-2-LR': 'r10i1p1f1',
+}
 
 def cmip(
     store='az',
@@ -17,11 +25,11 @@ def cmip(
     tlim=None,
     model=None,
     scenario=None,
+    downscaling='quantile-mapping',
     coarsen=None,
     variables=['ppt', 'tmean'],
     mask=None,
     member=None,
-    method='bias-corrected',
     sampling='annual',
     historical=False,
     remove_nans=False,
@@ -38,9 +46,7 @@ def cmip(
             raise ValueError('must specify model')
 
         path = setup.loading(store)
-
-        prefix = f'cmip6/{method}/conus/4000m/{sampling}/{model}.{scenario}.{member}.zarr'
-
+        prefix = f'cmip6/{downscaling}/conus/4000m/{sampling}/{model}.{scenario}.{member}.zarr'
         if store == 'az':
             mapper = zarr.storage.ABSStore(
                 'carbonplan-downscaling', prefix=prefix, account_name='carbonplan'
@@ -51,8 +57,7 @@ def cmip(
         ds = xr.open_zarr(mapper, consolidated=True)
 
         if historical:
-            prefix = f'cmip6/{method}/conus/4000m/{sampling}/{model}.historical.{member}.zarr'
-
+            prefix = f'cmip6/{downscaling}/conus/4000m/{sampling}/{model}.historical.{member}.zarr'
             if store == 'az':
                 mapper = zarr.storage.ABSStore(
                     'carbonplan-downscaling', prefix=prefix, account_name='carbonplan'
@@ -63,11 +68,10 @@ def cmip(
             ds_historical = xr.open_zarr(mapper, consolidated=True)
 
             ds = xr.concat([ds_historical, ds], 'time')
-
-        ds['cwd'] = ds['pet'] - ds['aet']
-        # ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -999, 0)
-        # ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -4, -4)
-        # ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] < 4, 4)
+        ds['cwd'] = ds['def']
+        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -999, 0)
+        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -16, -16)
+        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] < 16, 16)
 
         X = xr.Dataset()
         keys = variables

@@ -60,7 +60,7 @@ def terraclimate_fia_long():
     write_df(df, 'FIA-TerraClim-Long')
 
 
-def cmip_fia_long(cmip_table, method):
+def cmip_fia_long(cmip_table, downscaling):
     # generate long data w/ cmip
 
     df = load.fia(store='az', states=states, clean=False)
@@ -91,13 +91,13 @@ def cmip_fia_long(cmip_table, method):
                 scenario=row.scenario,
                 member=row.member,
                 historical=historical,
-                method=method,
+                downscaling=downscaling,
                 sampling='annual',
             )
             df = df[keep_vars]
             write_df(
                 df,
-                f'{method}/FIA-CMIP6-Long-{row.model}.{row.scenario}.{row.member}.-{tlim[0]}.{tlim[1]}',
+                f'{downscaling}/FIA-CMIP6-Long-{row.model}.{row.scenario}.{row.member}.-{tlim[0]}.{tlim[1]}',
             )
 
 
@@ -108,5 +108,5 @@ if __name__ == '__main__':
     with dask.config.set(scheduler='processes'):
         with ProgressBar():
             df = get_cmip_runs()
-            for method in ['quantile-mapping']:  # , 'bias-corrected']:
-                cmip_fia_long(df, method=method)
+            for downscaling in ['quantile-mapping']:  # , 'bias-corrected']:
+                cmip_fia_long(df, downscaling=downscaling)

@@ -42,9 +42,14 @@ def carto(
         elif clim is not None and cmap is None:
             return alt.Color(color, legend=clegend, scale=alt.Scale(domain=clim, clamp=True))
         elif clim is not None and cmap is not None:
-            return alt.Color(
-                color, legend=clegend, scale=alt.Scale(domain=clim, scheme=cmap, clamp=True)
-            )
+            if type(cmap) == str:
+                return alt.Color(
+                    color, legend=clegend, scale=alt.Scale(domain=clim, scheme=cmap, clamp=True)
+                )
+            else:
+                return alt.Color(
+                    color, legend=clegend, scale=alt.Scale(domain=clim, range=cmap, clamp=True)
+                )
 
     states = alt.topo_feature(vega_data.us_10m.url, 'states')
 
