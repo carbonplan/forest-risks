@@ -141,8 +141,6 @@ def performance(model, obs, percentage=True):
 def evaluation(
     data,
     model,
-    data_var='vlf',
-    model_var='prob',
     projection='albersUsa',
     clim=None,
     cmap='reds',
@@ -154,16 +152,19 @@ def evaluation(
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
 
-    color = performance(
-        model[model_var].groupby('time.year').sum().mean('year').values,
-        data[data_var].groupby('time.year').sum().mean('year').values,
-        percentage=percentage,
-    ).flatten()
-    if comparison:
-        # hacky!!!! WARNINGGGGGG THIS IS HORRIBLEEEE just want to make all inds active
-        inds = color > -99999
-    else:
-        inds = color > clim[0]
+#     color = performance(
+#         model[model_var].groupby('time.year').sum().mean('year').values,
+#         data[data_var].groupby('time.year').sum().mean('year').values,
+#         percentage=percentage,
+#     ).flatten()
+    color_model = model.groupby('time.year').sum().mean('year').values.flatten()
+    color_data = data.groupby('time.year').sum().mean('year').values.flatten()
+#     if comparison:
+#         # hacky!!!! WARNINGGGGGG THIS IS HORRIBLEEEE just want to make all inds active
+#         inds = color > -99999
+#     else:
+    inds_model = color_model >= clim[0]
+    inds_data = color_data >= clim[0]
 
     shape = data['lat'].shape
     size = (300 / shape[0]) * (500 / shape[1]) * 0.85
@@ -171,8 +172,8 @@ def evaluation(
     column = alt.vconcat()
 
     x = data.groupby('time.year').sum()['year'].values
-    y = data.groupby('time.year').sum().mean(['x', 'y'])[data_var].values
-    yhat = model.groupby('time.year').sum().mean(['x', 'y'])[model_var].values
+    y = data.groupby('time.year').sum().mean(['x', 'y']).values
+    yhat = model.groupby('time.year').sum().mean(['x', 'y']).values
 
     column &= line(
         x=x,
@@ -194,8 +195,8 @@ def evaluation(
     )
 
     x = data.groupby('time.month').mean()['month'].values
-    y = data.groupby('time.month').mean().mean(['x', 'y'])[data_var].values
-    yhat = model.groupby('time.month').mean().mean(['x', 'y'])[model_var].values
+    y = data.groupby('time.month').mean().mean(['x', 'y']).values
+    yhat = model.groupby('time.month').mean().mean(['x', 'y']).values
 
     column &= line(
         x=x,
@@ -217,9 +218,8 @@ def evaluation(
     )
 
     x = data['time'].values
-    y = data.mean(['x', 'y'])[data_var].values
-    print(model)
-    yhat = model.mean(['x', 'y'])[model_var].values
+    y = data.mean(['x', 'y']).values
+    yhat = model.mean(['x', 'y']).values
 
     column &= line(
         x=x,
@@ -245,18 +245,32 @@ def evaluation(
     if add_map:
         chart = alt.hconcat()
         chart |= column
-        chart |= carto(
-            lat=lat[inds],
-            lon=lon[inds],
-            color=color[inds],
+        maps = alt.vconcat()
+        maps &= carto(
+            lat=lat[inds_model],
+            lon=lon[inds_model],
+            color=color_model[inds_model],
             clim=clim,
             cmap=cmap,
             clabel=clabel,
             size=size,
-            width=500,
-            height=300,
+            width=450,
+            height=233,
             projection=projection,
         )
+        maps &= carto(
+            lat=lat[inds_data],
+            lon=lon[inds_data],
+            color=color_data[inds_data],
+            clim=clim,
+            cmap=cmap,
+            clabel=clabel,
+            size=size,
+            width=450,
+            height=233,
+            projection=projection,
+        )
+        chart |= maps
 
     return chart
 
