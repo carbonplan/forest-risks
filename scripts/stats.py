@@ -112,19 +112,22 @@ df = append(df, results)
 # cross validation
 years = pd.to_datetime(mtbs['time'].values).year
 
+print('[stats] split halves cross validation')
 for index in range(10):
     scrambled = years.unique().values.copy()
     np.random.shuffle(scrambled)
     subset = scrambled[0:round(len(scrambled)/2)]
     selection = [y in subset for y in years]
-    results = crossval(x_z, y, selection, mtbs['monthly'], f'kfold_{index}')
+    results = crossval(x_z, y, selection, mtbs['monthly'], f'split_halves_{index}')
     df = append(df, results)
 
+print('[stats] extrapolation cross validation')
 for index, threshold in enumerate([2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014]):
     selection = years > threshold
     results = crossval(x_z, y, selection, mtbs['monthly'], f'extrapolate_{index}')
     df = append(df, results)
 
+print('[stats] shuffling')
 for index in range(10):
     results = shuffle(x_z, y, mtbs['monthly'], f'shuffle_months_{index}')
     df = append(df, results)
