@@ -77,6 +77,7 @@ tlim = (1984, 2018)
 variables = ["ppt", "tmean", "cwd"]
 store = "az"
 
+print('[stats] loading data')
 mask = (load.nlcd(store=store, year=2001).sel(band=[41,42,43,90]).sum('band') > 0.25).astype('float')
 nftd = load.nftd(store=store, area_threshold=1500, coarsen=coarsen, mask=mask)
 climate = load.terraclim(
@@ -105,6 +106,7 @@ x_z, x_mean, x_std = utils.zscore_2d(x)
 df = pd.DataFrame()
 
 # same training and testing
+print('[stats] same training and testing')
 model = fit.hurdle(x_z, y, log=False)
 results = score(x_z, y, model, mtbs['monthly'], 'training')
 df = append(df, results)
