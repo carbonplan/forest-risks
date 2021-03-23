@@ -193,8 +193,8 @@ def evaluation(
         width=450,
         height=233,
         strokeWidth=2,
-        opacity=0.5,
-        color='rgb(175,91,92)',
+        opacity=1,
+        color='darkgrey',
         ylabel='Burn area [fraction/year]',
         xlabel='Time',
     ) + line(
@@ -203,7 +203,8 @@ def evaluation(
         width=450,
         height=233,
         strokeWidth=2,
-        color='rgb(175,91,92)',
+        opacity=1,
+        color='#EA9755',
         ylabel='Burn area [fraction/year]',
         xlabel='Time',
     )
@@ -218,8 +219,8 @@ def evaluation(
         width=450,
         height=233,
         strokeWidth=2,
-        opacity=0.5,
-        color='rgb(175,91,92)',
+        opacity=1,
+        color='darkgrey',
         ylabel='Burn area [fraction/month]',
         xlabel='Month',
     ) + line(
@@ -228,7 +229,7 @@ def evaluation(
         width=450,
         height=233,
         strokeWidth=2,
-        color='rgb(175,91,92)',
+        color='#EA9755',
         ylabel='Burn area [fraction/month]',
         xlabel='Month',
     )
@@ -243,8 +244,8 @@ def evaluation(
         width=450,
         height=233,
         strokeWidth=2,
-        opacity=0.5,
-        color='rgb(175,91,92)',
+        opacity=1,
+        color='darkgrey',
         ylabel='Burn area [fraction/month]',
         xlabel='Time',
     ) + line(
@@ -253,7 +254,7 @@ def evaluation(
         width=450,
         height=233,
         strokeWidth=2,
-        color='rgb(175,91,92)',
+        color='#EA9755',
         ylabel='Burn area [fraction/month]',
         xlabel='Time',
     )

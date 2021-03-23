@@ -74,7 +74,7 @@ def line(
             return alt.Color(color, scale=alt.Scale(domain=clim, scheme=cmap, clamp=True))
 
     if color is None:
-        color = 'rgb(250,100,150)'
+        color = '#EA9755'
 
     if type(color) is str:
         line = (
