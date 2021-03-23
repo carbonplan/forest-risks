@@ -19,14 +19,13 @@ members = {
     'MPI-ESM1-2-LR': 'r10i1p1f1',
 }
 
-
 def cmip(
     store='az',
     df=None,
     tlim=None,
     model=None,
     scenario=None,
-    downscaling=None,
+    downscaling='quantile-mapping',
     coarsen=None,
     variables=['ppt', 'tmean'],
     mask=None,
@@ -46,13 +45,8 @@ def cmip(
         if model is None:
             raise ValueError('must specify model')
 
-        if member is None:
-            member = members[model]
-
         path = setup.loading(store)
-
         prefix = f'cmip6/{downscaling}/conus/4000m/{sampling}/{model}.{scenario}.{member}.zarr'
-
         if store == 'az':
             mapper = zarr.storage.ABSStore(
                 'carbonplan-downscaling', prefix=prefix, account_name='carbonplan'
@@ -64,7 +58,6 @@ def cmip(
 
         if historical:
             prefix = f'cmip6/{downscaling}/conus/4000m/{sampling}/{model}.historical.{member}.zarr'
-
             if store == 'az':
                 mapper = zarr.storage.ABSStore(
                     'carbonplan-downscaling', prefix=prefix, account_name='carbonplan'
@@ -75,8 +68,7 @@ def cmip(
             ds_historical = xr.open_zarr(mapper, consolidated=True)
 
             ds = xr.concat([ds_historical, ds], 'time')
-        # any reason we still want to calculate it here and not just use def?
-        ds['cwd'] = ds['pet'] - ds['aet']
+        ds['cwd'] = ds['def']
         ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -999, 0)
         ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -16, -16)
         ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] < 16, 16)

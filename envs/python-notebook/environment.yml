@@ -1,0 +1,88 @@
+name: carbonplan
+channels:
+  - conda-forge
+dependencies:
+  - pangeo-notebook=2020.10.08  # don't bump until we bump the dask-gateway chart
+  - adlfs
+  - altair
+  - altair_data_server
+  - bokeh
+  - bottleneck
+  - cartopy
+  - cftime
+  - cmip6_preprocessing
+  - code-server >=3.2
+  - fastparquet
+  - fire
+  - gcsfs
+  - gdal
+  - geopandas
+  - geoviews
+  - git-crypt
+  - gspread
+  - h5py
+  - h5netcdf
+  - intake
+  - intake-esm
+  - intake-geopandas
+  - intake-parquet
+  - intake-xarray
+  - ipykernel
+  - ipython
+  - ipytree
+  - ipywidgets
+  - jedi
+  - jupyterlab
+  - jupyter-server-proxy
+  - jupyter-vscode-proxy
+  - libgdal
+  - matplotlib
+  - metpy
+  - nb_conda_kernels
+  - nc-time-axis
+  - netcdf4
+  - nodejs
+  - numba
+  - numcodecs
+  - numpy
+  - oauth2client
+  - openpyxl
+  - pandas
+  - portpicker
+  - pre_commit
+  - pykdtree
+  - pygraphviz
+  - pygeos
+  - pyproj
+  - pyresample
+  - pytest
+  - python-graphviz
+  - python-wget
+  - rasterio
+  - rechunker
+  - regionmask
+  - rio-cogeo
+  - rioxarray
+  - scikit-learn
+  - scipy
+  - seaborn
+  - tqdm
+  - verde
+  - vega_datasets
+  - xarray
+  - xesmf
+  - yarn
+  - zarr
+  - pip
+  - pip:
+      - carbonplan
+      - carbonplan-data
+      - carbonplan-forests
+      - carbonplan-styles
+      - numbagg
+      - showit
+      - git+https://github.com/jhamman/scikit-downscale.git@a502557f322cf6a8cd2e34008b31f1b89b7e8190
+      - git+https://github.com/jhamman/zarr.git@fix/absstore  # for current version of azure api
+      - git+https://github.com/jhamman/climate_indices.git@39bbf038c77922f8f0a46bb69704d6aace4179f9  # for no-nco deps, expanded range of pdsi
+      - git+https://github.com/altair-viz/altair_data_server.git  # for remote hosting
+      - git+https://github.com/carbonplan/cmip6-downscaling.git@e8cc4ad89ed3da47a1e46ccc441cdda8eebbc152

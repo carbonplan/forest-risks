@@ -15,13 +15,13 @@ PYTHON_REQUIRES = ">=3.7"
 description = "forest carbon potential and risks"
 
 setup(
-    name="carbonplan-forests",
+    name="carbonplan-forest-risks",
     description=description,
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
     maintainer="Joe Hamman",
     maintainer_email="joe@carbonplan.org",
-    url="https://github.com/carbonplan/forests",
+    url="https://github.com/carbonplan/forest-risks",
     packages=find_packages(),
     include_package_data=True,
     python_requires=PYTHON_REQUIRES,

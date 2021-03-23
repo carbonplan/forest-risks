@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from tenacity import retry, stop_after_attempt
 
 from .. import setup
 
@@ -252,6 +253,7 @@ def fia(store='az', states='conus', clean=True, group_repeats=False):
     return df
 
 
+@retry(stop=stop_after_attempt(7))
 def fia_state(store, state, clean):
     path = setup.loading(store)
     df = pd.read_parquet(
@@ -335,6 +337,7 @@ def fia_state(store, state, clean):
     return df.reset_index(drop=True)
 
 
+@retry(stop=stop_after_attempt(7))
 def fia_state_grouped(store, state, clean):
     """
     Pivot long (plot-condition-invyr per row) to wide by grouping
