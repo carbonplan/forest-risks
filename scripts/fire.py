@@ -5,8 +5,8 @@ import warnings
 import xarray as xr
 from tqdm import tqdm
 
-from carbonplan_forests import collect, fit, load, prepare, utils
-from carbonplan_forests.utils import get_store
+from carbonplan_forest_risks import collect, fit, load, prepare, utils
+from carbonplan_forest_risks.utils import get_store
 
 warnings.simplefilter('ignore', category=RuntimeWarning)
 
@@ -42,8 +42,17 @@ mtbs = load.mtbs(store=store, coarsen=coarsen_fit, tlim=tlim, mask=mask)
 mtbs = mtbs.assign_coords({'x': nftd.x, 'y': nftd.y})
 
 print('[fire] fitting model')
+prepend = climate.sel(time=slice('1983', '1983'))
 x, y = prepare.fire(
-    climate, nftd, mtbs, rolling_period=slice('1984', '2018'), gaussian_kernel_size=5
+    climate.sel(time=slice('1984', '2018')),
+    nftd,
+    mtbs,
+    add_global_climate_trends={
+        'tmean': {'climate_prepend': prepend, 'rolling_period': 12},
+        'ppt': {'climate_prepend': prepend, 'rolling_period': 12},
+    },
+    add_local_climate_trends=None,
+    analysis_tlim=slice('1984', '2018'),
 )
 x_z, x_mean, x_std = utils.zscore_2d(x)
 model = fit.hurdle(x_z, y, log=False)
@@ -64,17 +73,19 @@ climate = load.terraclim(
     mask=mask,
     sampling='monthly',
 )
-climate_prepend = climate.sel(time=slice('1983', '1983'))
+prepend = climate.sel(time=slice('1983', '1983'))
 x, y = prepare.fire(
-    climate.sel(time=analysis_tlim),
+    climate.sel(time=slice('1984', '2018')),
     nftd,
     mtbs,
     add_global_climate_trends={
-        'tmean': {'climate_prepend': climate_prepend},
-        'ppt': {'climate_prepend': climate_prepend},
+        'tmean': {'climate_prepend': prepend, 'rolling_period': 12},
+        'ppt': {'climate_prepend': prepend, 'rolling_period': 12},
     },
     add_local_climate_trends=None,
+    analysis_tlim=slice('1984', '2018'),
 )
+x_z, x_mean, x_std = utils.zscore_2d(x)
 
 x_z = utils.zscore_2d(x, mean=x_mean, std=x_std)
 yhat = model.predict(x_z)
@@ -127,16 +138,18 @@ for (cmip_model, member) in cmip_models:
                 historical=True,
                 mask=mask,
             )
+            prepend = climate.sel(time=slice('1969', '1969'))
             x = prepare.fire(
-                climate.sel(time=analysis_tlim),
+                climate.sel(time=slice('1970', '2099')),
                 nftd,
                 mtbs,
                 add_global_climate_trends={
-                    'tmean': {'climate_prepend': climate_prepend},
-                    'ppt': {'climate_prepend': climate_prepend},
+                    'tmean': {'climate_prepend': prepend, 'rolling_period': 12},
+                    'ppt': {'climate_prepend': prepend, 'rolling_period': 12},
                 },
                 add_local_climate_trends=None,
                 eval_only=True,
+                analysis_tlim=slice('1970', '2099'),
             )
             x_z = utils.zscore_2d(x, mean=x_mean, std=x_std)
             y_hat = model.predict(x_z)
