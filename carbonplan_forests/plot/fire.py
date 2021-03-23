@@ -8,7 +8,7 @@ from scipy.stats import binom
 from . import carto, line
 
 
-def monthly(data, data_var='monthly', projection='albersUsa', clim=None, cmap='reds'):
+def monthly(data, data_var='monthly', projection='albersUsa', clim=None, cmap='reds', clabel=None):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
 
@@ -32,20 +32,30 @@ def monthly(data, data_var='monthly', projection='albersUsa', clim=None, cmap='r
                 color=color[inds],
                 clim=clim,
                 cmap=cmap,
-                clabel=data_var,
+                clabel=clabel,
                 size=size,
                 width=270,
                 height=170,
                 projection=projection,
                 title=str(months_labels[counter]),
+                opacity=1,
             )
             counter += 1
         chart &= row
 
-    return chart.configure_view(strokeOpacity=0)
+    return chart
 
 
-def simple_map(data, data2=None, clabel=None, projection='albersUsa', clim=None, cmap='reds'):
+def simple_map(
+    data,
+    data2=None,
+    clabel=None,
+    projection='albersUsa',
+    clim=None,
+    cmap='reds',
+    title1=None,
+    title2=None,
+):
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
     color = data.values.flatten()
@@ -64,10 +74,11 @@ def simple_map(data, data2=None, clabel=None, projection='albersUsa', clim=None,
         cmap=cmap,
         clabel=clabel,
         size=size,
-        width=500,
-        height=300,
+        width=225,
+        height=150,
         projection=projection,
         opacity=1,
+        title=title1,
     )
     if data2 is not None:
         color = data2.values.flatten()
@@ -81,10 +92,11 @@ def simple_map(data, data2=None, clabel=None, projection='albersUsa', clim=None,
             cmap=cmap,
             clabel=clabel,
             size=size,
-            width=500,
-            height=300,
+            width=160,
+            height=100,
             projection=projection,
             opacity=1.0,
+            title=title2,
         )
     return row
 
@@ -173,24 +185,27 @@ def evaluation(
     x = data.groupby('time.year').sum()['year'].values
     y = data.groupby('time.year').sum().mean(['x', 'y'])[data_var].values
     yhat = model.groupby('time.year').sum().mean(['x', 'y'])[model_var].values
-
+    height = 100
+    width = 250
     column &= line(
         x=x,
         y=y,
-        width=500,
-        height=122,
+        width=width,
+        height=height,
         strokeWidth=2,
         opacity=0.5,
-        color='#ea9755',
-        ylabel='burn area [fraction/year]',
+        color='rgb(175,91,92)',
+        ylabel='Burn area [fraction/year]',
+        xlabel='Time',
     ) + line(
         x=x,
         y=yhat,
-        width=500,
-        height=122,
+        width=width,
+        height=height,
         strokeWidth=2,
-        color='#ea9755',
-        ylabel='burn area [fraction/year]',
+        color='rgb(175,91,92)',
+        ylabel='Burn area [fraction/year]',
+        xlabel='Time',
     )
 
     x = data.groupby('time.month').mean()['month'].values
@@ -200,44 +215,47 @@ def evaluation(
     column &= line(
         x=x,
         y=y,
-        width=500,
-        height=122,
+        width=width,
+        height=height,
         strokeWidth=2,
         opacity=0.5,
-        color='#ea9755',
-        ylabel='burn area [fraction/month]',
+        color='rgb(175,91,92)',
+        ylabel='Burn area [fraction/month]',
+        xlabel='Month',
     ) + line(
         x=x,
         y=yhat,
-        width=500,
-        height=122,
+        width=width,
+        height=height,
         strokeWidth=2,
-        color='#ea9755',
-        ylabel='burn area [fraction/month]',
+        color='rgb(175,91,92)',
+        ylabel='Burn area [fraction/month]',
+        xlabel='Month',
     )
 
     x = data['time'].values
     y = data.mean(['x', 'y'])[data_var].values
-    print(model)
     yhat = model.mean(['x', 'y'])[model_var].values
 
     column &= line(
         x=x,
         y=y,
-        width=500,
-        height=122,
+        width=width,
+        height=height,
         strokeWidth=2,
         opacity=0.5,
-        color='#ea9755',
-        ylabel='burn area [fraction/month]',
+        color='rgb(175,91,92)',
+        ylabel='Burn area [fraction/month]',
+        xlabel='Time',
     ) + line(
         x=x,
         y=yhat,
-        width=500,
-        height=122,
+        width=width,
+        height=height,
         strokeWidth=2,
-        color='#ea9755',
-        ylabel='burn area [fraction/month]',
+        color='rgb(175,91,92)',
+        ylabel='Burn area [fraction/month]',
+        xlabel='Time',
     )
 
     chart = column
@@ -253,8 +271,8 @@ def evaluation(
             cmap=cmap,
             clabel=clabel,
             size=size,
-            width=500,
-            height=300,
+            width=width,
+            height=height,
             projection=projection,
         )
 
@@ -357,8 +375,6 @@ def future_ts(decadal_averages, historical=None, domain=(0.0, 0.05)):
     df_toplot = df.melt('time', var_name='gcm_scenario', value_name='probability')
 
     if historical is not None:
-        # historical_df = historical.mean(dim=['x', 'y']).groupby('time.year').sum().to_dataframe()
-        # historical_df['time'] = pd.date_range('1984', '2019', freq='Y')
         historical['time'] = historical.index
         # the historical_historical is a hack to make the gcm/scenario splitting below not fail
 

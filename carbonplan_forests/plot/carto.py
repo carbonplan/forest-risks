@@ -16,7 +16,7 @@ def carto(
     width=650,
     height=400,
     title=None,
-    opacity=0.8,
+    opacity=1,
 ):
     if data is None:
         df = pd.DataFrame({'lon': lon, 'lat': lat})
