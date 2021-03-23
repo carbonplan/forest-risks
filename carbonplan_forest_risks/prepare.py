@@ -4,6 +4,7 @@ import numpy as np
 import xarray as xr
 from astropy.convolution import Gaussian2DKernel, convolve
 
+
 def smooth(da, gaussian_kernel_size=None):
     """
     Smooth in space a data array according
@@ -19,7 +20,15 @@ def smooth(da, gaussian_kernel_size=None):
         return da
 
 
-def annualize(ds, variable, signal, climate_prepend=None, rolling_period=None, gaussian_kernel_size=None):
+def annualize(
+    ds,
+    variable,
+    signal,
+    climate_prepend=None,
+    rolling_period=None,
+    gaussian_kernel_size=None,
+    analysis_tlim=slice('1984', '2018'),
+):
     """
     function to aggregate your full spatial
     ds into one at annual signal. it will aggregate across space
@@ -57,7 +66,7 @@ def annualize(ds, variable, signal, climate_prepend=None, rolling_period=None, g
 
     # drop your first year if you were rolling
     if climate_prepend is not None:
-        aggregated = aggregated.sel(time=slice('1984','2018'))
+        aggregated = aggregated.sel(time=analysis_tlim)
     return aggregated
 
 
@@ -93,6 +102,7 @@ def fire(
     add_local_climate_trends=False,
     climate_prepend=None,
     gaussian_kernel_size=None,
+    analysis_tlim=('1970', '2099'),
 ):
     """
     Prepare x and y and group variables for fire model fitting
@@ -117,6 +127,7 @@ def fire(
                             'global',
                             climate_prepend=attrs['climate_prepend'],
                             rolling_period=attrs['rolling_period'],
+                            analysis_tlim=analysis_tlim,
                         ),
                         shape,
                         'global',
@@ -136,6 +147,7 @@ def fire(
                             climate_prepend=attrs['climate_prepend'],
                             rolling_period=attrs['rolling_period'],
                             gaussian_kernel_size=attrs['gaussian_kernel_size'],
+                            analysis_tlim=analysis_tlim,
                         ),
                         shape,
                         'local',
@@ -227,8 +239,7 @@ def insects(df, eval_only=False, duration=10):
             'age_squared',
             'duration',
         ]
-        # 'pdsi_mean_min_1','cwd_sum_max_1',
-        # 'pet_mean_max_1', 'vpd_mean_max_1',
+
         inds = (
             (df['condprop'] > 0.3)
             & (not (df['disturb_human_1'] is True))
