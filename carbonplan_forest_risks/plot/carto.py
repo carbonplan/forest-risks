@@ -28,7 +28,6 @@ def carto(
     else:
         df = data
         _color = color
-
     if clabel is None:
         clabel = 'color'
 
@@ -56,7 +55,7 @@ def carto(
     background = (
         alt.Chart(states)
         .mark_geoshape(
-            fill='white',
+            fill='lightgrey',
             stroke='black',
             strokeWidth=0.3,
         )

@@ -25,7 +25,8 @@ def monthly(data, data_var='monthly', projection='albersUsa', clim=None, cmap='r
         row = alt.hconcat()
         for column in range(3):
             color = fires[counter].values.flatten()
-            inds = color > clim[0]
+            if clim is not None:
+                inds = color > clim[0]
             row |= carto(
                 lat=lat[inds],
                 lon=lon[inds],
@@ -153,6 +154,7 @@ def performance(model, obs, percentage=True):
 def evaluation(
     data,
     model,
+    mask,
     projection='albersUsa',
     clim=None,
     cmap='reds',
@@ -164,17 +166,9 @@ def evaluation(
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
 
-    #     color = performance(
-    #         model[model_var].groupby('time.year').sum().mean('year').values,
-    #         data[data_var].groupby('time.year').sum().mean('year').values,
-    #         percentage=percentage,
-    #     ).flatten()
-    color_model = model.groupby('time.year').sum().mean('year').values.flatten()
-    color_data = data.groupby('time.year').sum().mean('year').values.flatten()
-    #     if comparison:
-    #         # hacky!!!! WARNINGGGGGG THIS IS HORRIBLEEEE just want to make all inds active
-    #         inds = color > -99999
-    #     else:
+    color_model = model.groupby('time.year').sum().where(mask).mean('year').values.flatten()
+    color_data = data.groupby('time.year').sum().where(mask).mean('year').values.flatten()
+
     inds_model = color_model >= clim[0]
     inds_data = color_data >= clim[0]
 
@@ -183,9 +177,9 @@ def evaluation(
 
     column = alt.vconcat()
 
-    x = data.groupby('time.year').sum()['year'].values
-    y = data.groupby('time.year').sum().mean(['x', 'y']).values
-    yhat = model.groupby('time.year').sum().mean(['x', 'y']).values
+    x = data.groupby('time.year').sum().where(mask)['year'].values
+    y = data.groupby('time.year').sum().where(mask).mean(['x', 'y']).values
+    yhat = model.groupby('time.year').sum().where(mask).mean(['x', 'y']).values
 
     column &= line(
         x=x,
@@ -195,7 +189,7 @@ def evaluation(
         strokeWidth=2,
         opacity=1,
         color='darkgrey',
-        ylabel='Burn area [fraction/year]',
+        ylabel='Burn area (fraction/year',
         xlabel='Time',
     ) + line(
         x=x,
@@ -205,7 +199,7 @@ def evaluation(
         strokeWidth=2,
         opacity=1,
         color='#EA9755',
-        ylabel='Burn area [fraction/year]',
+        ylabel='Burn area (fraction/year)',
         xlabel='Time',
     )
 
@@ -221,7 +215,7 @@ def evaluation(
         strokeWidth=2,
         opacity=1,
         color='darkgrey',
-        ylabel='Burn area [fraction/month]',
+        ylabel='Burn area (fraction/month)',
         xlabel='Month',
     ) + line(
         x=x,
@@ -230,7 +224,7 @@ def evaluation(
         height=233,
         strokeWidth=2,
         color='#EA9755',
-        ylabel='Burn area [fraction/month]',
+        ylabel='Burn area (fraction/month)',
         xlabel='Month',
     )
 
@@ -246,7 +240,7 @@ def evaluation(
         strokeWidth=2,
         opacity=1,
         color='darkgrey',
-        ylabel='Burn area [fraction/month]',
+        ylabel='Burn area (fraction/month)',
         xlabel='Time',
     ) + line(
         x=x,
@@ -255,7 +249,7 @@ def evaluation(
         height=233,
         strokeWidth=2,
         color='#EA9755',
-        ylabel='Burn area [fraction/month]',
+        ylabel='Burn area (fraction/month)',
         xlabel='Time',
     )
 
