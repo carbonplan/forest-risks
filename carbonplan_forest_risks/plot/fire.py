@@ -63,7 +63,7 @@ def simple_map(
     inds = color > clim[0]
 
     shape = data['lat'].shape
-    size = (300 / shape[0]) * (500 / shape[1]) * 0.9
+    size = (250 / shape[0]) * (400 / shape[1]) * 0.9
 
     row = alt.hconcat()
 
@@ -75,8 +75,8 @@ def simple_map(
         cmap=cmap,
         clabel=clabel,
         size=size,
-        width=225,
-        height=150,
+        width=400,
+        height=250,
         projection=projection,
         opacity=1,
         title=title1,
@@ -198,7 +198,7 @@ def evaluation(
         height=233,
         strokeWidth=2,
         opacity=1,
-        color='#EA9755',
+        color='#D77B40',
         ylabel='Burn area (fraction/year)',
         xlabel='Time',
     )
@@ -223,7 +223,7 @@ def evaluation(
         width=450,
         height=233,
         strokeWidth=2,
-        color='#EA9755',
+        color='#D77B40',
         ylabel='Burn area (fraction/month)',
         xlabel='Month',
     )
@@ -248,7 +248,7 @@ def evaluation(
         width=450,
         height=233,
         strokeWidth=2,
-        color='#EA9755',
+        color='#D77B40',
         ylabel='Burn area (fraction/month)',
         xlabel='Time',
     )

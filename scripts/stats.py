@@ -8,8 +8,8 @@ def score(x, y, model, da, method):
     yhat = model.predict(x)
     prediction = collect.fire(yhat, da)
     
-    a = da.groupby("time.year").mean().mean(["x", "y"]).values
-    b = prediction["prediction"].groupby("time.year").mean().mean(["x", "y"]).values
+    a = da.groupby("time.year").sum().mean(["x", "y"]).values
+    b = prediction["prediction"].groupby("time.year").sum().mean(["x", "y"]).values
     a = a - a.mean()
     b = b - b.mean()
     annual_r2 = 1 - np.sum((a - b) ** 2)/np.sum((a - np.mean(a)) ** 2)
@@ -29,13 +29,16 @@ def score(x, y, model, da, method):
     b = b - b.mean()
     spatial_r2 = 1 - np.sum((a - b) ** 2)/np.sum((a - np.mean(a)) ** 2)
     
+    bias = (prediction['prediction'].mean().values - da.mean().values) / da.mean().values
+    
     return {
         'method': method,
         'roc': roc,
         'r2': r2,
         'annual_r2': annual_r2,
         'seasonal_r2': seasonal_r2,
-        'spatial_r2': spatial_r2
+        'spatial_r2': spatial_r2,
+        'bias': bias
     }
 
 def crossval(x, y, selection, da, method):
@@ -113,9 +116,10 @@ df = append(df, results)
 
 # cross validation
 years = pd.to_datetime(mtbs['time'].values).year
+nruns = 10
 
 print('[stats] split halves cross validation')
-for index in range(10):
+for index in range(nruns):
     scrambled = years.unique().values.copy()
     np.random.shuffle(scrambled)
     subset = scrambled[0:round(len(scrambled)/2)]
@@ -130,19 +134,19 @@ for index, threshold in enumerate([2005, 2006, 2007, 2008, 2009, 2010, 2011, 201
     df = append(df, results)
 
 print('[stats] shuffling')
-for index in range(10):
+for index in range(nruns):
     results = shuffle(x_z, y, mtbs['monthly'], f'shuffle_months_{index}')
     df = append(df, results)
     
-for index in range(10):
+for index in range(nruns):
     results = shuffle(x_z, y, mtbs['monthly'], f'shuffle_years_{index}')
     df = append(df, results)
 
-for index in range(10):
+for index in range(nruns):
     results = shuffle(x_z, y, mtbs['monthly'], f'shuffle_all_{index}')
     df = append(df, results)
 
-df = df[['method', 'roc', 'r2', 'annual_r2', 'seasonal_r2', 'spatial_r2']]
+df = df[['method', 'roc', 'r2', 'annual_r2', 'seasonal_r2', 'spatial_r2', 'bias']]
 
 print(df)
 

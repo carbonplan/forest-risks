@@ -55,7 +55,7 @@ def carto(
     background = (
         alt.Chart(states)
         .mark_geoshape(
-            fill='lightgrey',
+            fill='white',
             stroke='black',
             strokeWidth=0.3,
         )
