@@ -60,7 +60,7 @@ def simple_map(
     lat = data['lat'].values.flatten()
     lon = data['lon'].values.flatten()
     color = data.values.flatten()
-    inds = color > clim[0]
+    inds = color >= clim[0]
 
     shape = data['lat'].shape
     size = (250 / shape[0]) * (400 / shape[1]) * 0.9
