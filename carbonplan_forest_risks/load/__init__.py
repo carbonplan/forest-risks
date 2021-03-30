@@ -6,3 +6,4 @@ from .mtbs import mtbs
 from .nftd import nftd
 from .nlcd import nlcd
 from .terraclim import terraclim
+from .tiff import tiff
