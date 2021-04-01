@@ -1,10 +1,17 @@
 import os
+import warnings
 
 import numpy as np
+import rioxarray
 import xarray as xr
 
 from carbonplan_forest_risks import load
 from carbonplan_forest_risks.utils import get_store
+
+# flake8: noqa
+
+
+warnings.filterwarnings('ignore')
 
 impacts_to_consolidate = ['fire', 'insects', 'drought']
 account_key = os.environ.get('BLOB_ACCOUNT_KEY')
@@ -58,7 +65,7 @@ def package_impacts(url_template, mask):
                         )
                     ds[gcm].loc[dict(year=start_year + 5)] = load.tiff(url, ds).load()
                 except:
-                    print(gcm, scenario, start_year)
+                    print('file {} does not exist'.format(url))
         full_ds[scenario] = ds.to_array(dim="vars").mean(dim="vars")
     full_ds = full_ds.where(mask > 0)
     return full_ds
@@ -88,10 +95,13 @@ if 'fire' in impacts_to_consolidate:
                 .compute()['{}_{}'.format(cmip_model, scenario)],
             )
 
-            print(cmip_model)
         # average across all variables
         ds = ds.assign_coords(
-            {"x": website_mask.x, "y": website_mask.y, 'year': np.arange(1975, 2100, 10)}
+            {
+                "x": website_mask.x,
+                "y": website_mask.y,
+                'year': list(map(lambda x: str(x), np.arange(1975, 2100, 10))),
+            }
         ).where(website_mask)
         all_scenarios_ds[scenario] = ds.to_array(dim="vars").mean(dim="vars")
 
@@ -102,21 +112,10 @@ if 'insects' in impacts_to_consolidate:
     insect_url_template = "https://carbonplan.blob.core.windows.net/carbonplan-scratch/from_bill/InsectProjections_3-30/InsectModelProjection_{}.{}.{}-{}.{}-v14climate_3-30-2021.tif"
     ds = package_impacts(insect_url_template, website_mask)
     out_path = get_store('carbonplan-scratch', 'data/website/insects.zarr')
-    ds.to_zarr(out_path)
+    ds.to_zarr(out_path, mode='w')
 
 if 'drought' in impacts_to_consolidate:
     drought_url_template = "https://carbonplan.blob.core.windows.net/carbonplan-scratch/from_bill/DroughtProjections_3-31/DroughtModelProjection_{}.{}.{}-{}.{}-v14climate_3-30-2021.tif"
     ds = package_impacts(drought_url_template, website_mask)
     out_path = get_store('carbonplan-scratch', 'data/website/drought.zarr', account_key=account_key)
-    ds.to_zarr(out_path)
-
-
-# # target:
-# #for fire insects drought
-# zarr
-
-# albers conus
-# 4 km
-# variables: ssp245 ssp370 ssp585
-# impor
-# years: 2000 2010 2020 2030 2040, 2050, 2060, 2070, 2080, 2090, 2100
+    ds.to_zarr(out_path, mode='w')

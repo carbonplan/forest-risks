@@ -19,6 +19,7 @@ members = {
     'MPI-ESM1-2-LR': 'r10i1p1f1',
 }
 
+
 def cmip(
     store='az',
     df=None,
@@ -115,5 +116,5 @@ def cmip(
             return df
 
         X = X.drop(['x', 'y'])
-        X.load()
+        X.load(retries=10)
         return X
