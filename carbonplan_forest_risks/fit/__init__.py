@@ -1,5 +1,4 @@
 # flake8: noqa
-from .biomass import biomass
-from .fire import fire
+from .growth import growth
 from .hurdle import hurdle
 from .interp import interp

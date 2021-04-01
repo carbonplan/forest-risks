@@ -18,21 +18,15 @@ if len(args) == 2:
 else:
     store = args[2]
 
-cmip_models = ['BCC-CSM2-MR', 'ACCESS-ESM1-5', 'CanESM5', 'MIROC6', 'MPI-ESM1-2-LR']
+cmip_models = ['CanESM5-CanOE', 'MIROC-ES2L', 'ACCESS-CM2', 'ACCESS-ESM1-5', 'MRI-ESM2-0', 'MPI-ESM1-2-LR']
 scenarios = ['ssp245', 'ssp370', 'ssp585']
 
-targets = list(map(lambda x: str(x), np.arange(2020, 2120, 20)))
+targets = list(map(lambda x: str(x), np.arange(2005, 2100, 10)))
 pf = pd.read_parquet(f'data/{dataset}.parquet')
 ds = xr.Dataset()
 
 print(f'[{dataset}] filtering values')
 pf = pf.dropna().reset_index(drop=True)
-if dataset in ['drought', 'insects']:
-    badinds = (pf['historical'] > 1) | (np.isnan(pf['historical']))
-    for key in pf.columns:
-        if key not in ['lat', 'lon', 'type_code', 'r2']:
-            badinds = badinds | ((pf[key] > 1) | (np.isnan(pf[key])))
-    pf = pf[~badinds]
 
 print(f'[{dataset}] computing multi model mean')
 for scenario in scenarios:

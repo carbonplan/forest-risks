@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from carbonplan_forests import fit, load
+from carbonplan_forest_risks import fit, load
 
 args = sys.argv
 
@@ -14,17 +14,16 @@ if len(args) < 2:
 else:
     store = args[1]
 
-data_vars = ['tavg', 'ppt']
-data_aggs = ['mean', 'sum']
+variables = ['tmean', 'ppt']
 
 print('[biomass] loading data')
 df = load.fia(store=store, states='conus')
 df = load.terraclim(
     store=store,
     tlim=(2000, 2020),
-    data_vars=data_vars,
-    data_aggs=data_aggs,
+    variables=variables,
     remove_nans=True,
+    sampling='annual',
     df=df,
 )
 type_codes = df['type_code'].unique()
@@ -35,12 +34,9 @@ for code in tqdm(type_codes):
     df_type = df[df['type_code'] == code].reset_index()
     x = df_type['age']
     y = df_type['biomass']
-    f = [df_type['tavg_mean_mean'], df_type['ppt_sum_mean']]
-    model = fit.biomass(x=x, y=y, f=f, noise='gamma')
+    f = [df_type['tmean_mean'], df_type['ppt_mean']]
+    model = fit.growth(x=x, y=y, f=f, noise='gamma')
     models[code] = model
-
-with open('data/biomass.pkl', 'wb') as f:
-    pickle.dump(models, f)
 
 print('[biomass] preparing for evaluations')
 pf = pd.DataFrame()
@@ -54,12 +50,12 @@ for code in type_codes:
         model = models[code]
         inds = df['type_code'] == code
         x = df[inds]['age']
-        f = [df[inds]['tavg_mean_mean'], df[inds]['ppt_sum_mean']]
+        f = [df[inds]['tmean_mean'], df[inds]['ppt_mean']]
         pf.loc[inds, 'historical'] = model.predict(x, f)
 
 print('[biomass] evaluating predictions on future climate models')
-targets = list(map(lambda x: str(x), np.arange(2020, 2120, 20)))
-cmip_models = ['BCC-CSM2-MR', 'ACCESS-ESM1-5', 'CanESM5', 'MIROC6', 'MPI-ESM1-2-LR']
+targets = list(map(lambda x: str(x), np.arange(2005, 2100, 10)))
+cmip_models = ['CanESM5-CanOE', 'MIROC-ES2L', 'ACCESS-CM2', 'ACCESS-ESM1-5', 'MRI-ESM2-0', 'MPI-ESM1-2-LR']
 scenarios = ['ssp245', 'ssp370', 'ssp585']
 for it in tqdm(range(len(targets))):
     target = targets[it]
@@ -70,11 +66,11 @@ for it in tqdm(range(len(targets))):
             df = load.cmip(
                 store=store,
                 tlim=(int(tlim[0]), int(tlim[1])),
-                data_vars=data_vars,
-                data_aggs=data_aggs,
+                variables=variables,
+                historical=True if int(tlim[0]) < 2015 else False,
                 model=cmip_model,
                 scenario=scenario,
-                annual=True,
+                sampling='annual',
                 df=df,
             )
             pf[key] = np.NaN
@@ -84,7 +80,7 @@ for it in tqdm(range(len(targets))):
                     inds = df['type_code'] == code
                     x = df[inds]['age']
                     year = df[inds]['year']
-                    f = [df[inds]['tavg_mean_mean'], df[inds]['ppt_sum_mean']]
+                    f = [df[inds]['tmean_mean'], df[inds]['ppt_mean']]
                     if it == 0:
                         pf.loc[inds, key] = model.predict(
                             np.maximum(x + (float(target) - year), 0), f
