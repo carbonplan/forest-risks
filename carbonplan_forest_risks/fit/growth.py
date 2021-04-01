@@ -14,7 +14,7 @@ def logistic(x, f, p):
     )
 
 
-def biomass(x, y, f, noise='gamma', init=None):
+def growth(x, y, f, noise='gamma', init=None):
     def loglik(x, y, f, p):
         a, b, c, w0, w1, scale = p
         _mu = logistic(x, f, [a, b, c, w0, w1])
@@ -33,7 +33,7 @@ def biomass(x, y, f, noise='gamma', init=None):
     bounds = Bounds(lb, ub)
     if init is None:
         init = [np.nanmean(y), 0.1, 10, 0, 0, np.nanstd(y)]
-    options_trust = {'maxiter': 5000}
+    options_trust = {'maxiter': 10000}
 
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', category=UserWarning)
@@ -42,10 +42,10 @@ def biomass(x, y, f, noise='gamma', init=None):
     if result.success is False:
         print('optimization failed')
 
-    return BiomassModel(result, noise, x, y, f)
+    return GrowthModel(result, noise, x, y, f)
 
 
-class BiomassModel:
+class GrowthModel:
     def __init__(self, result, noise, x=None, y=None, f=None):
         self.result = result
         self.noise = noise

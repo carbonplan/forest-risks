@@ -45,6 +45,8 @@ def cmip(
             raise ValueError('must specify scenario')
         if model is None:
             raise ValueError('must specify model')
+        if member is None:
+            member = members[model]
 
         path = setup.loading(store)
         prefix = f'cmip6/{downscaling}/conus/4000m/{sampling}/{model}.{scenario}.{member}.zarr'
