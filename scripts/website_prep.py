@@ -13,12 +13,12 @@ from carbonplan_forest_risks.utils import get_store
 
 warnings.filterwarnings('ignore')
 
-impacts_to_consolidate = ['insects', 'drought']  #'fire',
+impacts_to_consolidate = ['fire', 'insects', 'drought']
 account_key = os.environ.get('BLOB_ACCOUNT_KEY')
 
 # specify the kind of mask you want to use
 website_mask = (
-    load.nlcd(store="az", year=2001).sel(band=[41, 42, 43, 90]).sum("band") > 0.5
+    load.nlcd(store="az", year=2016).sel(band=[41, 42, 43, 90]).sum("band") > 0.5
 ).astype("float")
 gcms = [
     ("ACCESS-CM2", "r1i1p1f1"),
