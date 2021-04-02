@@ -13,9 +13,9 @@ from carbonplan_forest_risks.utils import get_store
 
 warnings.filterwarnings('ignore')
 
-impacts_to_consolidate = ['fire', 'insects', 'drought']
+impacts_to_consolidate = ['insects', 'drought']  #
 account_key = os.environ.get('BLOB_ACCOUNT_KEY')
-
+rolling = True
 # specify the kind of mask you want to use
 website_mask = (
     load.nlcd(store="az", year=2016).sel(band=[41, 42, 43, 90]).sum("band") > 0.5
@@ -52,40 +52,51 @@ if 'fire' in impacts_to_consolidate:
                 .mean()
                 .compute()['{}_{}'.format(cmip_model, scenario)],
             )
+            if rolling:
+                ds[cmip_model] = ds[cmip_model].rolling(year=2).mean().drop(year=1975)
 
         # average across all variables
-        ds = ds.assign_coords(
-            {
-                "x": website_mask.x,
-                "y": website_mask.y,
-                'year': list(map(lambda x: str(x), np.arange(1975, 2100, 10))),
-            }
-        ).where(website_mask)
+        if rolling:
+            ds = ds.assign_coords(
+                {
+                    "x": website_mask.x,
+                    "y": website_mask.y,
+                    'year': list(map(lambda x: str(x), np.arange(1980, 2100, 10))),
+                }
+            ).where(website_mask)
+        else:
+            ds = ds.assign_coords(
+                {
+                    "x": website_mask.x,
+                    "y": website_mask.y,
+                    'year': list(map(lambda x: str(x), np.arange(1975, 2100, 10))),
+                }
+            ).where(website_mask)
         all_scenarios_ds[scenario] = ds.to_array(dim="vars").mean(dim="vars")
 
-    out_path = get_store('carbonplan-scratch', 'data/website/fire.zarr', account_key=account_key)
-    all_scenarios_ds.to_zarr(out_path)
+    out_path = get_store('carbonplan-scratch', 'data/website/fire_v2.zarr', account_key=account_key)
+    all_scenarios_ds.to_zarr(out_path, mode='w')
+
+
+def write_impacts(url_template, out_path, website_mask, rolling=False):
+    if rolling:
+        year_coords = list(map(lambda x: str(x), np.arange(1980, 2100, 10)))
+    else:
+        year_coords = list(map(lambda x: str(x), np.arange(1975, 2100, 10)))
+    ds = load.impacts(url_template, website_mask, mask=website_mask) * 100
+    ds = ds.to_array(dim="vars").mean("vars").to_dataset(dim='scenario')
+    if rolling:
+        ds = ds.rolling(year=2).mean().drop_sel(year=1970)
+    ds = ds.assign_coords({'year': year_coords})
+    ds.to_zarr(out_path, mode='w')
+
 
 if 'insects' in impacts_to_consolidate:
     insect_url_template = "https://carbonplan.blob.core.windows.net/carbonplan-scratch/from_bill/InsectProjections_3-30/InsectModelProjection_{}.{}.{}-{}.{}-v14climate_3-30-2021.tif"
-    ds = load.impacts(insect_url_template, website_mask, mask=website_mask) * 100
-    ds = (
-        ds.to_array(dim="vars")
-        .mean("vars")
-        .to_dataset(dim='scenario')
-        .assign_coords({'year': list(map(lambda x: str(x), np.arange(1975, 2100, 10)))})
-    )
     out_path = get_store('carbonplan-scratch', 'data/website/insects.zarr')
-    ds.to_zarr(out_path, mode='w')
+    write_impacts(insect_url_template, out_path, website_mask, rolling=False)
 
 if 'drought' in impacts_to_consolidate:
     drought_url_template = "https://carbonplan.blob.core.windows.net/carbonplan-scratch/from_bill/DroughtProjections_3-31/DroughtModelProjection_{}.{}.{}-{}.{}-v14climate_3-30-2021.tif"
-    ds = load.impacts(drought_url_template, website_mask, mask=website_mask) * 100
-    ds = (
-        ds.to_array(dim="vars")
-        .mean("vars")
-        .to_dataset(dim='scenario')
-        .assign_coords({'year': list(map(lambda x: str(x), np.arange(1975, 2100, 10)))})
-    )
     out_path = get_store('carbonplan-scratch', 'data/website/drought.zarr', account_key=account_key)
-    ds.to_zarr(out_path, mode='w')
+    write_impacts(drought_url_template, out_path, website_mask, rolling=False)
