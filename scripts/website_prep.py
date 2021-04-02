@@ -13,7 +13,7 @@ from carbonplan_forest_risks.utils import get_store
 
 warnings.filterwarnings('ignore')
 
-impacts_to_consolidate = ['fire', 'insects', 'drought']
+impacts_to_consolidate = ['insects', 'drought']  #'fire',
 account_key = os.environ.get('BLOB_ACCOUNT_KEY')
 
 # specify the kind of mask you want to use
@@ -28,48 +28,6 @@ gcms = [
     ("MPI-ESM1-2-LR", "r10i1p1f1"),
     ("CanESM5-CanOE", "r3i1p2f1"),
 ]
-
-
-def initialize_empty():
-    historical_fire = xr.open_zarr(
-        get_store("carbonplan-scratch", "data/fire_historical_v4_high_res.zarr")
-    ).load()
-    ds = xr.full_like(historical_fire.isel(time=slice(None, 10)), np.nan)
-    ds = ds.rename({'time': 'year'})
-    ds = ds.assign_coords({"year": np.arange(2005, 2100, 10)})
-    return ds
-
-
-def package_impacts(url_template, mask):
-    start_years = np.arange(2000, 2100, 10)
-    end_years = np.arange(2009, 2109, 10)
-    empty_dataset = initialize_empty()
-    full_ds = xr.Dataset()
-    for scenario in ["ssp245", "ssp370", "ssp585"]:
-        # this initializes empty array that you'll fill
-        full_ds[scenario] = empty_dataset['historical']
-        ds = xr.Dataset()
-
-        for (gcm, ensemble_member) in gcms:
-            ds[gcm] = empty_dataset['historical']
-            # want to def initialize_empty
-            for start_year, end_year in zip(start_years, end_years):
-                try:
-                    if start_year == 2000:
-                        url = url_template.format(
-                            gcm, 'historical', ensemble_member, start_year, end_year
-                        )
-                    else:
-                        url = url_template.format(
-                            gcm, scenario, ensemble_member, start_year, end_year
-                        )
-                    ds[gcm].loc[dict(year=start_year + 5)] = load.tiff(url, ds).load()
-                except:
-                    print('file {} does not exist'.format(url))
-        full_ds[scenario] = ds.to_array(dim="vars").mean(dim="vars")
-    full_ds = full_ds.where(mask > 0)
-    return full_ds
-
 
 if 'fire' in impacts_to_consolidate:
     run_name = 'v3_high_res'
@@ -110,12 +68,24 @@ if 'fire' in impacts_to_consolidate:
 
 if 'insects' in impacts_to_consolidate:
     insect_url_template = "https://carbonplan.blob.core.windows.net/carbonplan-scratch/from_bill/InsectProjections_3-30/InsectModelProjection_{}.{}.{}-{}.{}-v14climate_3-30-2021.tif"
-    ds = package_impacts(insect_url_template, website_mask)
+    ds = load.impacts(insect_url_template, website_mask, mask=website_mask) * 100
+    ds = (
+        ds.to_array(dim="vars")
+        .mean("vars")
+        .to_dataset(dim='scenario')
+        .assign_coords({'year': list(map(lambda x: str(x), np.arange(1975, 2100, 10)))})
+    )
     out_path = get_store('carbonplan-scratch', 'data/website/insects.zarr')
     ds.to_zarr(out_path, mode='w')
 
 if 'drought' in impacts_to_consolidate:
     drought_url_template = "https://carbonplan.blob.core.windows.net/carbonplan-scratch/from_bill/DroughtProjections_3-31/DroughtModelProjection_{}.{}.{}-{}.{}-v14climate_3-30-2021.tif"
-    ds = package_impacts(drought_url_template, website_mask)
+    ds = load.impacts(drought_url_template, website_mask, mask=website_mask) * 100
+    ds = (
+        ds.to_array(dim="vars")
+        .mean("vars")
+        .to_dataset(dim='scenario')
+        .assign_coords({'year': list(map(lambda x: str(x), np.arange(1975, 2100, 10)))})
+    )
     out_path = get_store('carbonplan-scratch', 'data/website/drought.zarr', account_key=account_key)
     ds.to_zarr(out_path, mode='w')
