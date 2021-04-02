@@ -1,13 +1,14 @@
 import numpy as np
 import xarray as xr
 from carbonplan.data import cat
+from rasterio.enums import Resampling
 
 
 def tiff(url, model_ds, coarsen=1):
     target = cat.nlcd.raster.to_dask()
     source = xr.open_rasterio(url)
     source = source.where(source > -1)
-    ds = source.rio.reproject_match(target)
+    ds = source.rio.reproject_match(target, resampling=Resampling.bilinear)
     ds = (
         ds.where(ds > -1)
         .coarsen(x=coarsen, y=coarsen, boundary="trim")
@@ -15,6 +16,7 @@ def tiff(url, model_ds, coarsen=1):
         .sel(band=1)
         .drop('band')
         .drop('spatial_ref')
+        .astype(np.float64)
     )
     # make sure that the coordinates are *exactly* aligned- otherwise you'll have
     # pesky plotting peculiarities
