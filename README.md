@@ -25,7 +25,7 @@ This repository includes our libraries and scripts for mapping forest carbon pot
 ## install
 
 ```shell
-pip install carbonplan[forests]
+pip install carbonplan[forest-risks]
 ```
 
 ## usage
@@ -36,8 +36,6 @@ There are four scripts in the `scripts` folder that use these tools to import da
 
 - `biomass.py`
 - `fire.py`
-- `drought.py`
-- `insects.py`
 
 And there are two additional scripts `regrid.py` and `convert.py` for converting the results to zarr files for storage and geojson for visualization purposes.
 
@@ -47,12 +45,11 @@ Several notebooks are additionally provided that show the use of these tools for
 
 As part of this project we have created derived data products for five key variables relevant to evaluating forest carbon storage potential and risks.
 - `biomass` The potential carbon storage in forests assuming continued growth of existing forests.
-- `drought` The projected future impacts of drought on forests.
 - `fire` The risks associated with forest fires.
+- `drought` The risk to forests from insect-related tree mortality.
 - `insects` The risk to forests from insect-related tree mortality.
-- `biophysical` The climate impact of forests by reflecting/absorbing light and transpiration.
 
-Gridded rasters for each of these layers are available for the continental United States at a 4km spatial scale from the 20th century through the end of the 21st century in decadal increments. All data are accessible via this [catalog](https://github.com/carbonplan/forests/blob/master/carbonplan_forests/data/catalog.yaml). Additional formats and download options will be provided in the future.
+Gridded rasters for each of these layers are available for the continental United States at a 4km spatial scale. For biomass and fire, projections are shown through the end of the 21st century in decadal increments. Drought and insect models are still in development so we currently only show historical risks for these disturbance types.  All data are accessible via this [catalog](https://github.com/carbonplan/forest-risks/blob/master/carbonplan_forest_risks/data/catalog.yaml). Additional formats and download options will be provided in the future. *Note: These products are a work in progress and we expect that they will be updated in the future.
 
 ## license
 
