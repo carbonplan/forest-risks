@@ -48,15 +48,30 @@ def impacts(url_template, spatial_template, mask=None, coarsen=1):
         for (gcm, ensemble_member) in gcms:
             year_coords, impact_ds_list = [], []
             for start_year, end_year in zip(start_years, end_years):
-                #                 try:
-                if start_year < 2005:
-                    url = url_template.format(
-                        gcm, 'historical', ensemble_member, start_year, end_year
-                    )
-                else:
-                    url = url_template.format(gcm, scenario, ensemble_member, start_year, end_year)
-                year_coords.append(start_year + 5)
-                impact_ds_list.append(tiff(url, spatial_template, coarsen=coarsen).load())
+                try:
+                    date_stamp = '04-06-2021'
+                    if start_year < 2005:
+                        url = url_template.format(
+                            gcm, 'historical', ensemble_member, start_year, end_year, date_stamp
+                        )
+                    else:
+                        url = url_template.format(
+                            gcm, scenario, ensemble_member, start_year, end_year, date_stamp
+                        )
+                    impact_ds_list.append(tiff(url, spatial_template, coarsen=coarsen).load())
+                    year_coords.append(start_year)
+                except:
+                    date_stamp = '4-06-2021'
+                    if start_year < 2005:
+                        url = url_template.format(
+                            gcm, 'historical', ensemble_member, start_year, end_year, date_stamp
+                        )
+                    else:
+                        url = url_template.format(
+                            gcm, scenario, ensemble_member, start_year, end_year, date_stamp
+                        )
+                    impact_ds_list.append(tiff(url, spatial_template, coarsen=coarsen).load())
+                    year_coords.append(start_year)
             impact_ds[gcm] = xr.concat(impact_ds_list, 'year').assign_coords({'year': year_coords})
         full_ds_list.append(impact_ds)
     full_ds = xr.concat(full_ds_list, 'scenario').assign_coords({'scenario': scenarios})
