@@ -10,13 +10,14 @@ from dask.diagnostics import ProgressBar
 from carbonplan_forests import load
 
 # parameters
-variables = ['ppt', 'tmean', 'pdsi', 'cwd', 'pet', 'vpd']
+variables = ['ppt', 'tmean', 'pdsi', 'cwd', 'pet', 'vpd', 'rh']
 targets_future = list(map(lambda x: str(x), np.arange(2015, 2105, 10)))
 targets_historical = list(map(lambda x: str(x), np.arange(1955, 2015, 10)))
+targets_terraclimate = list(map(lambda x: str(x), np.arange(1965, 2020, 10)))
 prefix = 'az://carbonplan-scratch/forests'
 states = 'conus'
-version = 'v14'
-date = '03-17-2021'
+version = 'v16'
+date = '04-13-2021'
 
 
 def write_df(df, name):
@@ -33,12 +34,12 @@ def write_df(df, name):
 
 def terraclimate_fia_wide():
     # generate wide data w/ terraclim
-    df = load.fia(store='az', states=states, group_repeats=True)
+    df_fia = load.fia(store='az', states=states, group_repeats=True)
     df = load.terraclim(
         store='az',
-        tlim=(int(df['year_0'].min()), 2020),
+        tlim=(int(df_fia['year_0'].min()), 2020),
         variables=variables,
-        df=df,
+        df=df_fia,
         group_repeats=True,
         sampling='annual',
     )
@@ -48,22 +49,27 @@ def terraclimate_fia_wide():
 def terraclimate_fia_long():
     # generate long data w/ terraclim
 
-    df = load.fia(store='az', states=states, clean=False)
-    df = load.terraclim(
-        store='az',
-        tlim=(int(df['year'].min()), 2020),
-        variables=variables,
-        df=df,
-        sampling='annual',
-    )
+    df_fia = load.fia(store='az', states=states, clean=False)
 
-    write_df(df, 'FIA-TerraClim-Long')
+    for target in targets_terraclimate:
+        tlim = (str(int(target) - 5), str(int(target) + 4))
+        print(tlim)
+
+        df = load.terraclim(
+            store='az',
+            tlim=(int(tlim[0]), int(tlim[1])),
+            variables=variables,
+            df=df_fia,
+            sampling='annual',
+        )
+
+        write_df(df, f'FIA-TerraClim-Long-{tlim[0]}.{tlim[1]}')
 
 
 def cmip_fia_long(cmip_table, method):
     # generate long data w/ cmip
 
-    df = load.fia(store='az', states=states, clean=False)
+    df_fia = load.fia(store='az', states=states, clean=False)
     keep_vars = (
         ['lat', 'lon', 'plot_cn']
         + [var + '_min' for var in variables]
@@ -86,7 +92,7 @@ def cmip_fia_long(cmip_table, method):
                 store='az',
                 tlim=(int(tlim[0]), int(tlim[1])),
                 variables=variables,
-                df=df,
+                df=df_fia,
                 model=row.model,
                 scenario=row.scenario,
                 member=row.member,
@@ -97,16 +103,15 @@ def cmip_fia_long(cmip_table, method):
             df = df[keep_vars]
             write_df(
                 df,
-                f'{method}/FIA-CMIP6-Long-{row.model}.{row.scenario}.{row.member}.-{tlim[0]}.{tlim[1]}',
+                f'{method}/FIA-CMIP6-Long-{row.model}.{row.scenario}.{row.member}-{tlim[0]}.{tlim[1]}',
             )
 
 
 if __name__ == '__main__':
-
-    terraclimate_fia_long()
-    terraclimate_fia_wide()
+    df = get_cmip_runs()
     with dask.config.set(scheduler='processes'):
         with ProgressBar():
-            df = get_cmip_runs()
+            terraclimate_fia_long()
+            terraclimate_fia_wide()
             for method in ['quantile-mapping']:  # , 'bias-corrected']:
                 cmip_fia_long(df, method=method)

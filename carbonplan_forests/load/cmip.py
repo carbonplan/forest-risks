@@ -7,10 +7,12 @@ import zarr
 from pyproj import Proj, transform
 from rasterio import Affine
 from rasterio.transform import rowcol
+from tenacity import retry, stop_after_attempt
 
 from .. import setup, utils
 
 
+@retry(stop=stop_after_attempt(5))
 def cmip(
     store='az',
     df=None,
@@ -65,9 +67,7 @@ def cmip(
             ds = xr.concat([ds_historical, ds], 'time')
 
         ds['cwd'] = ds['pet'] - ds['aet']
-        # ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -999, 0)
-        # ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -4, -4)
-        # ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] < 4, 4)
+        ds['pdsi'] = ds['pdsi'].clip(-16, 16)
 
         X = xr.Dataset()
         keys = variables
