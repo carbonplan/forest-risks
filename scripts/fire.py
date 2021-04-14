@@ -200,3 +200,32 @@ for (cmip_model, member) in cmip_models:
                     cmip_model, scenario, year
                 )
             )
+
+## combine all of the runs into a single zarr file for follow-on analysis
+postprocess = False
+gcms = ['CanESM5-CanOE', 'MIROC-ES2L', 'ACCESS-CM2', 'ACCESS-ESM1-5', 'MRI-ESM2-0', 'MPI-ESM1-2-LR']
+scenarios = ['ssp245', 'ssp370', 'ssp585']
+out_path = get_store(
+    'carbonplan-forests', 'risks/results/paper/fire_cmip.zarr', account_key=account_key
+)
+
+if postprocess:
+    gcm_list = []
+    for gcm in gcms:
+        scenario_list = []
+        for scenario in scenarios:
+            path = get_store(
+                'carbonplan-scratch',
+                'data/fire_future_{}_{}_{}.zarr'.format('v3_high_res', gcm, scenario),
+                account_key=account_key,
+            )
+            scenario_list.append(
+                xr.open_zarr(path).rename({'{}_{}'.format(gcm, scenario): 'probability'})
+            )
+            print('{} {} is done!'.format(scenario, gcm))
+        ds = xr.concat(scenario_list, dim='scenario')
+        ds = ds.assign_coords({'scenario': scenarios})
+        gcm_list.append(ds)
+    full_ds = xr.concat(gcm_list, dim='gcm')
+    full_ds = full_ds.assign_coords({'gcm': gcms})
+    full_ds.to_zarr(out_path, consolidated=True, mode='w')
