@@ -14,7 +14,7 @@ from carbonplan_forest_risks.utils import get_store
 
 warnings.filterwarnings('ignore')
 
-impacts_to_consolidate = ['fire']
+impacts_to_process = ['fire']  # insects, drought
 account_key = os.environ.get('BLOB_ACCOUNT_KEY')
 rolling = True
 # specify the kind of mask you want to use
@@ -31,10 +31,12 @@ gcms = [
     ("CanESM5-CanOE", "r3i1p2f1"),
 ]
 
-if 'fire' in impacts_to_consolidate:
+for impact in impacts_to_process:
     ds = xr.open_zarr(
         get_store(
-            'carbonplan-forests', 'risks/results/paper/fire_cmip.zarr', account_key=account_key
+            'carbonplan-forests',
+            'risks/results/paper/{}_cmip.zarr'.format(impact),
+            account_key=account_key,
         )
     )
     ds = ds.assign_coords(
@@ -43,11 +45,14 @@ if 'fire' in impacts_to_consolidate:
             "y": website_mask.y,
         }
     )
-    print('here!')
-    ds = ds.groupby('time.year').sum().coarsen(year=10).mean().compute()
-    print('here!')
-    ds = ds.assign_coords({'year': np.arange(1970, 2100, 10)})
-    ds = ds.rolling(year=2).mean().drop_sel(year=1970)
+    if impact == 'fire':
+        ds = ds.groupby('time.year').sum().coarsen(year=10).mean().compute()
+        ds = ds.assign_coords({'year': np.arange(1970, 2100, 10)})
+        ds = ds.rolling(year=2).mean().drop_sel(year=1970)
+    else:
+        ds = ds.assign_coords({'year': np.arange(1970, 2100, 10)})
+        ds = ds.rolling(year=2).mean().drop_sel(year=1970)
+
     ds = ds.assign_coords({'year': list(map(lambda x: str(x), np.arange(1980, 2100, 10)))})
     ds = ds.mean(dim='gcm').probability.to_dataset(dim='scenario')
 

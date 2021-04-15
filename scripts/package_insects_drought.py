@@ -32,3 +32,6 @@ out_path = get_store('carbonplan-forests', 'risks/results/paper/drought_cmip.zar
 ds = xr.Dataset()
 ds['probability'] = da.to_array(dim='vars').rename({'vars': 'gcm'})
 ds.to_zarr(out_path, mode='w', consolidated=True)
+
+
+# TODO: drought_terraclimate and insects_terraclimate

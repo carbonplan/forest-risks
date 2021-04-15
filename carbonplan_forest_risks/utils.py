@@ -6,6 +6,7 @@ from pyproj import Proj, transform
 from rasterio import Affine
 from rasterio.crs import CRS
 from rasterio.transform import rowcol, xy
+from scipy.stats import binom
 
 
 def albers_conus_extent():
@@ -139,3 +140,7 @@ def get_store(bucket, prefix, account_key=None):
         account_key=account_key,
     )
     return store
+
+
+def integrated_risk(p):
+    return (1 - binom.cdf(0, 20, p)) * 100
