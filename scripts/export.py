@@ -4,9 +4,10 @@ import os
 import dask
 import fsspec
 import numpy as np
-from carbonplan_forests import load
 from cmip6_downscaling.workflows.share import get_cmip_runs
 from dask.diagnostics import ProgressBar
+
+from carbonplan_forest_risks import load
 
 # parameters
 variables = ['ppt', 'tmean', 'pdsi', 'cwd', 'pet', 'vpd', 'rh']
@@ -107,10 +108,11 @@ def cmip_fia_long(cmip_table, method):
 
 
 if __name__ == '__main__':
-    df = get_cmip_runs()
+    df = get_cmip_runs(comp=True, unique=True).reset_index()
+    df = df[df.model == 'CanESM5-CanOE'].reset_index()
     with dask.config.set(scheduler='processes'):
         with ProgressBar():
             terraclimate_fia_long()
             terraclimate_fia_wide()
-            for method in ['quantile-mapping']:  # , 'bias-corrected']:
+            for method in ['quantile-mapping-v2']:  # , 'bias-corrected']:
                 cmip_fia_long(df, method=method)

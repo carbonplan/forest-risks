@@ -31,7 +31,7 @@ def terraclim(
         warnings.simplefilter('ignore', category=RuntimeWarning)
 
         path = setup.loading(store)
-        prefix = f'obs/conus/4000m/{sampling}/terraclimate_plus.zarr'
+        prefix = f'obs/conus/4000m/{sampling}/terraclimate_plus_v3.zarr'
 
         if store == 'az':
             mapper = zarr.storage.ABSStore(
