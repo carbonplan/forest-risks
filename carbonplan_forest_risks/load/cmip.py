@@ -28,11 +28,11 @@ def cmip(
     tlim=None,
     model=None,
     scenario=None,
-    downscaling='quantile-mapping',
     coarsen=None,
     variables=['ppt', 'tmean'],
     mask=None,
     member=None,
+    method='bias-corrected',
     sampling='annual',
     historical=False,
     remove_nans=False,
@@ -47,11 +47,11 @@ def cmip(
             raise ValueError('must specify scenario')
         if model is None:
             raise ValueError('must specify model')
-        if member is None:
-            member = members[model]
 
         path = setup.loading(store)
-        prefix = f'cmip6/{downscaling}/conus/4000m/{sampling}/{model}.{scenario}.{member}.zarr'
+
+        prefix = f'cmip6/{method}/conus/4000m/{sampling}/{model}.{scenario}.{member}.zarr'
+
         if store == 'az':
             mapper = zarr.storage.ABSStore(
                 'carbonplan-downscaling', prefix=prefix, account_name='carbonplan'
@@ -62,7 +62,8 @@ def cmip(
         ds = xr.open_zarr(mapper, consolidated=True)
 
         if historical:
-            prefix = f'cmip6/{downscaling}/conus/4000m/{sampling}/{model}.historical.{member}.zarr'
+            prefix = f'cmip6/{method}/conus/4000m/{sampling}/{model}.historical.{member}.zarr'
+
             if store == 'az':
                 mapper = zarr.storage.ABSStore(
                     'carbonplan-downscaling', prefix=prefix, account_name='carbonplan'
