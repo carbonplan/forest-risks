@@ -3,8 +3,9 @@ import sys
 import numpy as np
 import pandas as pd
 import xarray as xr
-from carbonplan_forests import fit, load
 from tqdm import tqdm
+
+from carbonplan_forests import fit, load
 
 args = sys.argv
 
