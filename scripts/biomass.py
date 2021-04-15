@@ -1,4 +1,3 @@
-import pickle
 import sys
 
 import numpy as np
@@ -55,7 +54,14 @@ for code in type_codes:
 
 print('[biomass] evaluating predictions on future climate models')
 targets = list(map(lambda x: str(x), np.arange(2005, 2100, 10)))
-cmip_models = ['CanESM5-CanOE', 'MIROC-ES2L', 'ACCESS-CM2', 'ACCESS-ESM1-5', 'MRI-ESM2-0', 'MPI-ESM1-2-LR']
+cmip_models = [
+    'CanESM5-CanOE',
+    'MIROC-ES2L',
+    'ACCESS-CM2',
+    'ACCESS-ESM1-5',
+    'MRI-ESM2-0',
+    'MPI-ESM1-2-LR',
+]
 scenarios = ['ssp245', 'ssp370', 'ssp585']
 for it in tqdm(range(len(targets))):
     target = targets[it]

@@ -7,6 +7,7 @@ import zarr
 from pyproj import Proj, transform
 from rasterio import Affine
 from rasterio.transform import rowcol
+from tenacity import retry, stop_after_attempt
 
 from .. import setup, utils
 
@@ -19,6 +20,8 @@ members = {
     'MPI-ESM1-2-LR': 'r10i1p1f1',
 }
 
+
+@retry(stop=stop_after_attempt(5))
 def cmip(
     store='az',
     df=None,
@@ -70,10 +73,9 @@ def cmip(
             ds_historical = xr.open_zarr(mapper, consolidated=True)
 
             ds = xr.concat([ds_historical, ds], 'time')
+
         ds['cwd'] = ds['def']
-        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -999, 0)
-        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -16, -16)
-        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] < 16, 16)
+        ds['pdsi'] = ds['pdsi'].clip(-16, 16)
 
         X = xr.Dataset()
         keys = variables
