@@ -4,9 +4,10 @@ import os
 import dask
 import fsspec
 import numpy as np
-from carbonplan_forests import load
 from cmip6_downscaling.workflows.share import get_cmip_runs
 from dask.diagnostics import ProgressBar
+
+from carbonplan_forests import load
 
 # parameters
 variables = ['ppt', 'tmean', 'pdsi', 'cwd', 'pet', 'vpd', 'rh']
@@ -15,8 +16,8 @@ targets_historical = list(map(lambda x: str(x), np.arange(1955, 2015, 10)))
 targets_terraclimate = list(map(lambda x: str(x), np.arange(1965, 2020, 10)))
 prefix = 'az://carbonplan-scratch/forests'
 states = 'conus'
-version = 'v16'
-date = '04-13-2021'
+version = 'v17'
+date = '04-14-2021'
 
 
 def write_df(df, name):
