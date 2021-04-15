@@ -4,10 +4,9 @@ import os
 import dask
 import fsspec
 import numpy as np
+from carbonplan_forests import load
 from cmip6_downscaling.workflows.share import get_cmip_runs
 from dask.diagnostics import ProgressBar
-
-from carbonplan_forests import load
 
 # parameters
 variables = ['ppt', 'tmean', 'pdsi', 'cwd', 'pet', 'vpd', 'rh']

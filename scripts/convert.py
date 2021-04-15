@@ -5,9 +5,8 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from scipy.stats import binom
-
 from carbonplan_forests import utils
+from scipy.stats import binom
 
 
 def integrated_risk(p):

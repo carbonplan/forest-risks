@@ -1,9 +1,8 @@
 import sys
 
 import numpy as np
-from tqdm import tqdm
-
 from carbonplan_forests import fit, load, prepare, utils
+from tqdm import tqdm
 
 args = sys.argv
 
