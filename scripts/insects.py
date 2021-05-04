@@ -3,7 +3,7 @@ import sys
 import numpy as np
 from tqdm import tqdm
 
-from carbonplan_forests import fit, load, prepare, utils
+from carbonplan_forest_risks import fit, load, prepare, utils
 
 args = sys.argv
 

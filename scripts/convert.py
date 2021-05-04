@@ -7,7 +7,7 @@ import pandas as pd
 import xarray as xr
 from scipy.stats import binom
 
-from carbonplan_forests import utils
+from carbonplan_forest_risks import utils
 
 
 def integrated_risk(p):

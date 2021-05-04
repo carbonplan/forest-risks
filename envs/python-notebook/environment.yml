@@ -66,6 +66,7 @@ dependencies:
   - scikit-learn
   - scipy
   - seaborn
+  - tenacity
   - tqdm
   - verde
   - vega_datasets

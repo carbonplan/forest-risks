@@ -7,10 +7,12 @@ import zarr
 from pyproj import Proj, transform
 from rasterio import Affine
 from rasterio.transform import rowcol
+from tenacity import retry, stop_after_attempt
 
 from .. import setup, utils
 
 
+@retry(stop=stop_after_attempt(5))
 def terraclim(
     store='az',
     df=None,
@@ -29,7 +31,7 @@ def terraclim(
         warnings.simplefilter('ignore', category=RuntimeWarning)
 
         path = setup.loading(store)
-        prefix = f'obs/conus/4000m/{sampling}/terraclimate_plus.zarr'
+        prefix = f'obs/conus/4000m/{sampling}/terraclimate_plus_v3.zarr'
 
         if store == 'az':
             mapper = zarr.storage.ABSStore(
@@ -41,9 +43,7 @@ def terraclim(
         ds = xr.open_zarr(mapper, consolidated=True)
 
         ds['cwd'] = ds['pet'] - ds['aet']
-        # ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -999, 0)
-        # ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -4, -4)
-        # ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] < 4, 4)
+        ds['pdsi'] = ds['pdsi'].clip(-16, 16)
 
         X = xr.Dataset()
 

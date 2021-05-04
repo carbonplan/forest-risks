@@ -5,7 +5,7 @@ import pandas as pd
 import xarray as xr
 from tqdm import tqdm
 
-from carbonplan_forests import fit, load
+from carbonplan_forest_risks import fit, load
 
 args = sys.argv
 
@@ -18,7 +18,14 @@ if len(args) == 2:
 else:
     store = args[2]
 
-cmip_models = ['CanESM5-CanOE', 'MIROC-ES2L', 'ACCESS-CM2', 'ACCESS-ESM1-5', 'MRI-ESM2-0', 'MPI-ESM1-2-LR']
+cmip_models = [
+    'CanESM5-CanOE',
+    'MIROC-ES2L',
+    'ACCESS-CM2',
+    'ACCESS-ESM1-5',
+    'MRI-ESM2-0',
+    'MPI-ESM1-2-LR',
+]
 scenarios = ['ssp245', 'ssp370', 'ssp585']
 
 targets = list(map(lambda x: str(x), np.arange(2005, 2100, 10)))
