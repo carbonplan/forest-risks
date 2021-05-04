@@ -16,8 +16,8 @@ targets_historical = list(map(lambda x: str(x), np.arange(1955, 2015, 10)))
 targets_terraclimate = list(map(lambda x: str(x), np.arange(1965, 2020, 10)))
 prefix = 'az://carbonplan-scratch/forests'
 states = 'conus'
-version = 'v17'
-date = '04-14-2021'
+version = 'v18'
+date = '05-03-2021'
 
 
 def write_df(df, name):
@@ -113,5 +113,5 @@ if __name__ == '__main__':
         with ProgressBar():
             terraclimate_fia_long()
             terraclimate_fia_wide()
-            for method in ['quantile-mapping-v2']:  # , 'bias-corrected']:
+            for method in ['quantile-mapping-v3']:  # , 'bias-corrected']:
                 cmip_fia_long(df, method=method)
