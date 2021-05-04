@@ -120,5 +120,5 @@ def cmip(
             return df
 
         X = X.drop(['x', 'y'])
-        X.load()
+        X.load(retries=10)
         return X
