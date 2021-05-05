@@ -110,7 +110,11 @@ for year in np.arange(1984, 2024, 10):
             'data/fire_historical_{}.zarr'.format(run_name),
             account_key=account_key,
         )
-        ds.to_zarr(path, consolidated=True, mode='a', append_dim='time')
+
+        if year == 1984:
+            ds.to_zarr(path, consolidated=True, mode='w')
+        else:
+            ds.to_zarr(path, consolidated=True, mode='a', append_dim='time')
 print('[fire] evaluating on future climate')
 cmip_models = [
     ('CanESM5-CanOE', 'r3i1p2f1'),
@@ -128,7 +132,7 @@ for (cmip_model, member) in cmip_models:
             store=store,
             model=cmip_model,
             # coarsen=coarsen_predict,
-            downscaling='quantile-mapping',
+            method='quantile-mapping-v3',
             scenario=scenario,
             tlim=('1969', '2099'),
             variables=data_vars,
@@ -202,11 +206,13 @@ for (cmip_model, member) in cmip_models:
             )
 
 ## combine all of the runs into a single zarr file for follow-on analysis
-postprocess = False
+postprocess = True
 gcms = ['CanESM5-CanOE', 'MIROC-ES2L', 'ACCESS-CM2', 'ACCESS-ESM1-5', 'MRI-ESM2-0', 'MPI-ESM1-2-LR']
 scenarios = ['ssp245', 'ssp370', 'ssp585']
 out_path = get_store(
-    'carbonplan-forests', 'risks/results/paper/fire_cmip.zarr', account_key=account_key
+    'carbonplan-forests',
+    'risks/results/paper/fire_cmip_{}.zarr'.format(run_name),
+    account_key=account_key,
 )
 
 if postprocess:
@@ -216,7 +222,7 @@ if postprocess:
         for scenario in scenarios:
             path = get_store(
                 'carbonplan-scratch',
-                'data/fire_future_{}_{}_{}.zarr'.format('v3_high_res', gcm, scenario),
+                'data/fire_future_{}_{}_{}.zarr'.format(run_name, gcm, scenario),
                 account_key=account_key,
             )
             scenario_list.append(
