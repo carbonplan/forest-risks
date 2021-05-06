@@ -7,6 +7,7 @@ import zarr
 from pyproj import Proj, transform
 from rasterio import Affine
 from rasterio.transform import rowcol
+from tenacity import retry, stop_after_attempt
 
 from .. import setup, utils
 
@@ -19,17 +20,19 @@ members = {
     'MPI-ESM1-2-LR': 'r10i1p1f1',
 }
 
+
+@retry(stop=stop_after_attempt(5))
 def cmip(
     store='az',
     df=None,
     tlim=None,
     model=None,
     scenario=None,
-    downscaling='quantile-mapping',
     coarsen=None,
     variables=['ppt', 'tmean'],
     mask=None,
     member=None,
+    method='bias-corrected',
     sampling='annual',
     historical=False,
     remove_nans=False,
@@ -44,11 +47,11 @@ def cmip(
             raise ValueError('must specify scenario')
         if model is None:
             raise ValueError('must specify model')
-        if member is None:
-            member = members[model]
 
         path = setup.loading(store)
-        prefix = f'cmip6/{downscaling}/conus/4000m/{sampling}/{model}.{scenario}.{member}.zarr'
+
+        prefix = f'cmip6/{method}/conus/4000m/{sampling}/{model}.{scenario}.{member}.zarr'
+
         if store == 'az':
             mapper = zarr.storage.ABSStore(
                 'carbonplan-downscaling', prefix=prefix, account_name='carbonplan'
@@ -59,7 +62,8 @@ def cmip(
         ds = xr.open_zarr(mapper, consolidated=True)
 
         if historical:
-            prefix = f'cmip6/{downscaling}/conus/4000m/{sampling}/{model}.historical.{member}.zarr'
+            prefix = f'cmip6/{method}/conus/4000m/{sampling}/{model}.historical.{member}.zarr'
+
             if store == 'az':
                 mapper = zarr.storage.ABSStore(
                     'carbonplan-downscaling', prefix=prefix, account_name='carbonplan'
@@ -70,10 +74,9 @@ def cmip(
             ds_historical = xr.open_zarr(mapper, consolidated=True)
 
             ds = xr.concat([ds_historical, ds], 'time')
+
         ds['cwd'] = ds['def']
-        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -999, 0)
-        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] > -16, -16)
-        ds['pdsi'] = ds['pdsi'].where(ds['pdsi'] < 16, 16)
+        ds['pdsi'] = ds['pdsi'].clip(-16, 16)
 
         X = xr.Dataset()
         keys = variables
@@ -117,5 +120,5 @@ def cmip(
             return df
 
         X = X.drop(['x', 'y'])
-        X.load()
+        X.load(retries=10)
         return X

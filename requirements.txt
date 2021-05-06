@@ -14,6 +14,7 @@ pandas
 pytest
 rasterio
 scikit-learn
+tenacity
 urlpath
 vega_datasets
 xarray

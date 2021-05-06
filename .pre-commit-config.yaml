@@ -18,7 +18,7 @@ repos:
       args: ["--line-length", "100", "--skip-string-normalization"]
 
 -   repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.4
+    rev: 3.9.0
     hooks:
     - id: flake8
 
@@ -27,7 +27,7 @@ repos:
     hooks:
     - id: seed-isort-config
 -   repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.7.0
+    rev: v5.8.0
     hooks:
     - id: isort
 
@@ -35,3 +35,10 @@ repos:
     rev: f5bdb72a400f1a56fe88109936c83aa12cc349fa
     hooks:
     - id: prenotebook
+
+# for R code
+# -   repo: https://github.com/lorenzwalthert/precommit
+#     rev: v0.1.3
+#     hooks:
+#     - id: style-files
+#       args: [--style_pkg=styler, --style_fun=tidyverse_style]
