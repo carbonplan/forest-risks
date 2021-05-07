@@ -65,7 +65,7 @@ cmip_models = [
 scenarios = ['ssp245', 'ssp370', 'ssp585']
 for it in tqdm(range(len(targets))):
     target = targets[it]
-    tlim = (str(int(target) - 5), str(int(target) + 4))
+    tlim = (str(int(target) - 10), str(int(target) + 9))
     for cmip_model in cmip_models:
         for scenario in scenarios:
             key = cmip_model + '_' + scenario + '_' + target
@@ -102,4 +102,4 @@ for it in tqdm(range(len(targets))):
 pf['r2'] = pf['type_code'].map(lambda k: models[k].train_r2)
 pf['scale'] = pf['type_code'].map(lambda k: models[k].scale)
 
-pf.to_parquet('data/biomass.parquet', compression='gzip', engine='fastparquet')
+pf.to_parquet('data/biomass_v2.parquet', compression='gzip', engine='fastparquet')
