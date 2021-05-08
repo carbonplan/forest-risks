@@ -13,25 +13,59 @@ from carbonplan_forest_risks.utils import get_store
 account_key = os.environ.get('BLOB_ACCOUNT_KEY')
 
 # this is only used to provide the x/y template for the insects/drought tifs
-website_mask = (
+grid_template = (
     load.nlcd(store="az", year=2016).sel(band=[41, 42, 43, 90]).sum("band") > 0.5
 ).astype("float")
 
-insect_url_template = "https://carbonplan.blob.core.windows.net/carbonplan-scratch/from-bill-04-09-2021/InsectProjections_EnsembleBaseline_4-8-21/InsectModelProjection_{}.{}.{}-{}.{}-v15climate_{}.tif"
-da = load.impacts(insect_url_template, website_mask, mask=None) * 100
-out_path = get_store('carbonplan-forests', 'risks/results/paper/insects_cmip.zarr')
+# # by passing mask as none we don't mask out any values
+# # we'll pass a mask for when we do the webmap data prep
+cmip_insect_url_template = "https://carbonplan.blob.core.windows.net/carbonplan-scratch/from-bill-05-03-2021/InsectProjections_Maps_5-5-21/InsectModelProjection_{}.{}.{}-{}.{}-v18climate_05-05-2021.tif"
+da = load.impacts(cmip_insect_url_template, grid_template, mask=None) * 100
+out_path = get_store('carbonplan-forests', 'risks/results/paper/insects_cmip_v5.zarr')
 ds = xr.Dataset()
 ds['probability'] = da.to_array(dim='vars').rename({'vars': 'gcm'})
 ds.to_zarr(out_path, mode='w', consolidated=True)
 
 
-drought_url_template = "https://carbonplan.blob.core.windows.net/carbonplan-scratch/from-bill-04-09-2021/DroughtProjections_EnsembleBaseline_4-8-21/DroughtModelProjection_{}.{}.{}-{}.{}-v15climate_{}.tif"
+cmip_drought_url_template = "https://carbonplan.blob.core.windows.net/carbonplan-scratch/from-bill-05-03-2021/DroughtProjections_Maps_5-5-21/DroughtModelProjection_{}.{}.{}-{}.{}-v18climate_05-05-2021.tif"
 
-da = load.impacts(drought_url_template, website_mask, mask=None) * 100
-out_path = get_store('carbonplan-forests', 'risks/results/paper/drought_cmip.zarr')
+da = load.impacts(cmip_drought_url_template, grid_template, mask=None) * 100
+out_path = get_store('carbonplan-forests', 'risks/results/paper/drought_cmip_v5.zarr')
 ds = xr.Dataset()
 ds['probability'] = da.to_array(dim='vars').rename({'vars': 'gcm'})
 ds.to_zarr(out_path, mode='w', consolidated=True)
 
 
-# TODO: drought_terraclimate and insects_terraclimate
+# load in historical runs to create drought_terraclimate and insects_terraclimate
+terraclimate_insect_url_template = "https://carbonplan.blob.core.windows.net/carbonplan-scratch/from-bill-05-03-2021/Fig2_TerraClimateHistModels_4-22-21/InsectModel_ModeledTerraClimateFIAlong_{}-{}_04-22-2021.tif"
+ds = xr.Dataset()
+ds['probability'] = (
+    load.impacts(
+        terraclimate_insect_url_template,
+        grid_template,
+        mask=None,
+        period_start=1990,
+        period_end=2020,
+        met_data='terraclimate',
+    )
+    * 100
+)
+out_path = get_store('carbonplan-forests', 'risks/results/paper/insects_terraclimate.zarr')
+ds.to_zarr(out_path, mode='w', consolidated=True)
+
+
+terraclimate_drought_url_template = "https://carbonplan.blob.core.windows.net/carbonplan-scratch/from-bill-05-03-2021/Fig2_TerraClimateHistModels_4-22-21/DroughtModel_ModeledTerraClimateFIAlong_{}-{}_04-22-2021.tif"
+ds = xr.Dataset()
+ds['probability'] = (
+    load.impacts(
+        terraclimate_drought_url_template,
+        grid_template,
+        mask=None,
+        period_start=1990,
+        period_end=2020,
+        met_data='terraclimate',
+    )
+    * 100
+)
+out_path = get_store('carbonplan-forests', 'risks/results/paper/drought_terraclimate.zarr')
+ds.to_zarr(out_path, mode='w', consolidated=True)

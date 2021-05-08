@@ -8,4 +8,4 @@
 #python fire.py az tmean_ppt_cwd_pdsi_true [tmean,ppt,cwd,pdsi] 4 True
 #python fire.py az tmean_ppt_cwd_pdsi_false [tmean,ppt,cwd,pdsi] 4 False
 #python fire.py az v2_remaining [tmean,ppt,cwd] 4
-python fire.py az v3_high_res [tmean,ppt,cwd] 4 1
+python fire.py az v6 [tmean,ppt,cwd] 4 4
