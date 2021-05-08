@@ -13,6 +13,7 @@ from carbonplan_forest_risks import utils
 def integrated_risk(p):
     return (1 - binom.cdf(0, 20, p)) * 100
 
+
 args = sys.argv
 
 if len(args) < 2:
@@ -83,7 +84,7 @@ if 'insects' in dataset or 'drought' in dataset:
 
     if 'insects' in dataset or 'drought' in dataset:
         a = a * 100 * 20
-    
+
     a[np.isnan(a)] = 0
     r, c = np.nonzero(a)
     lat, lon = utils.rowcol_to_latlon(r, c, res=res)
@@ -92,6 +93,6 @@ if 'insects' in dataset or 'drought' in dataset:
     a[np.isnan(a)] = 0
     df = pd.DataFrame()
     df[key] = np.round(a[r, c], precision)
-    
+
 gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(lon, lat))
 gdf.to_file(f'data/{savename}.geojson', driver='GeoJSON')
