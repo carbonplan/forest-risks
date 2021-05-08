@@ -9,15 +9,9 @@ def tiff(url, model_ds, coarsen=1):
     source = xr.open_rasterio(url)
     source = source.where(source > -1)
     ds = source.rio.reproject_match(target, resampling=Resampling.bilinear)
-    ds = (
-        ds.where(ds > -1)
-        .coarsen(x=coarsen, y=coarsen, boundary="trim")
-        .mean()
-        .sel(band=1)
-        .drop('band')
-        .drop('spatial_ref')
-        .astype(np.float64)
-    )
+    ds = ds.where(ds > -1).sel(band=1).drop('band').drop('spatial_ref').astype(np.float64)
+    if coarsen != 1:
+        ds = ds.coarsen(x=coarsen, y=coarsen, boundary="trim").mean()
     # make sure that the coordinates are *exactly* aligned- otherwise you'll have
     # pesky plotting peculiarities
     ds = ds.assign_coords({"x": model_ds.x, "y": model_ds.y})
