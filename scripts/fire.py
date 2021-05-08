@@ -62,12 +62,12 @@ yhat = model.predict(x_z)
 prediction = collect.fire(yhat, mtbs)
 print('[fire] evaluating on training data')
 # reload everything at the appropriate coarsen level (in this case no coarsening)
-nftd = load.nftd(store=store, groups='all', mask=mask, area_threshold=1500)
+nftd = load.nftd(store=store, groups='all', mask=mask, coarsen=coarsen_predict, area_threshold=1500)
 
 climate = load.terraclim(
     store=store,
     tlim=tlim,
-    # coarsen=coarsen_predict,
+    coarsen=coarsen_predict,
     variables=data_vars,
     mask=mask,
     sampling='monthly',
@@ -106,11 +106,10 @@ for year in np.arange(1984, 2024, 10):
         ds.to_zarr('data/fire_historical.zarr', mode='w')
     elif store == 'az':
         path = get_store(
-            'carbonplan-scratch',
-            'data/fire_historical_{}.zarr'.format(run_name),
+            'carbonplan-forests',
+            'risks/results/paper/fire_terraclimate_{}.zarr'.format(run_name),
             account_key=account_key,
         )
-
         if year == 1984:
             ds.to_zarr(path, consolidated=True, mode='w')
         else:
@@ -131,7 +130,7 @@ for (cmip_model, member) in cmip_models:
         climate = load.cmip(
             store=store,
             model=cmip_model,
-            # coarsen=coarsen_predict,
+            coarsen=coarsen_predict,
             method='quantile-mapping-v3',
             scenario=scenario,
             tlim=('1969', '2099'),

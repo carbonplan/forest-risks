@@ -60,6 +60,6 @@ for impact in impacts_to_process:
         ds = ds.where(website_mask)
 
     out_path = get_store(
-        'carbonplan-forests', 'risks/results/web/fire.zarr', account_key=account_key
+        'carbonplan-forests', 'risks/results/web/{}.zarr'.format(impact), account_key=account_key
     )
     ds.to_zarr(out_path, mode='w')
