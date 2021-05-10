@@ -111,6 +111,7 @@ x, y = prepare.fire(
         'ppt': {'climate_prepend': prepend, 'rolling_period': 12},
     },
     add_local_climate_trends=None,
+    analysis_tlim=slice('1984', '2018'),
 )
 x_z, x_mean, x_std = utils.zscore_2d(x)
 
