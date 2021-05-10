@@ -11,7 +11,8 @@ from carbonplan_forest_risks import fit, load, utils
 store = 'az'
 
 df = pd.read_csv(
-    'https://carbonplan.blob.core.windows.net/carbonplan-scratch/from-bill-04-14-2021/Fig1D_DroughtModel_ModeledFIAlongEnsembleHistMort_FIAlong_04-14-2021.csv')
+    'https://carbonplan.blob.core.windows.net/carbonplan-scratch/from-bill-04-14-2021/Fig1D_DroughtModel_ModeledFIAlongEnsembleHistMort_FIAlong_04-14-2021.csv'
+)
 
 pf = pd.DataFrame()
 
@@ -33,5 +34,7 @@ gridded = fit.interp(pf, final_mask, var='mortality')
 ds['historical'] = gridded
 
 account_key = os.environ.get('BLOB_ACCOUNT_KEY')
-path = utils.get_store('carbonplan-forests', f'risks/results/web/drought.zarr', account_key=account_key)
+path = utils.get_store(
+    'carbonplan-forests', f'risks/results/web/drought.zarr', account_key=account_key
+)
 ds.to_zarr(path, mode='w')

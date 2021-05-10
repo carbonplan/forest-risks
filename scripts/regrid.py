@@ -68,7 +68,9 @@ for scenario in tqdm(scenarios):
     da = xr.concat(results, dim=xr.Variable('year', targets))
     ds[scenario] = da
 
-    
+
 account_key = os.environ.get('BLOB_ACCOUNT_KEY')
-path = utils.get_store('carbonplan-forests', f'risks/results/web/{dataset}.zarr', account_key=account_key)
+path = utils.get_store(
+    'carbonplan-forests', f'risks/results/web/{dataset}.zarr', account_key=account_key
+)
 ds.to_zarr(path, mode='w')
