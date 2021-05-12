@@ -1,10 +1,7 @@
 import os
-import sys
 
-import numpy as np
 import pandas as pd
 import xarray as xr
-from tqdm import tqdm
 
 from carbonplan_forest_risks import fit, load, utils
 
@@ -35,6 +32,6 @@ ds['historical'] = gridded
 
 account_key = os.environ.get('BLOB_ACCOUNT_KEY')
 path = utils.get_store(
-    'carbonplan-forests', f'risks/results/web/drought.zarr', account_key=account_key
+    'carbonplan-forests', 'risks/results/web/drought.zarr', account_key=account_key
 )
 ds.to_zarr(path, mode='w')

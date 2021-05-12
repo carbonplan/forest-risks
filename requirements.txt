@@ -1,6 +1,7 @@
 altair
 altair-data-server
 carbonplan
+carbonplan[styles]
 dask[complete]
 fsspec
 fastparquet
