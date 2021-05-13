@@ -31,7 +31,14 @@ class NpEncoder(json.JSONEncoder):
 warnings.filterwarnings('ignore')
 
 account_key = os.environ.get('BLOB_ACCOUNT_KEY')
-gcms = ['CanESM5-CanOE', 'MIROC-ES2L', 'ACCESS-CM2', 'ACCESS-ESM1-5', 'MRI-ESM2-0', 'MPI-ESM1-2-LR']
+gcms = [
+    ('CanESM5-CanOE', 'r3i1p2f1'),
+    ('MIROC-ES2L', 'r1i1p1f2'),
+    ('ACCESS-CM2', 'r1i1p1f1'),
+    ('ACCESS-ESM1-5', 'r10i1p1f1'),
+    ('MRI-ESM2-0', 'r1i1p1f1'),
+    ('MPI-ESM1-2-LR', 'r10i1p1f1'),
+]
 scenarios = ['ssp245', 'ssp370', 'ssp585']
 
 website_mask = (
@@ -49,88 +56,178 @@ region_bboxes = {
     },
 }
 
-results_dict = {}
-# select out bounding boxes
-for impact in ['fire', 'insects', 'drought']:
-    results_dict[impact] = {}
-    if impact == 'fire':
-        store_path = 'risks/results/web/{}_cmip_high_res.zarr'.format(impact)
-    else:
-        store_path = 'risks/results/paper/{}_cmip.zarr'.format(impact)
-    ds = xr.open_zarr(
-        get_store(
-            'carbonplan-forests',
-            store_path,
-            account_key=account_key,
-        )
-    )
 
-    if impact == 'fire':
-        # bring fire into same temporal scale as insects/drought
-        # this takes a while but that's okay
-        ds = ds.assign_coords(
+def build_climate_cube(
+    tlim=(1970, 2099), variables=['tmean'], downscaling_method='quantile-mapping-v3'
+):
+    """"""
+    gcms = [
+        ('CanESM5-CanOE', 'r3i1p2f1'),
+        ('MIROC-ES2L', 'r1i1p1f2'),
+        ('ACCESS-CM2', 'r1i1p1f1'),
+        ('ACCESS-ESM1-5', 'r10i1p1f1'),
+        ('MRI-ESM2-0', 'r1i1p1f1'),
+        ('MPI-ESM1-2-LR', 'r10i1p1f1'),
+    ]
+    scenarios = ['ssp245', 'ssp370', 'ssp585']
+    all_scenarios = []
+    for scenario in scenarios:
+        all_gcms = []
+        for (gcm, ensemble_member) in gcms:
+            cmip = load.cmip(
+                store='az',
+                model=gcm,
+                tlim=tlim,
+                scenario=scenario,
+                historical=True,
+                member=ensemble_member,
+                method=downscaling_method,
+                sampling='annual',
+                variables=variables,
+            )
+            all_gcms.append(cmip)
+        concatted = xr.concat(all_gcms, dim='gcm')
+        concatted = concatted.assign_coords({'gcm': [gcm[0] for gcm in gcms]})
+        all_scenarios.append(concatted)
+    ds = xr.concat(all_scenarios, dim='scenario')
+    ds = ds.assign_coords({'scenario': scenarios})
+    return ds
+
+
+def timeseries_dict(ds, time_period='historical'):
+    gcms = [
+        ('CanESM5-CanOE', 'r3i1p2f1'),
+        ('MIROC-ES2L', 'r1i1p1f2'),
+        ('ACCESS-CM2', 'r1i1p1f1'),
+        ('ACCESS-ESM1-5', 'r10i1p1f1'),
+        ('MRI-ESM2-0', 'r1i1p1f1'),
+        ('MPI-ESM1-2-LR', 'r10i1p1f1'),
+    ]
+
+    mean = []
+    gcm_dict = {}
+    for (gcm, ensemble_member) in gcms:
+        gcm_dict[gcm] = []
+    if time_period == 'historical':
+        years = np.arange(1980, 2020, 10)
+    elif time_period == 'future':
+        years = np.arange(2020, 2100, 10)
+    for year in years:
+        # average across scenarios
+        mean.append(
             {
-                "x": website_mask.x,
-                "y": website_mask.y,
+                'y': year,
+                'r': ds.mean(dim='gcm').sel(year=year).values.item(),
             }
         )
-        ds = ds.groupby('time.year').sum().coarsen(year=10).mean().compute()
-        ds = ds.assign_coords({'year': np.arange(1970, 2100, 10)})
-    ds = ds.where(website_mask > 0)
+        # then populate all the gcms
+        for (gcm, ensemble_member) in gcms:
+            gcm_dict[gcm].append({'y': year, 'r': ds.sel(gcm=gcm, year=year).values.item()})
+    return mean, gcm_dict
 
-    # then do rolling mean for two decades
+
+# first print the bounding box coordinates
+
+region_bboxes_lists = {}
+slice_to_list = lambda x: [x.start, x.stop]
+for region in region_bboxes:
+    region_bboxes_lists[region] = {}
+    for coord in ['x', 'y']:
+        region_bboxes_lists[region][coord] = slice_to_list(region_bboxes[region][coord])
+with fsspec.open(
+    'az://carbonplan-forests/risks/results/web/time-series-bounding-boxes.json',
+    account_name="carbonplan",
+    account_key=account_key,
+    mode='w',
+) as f:
+    json.dump(region_bboxes_lists, f, indent=2, cls=NpEncoder)
+
+# second grab regionally-averaged reults and write them into this dictionary
+# populate your results dict according to the format which will be used
+# for the web article rendering (nested by impact, region, scenario, models/multi-model mean, year/risk)
+results_dict = {}
+# select out bounding boxes
+# select out bounding boxes
+for impact in ['insects', 'drought', 'tmean', 'fire']:
+    results_dict[impact] = {}
+    # read in the temperature data from its different sources and create a datacube
+    # of the same specs as the risks
+    if impact == 'tmean':
+        ds = build_climate_cube()
+    # grab the risks data
+    else:
+        if impact == 'fire':
+            store_path = 'risks/results/web/{}_cmip_high_res.zarr'.format(impact)
+        else:
+            store_path = 'risks/results/paper/{}_cmip.zarr'.format(impact)
+        ds = xr.open_zarr(
+            get_store(
+                'carbonplan-forests',
+                store_path,
+                account_key=account_key,
+            )
+        )
+    # assign the coords for all of the data sources (this helps make sure that
+    # the masking works appropriately and coordinates aren't off by 0.00000001)
+    ds = ds.assign_coords(
+        {
+            "x": website_mask.x,
+            "y": website_mask.y,
+        }
+    )
+    # align to the annual timesteps for tmean and fire
+    if impact in ['tmean', 'fire']:
+        if impact == 'tmean':
+            ds = ds.coarsen(time=10).mean().compute()
+            ds = ds.rename({'time': 'year'})
+        elif impact == 'fire':
+            # bring fire into same temporal scale as insects/drought
+            # this takes a while but that's okay
+            ds = ds.groupby('time.year').sum().coarsen(year=10).mean().compute()
+        ds = ds.assign_coords({'year': np.arange(1970, 2100, 10)})
+
+    # mask according to the mask we use for the web
+    ds = ds.where(website_mask > 0).compute()
+
+    # then do rolling mean for two decades (and drop the first timestep which only
+    # has info for one decade). we'll report 20 year risks at 10 year increments
     ds = ds.rolling(year=2).mean().drop_sel(year=1970)
+
+    # loop through each of the regions of interest
     for region, bbox in region_bboxes.items():
+        print('Calculating regional averages over the {} for {}'.format(region, impact))
+        # initialize the dictionary
         results_dict[impact][region] = {}
+        # select out the box you want
         selected = ds.sel(**region_bboxes[region])
+        # aggregate the different risks according to either 20 year integrated risk for fire
+        # or just multiply by 20 for the 20 year total mortality for insects/drought
         if impact == 'fire':
             selected = selected.apply(utils.integrated_risk)
+        elif impact in ['drought', 'insects']:
+            selected *= 20
+        # calculate regional averages (these have already been masked) and then select the
+        # appropriate variable
+        if impact == 'tmean':
+            selected = selected.mean(dim=['x', 'y']).compute().tmean
         else:
-            selected *= 10
+            selected = selected.mean(dim=['x', 'y']).compute().probability
 
-        selected = selected.mean(dim=['x', 'y']).compute().probability
         # first populate the historical values
-        results_dict[impact][region]['historical'] = {'mean': [], 'models': {}}
+        results_dict[impact][region]['historical'] = {}
         # initialize your dictionary with the gcm keys
-        for gcm in gcms:
-            results_dict[impact][region]['historical']['models'][gcm] = []
-        print('at historical')
-        for year in np.arange(1980, 2020, 10):
-            # average across scenarios
-            results_dict[impact][region]['historical']['mean'].append(
-                {
-                    'y': year,
-                    'r': selected.mean(dim='scenario').mean(dim='gcm').sel(year=year).values,
-                }
-            )
-            # then populate all the gcms
-            for gcm in gcms:
-                results_dict[impact][region]['historical']['models'][gcm].append(
-                    {'y': year, 'r': selected.mean(dim='scenario').sel(gcm=gcm, year=year).values}
-                )
-
+        mean, models = timeseries_dict(selected.mean(dim='scenario'), time_period='historical')
+        results_dict[impact][region]['historical']['mean'] = mean
+        results_dict[impact][region]['historical']['models'] = models
+        # then fill in each of the three different scenarios
         for scenario in scenarios:
-            print(scenario)
             results_dict[impact][region][scenario] = {}
-            results_dict[impact][region][scenario] = {'mean': [], 'models': {}}
             # initialize your dictionary with the gcm keys
-            for gcm in gcms:
-                results_dict[impact][region][scenario]['models'][gcm] = []
-            # loop through scenarios
-            for year in np.arange(2020, 2100, 10):
+            mean, models = timeseries_dict(selected.sel(scenario=scenario), time_period='future')
+            results_dict[impact][region][scenario]['mean'] = mean
+            results_dict[impact][region][scenario]['models'] = models
 
-                results_dict[impact][region][scenario]['mean'].append(
-                    {
-                        'y': year,
-                        'r': selected.sel(scenario=scenario).mean(dim='gcm').sel(year=year).values,
-                    }
-                )
-                # then populate all the gcms
-                for gcm in gcms:
-                    results_dict[impact][region][scenario]['models'][gcm].append(
-                        {'y': year, 'r': selected.sel(gcm=gcm, scenario=scenario, year=year).values}
-                    )
-
+# write out to dictionary to rendered within the explainer
 with fsspec.open(
     'az://carbonplan-forests/risks/results/web/time-series.json',
     account_name="carbonplan",
