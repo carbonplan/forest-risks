@@ -14,7 +14,7 @@ from carbonplan_forest_risks.utils import get_store
 
 warnings.filterwarnings('ignore')
 
-impacts_to_process = ['fire']  # insects, drought
+impacts_to_process = ['fire']
 account_key = os.environ.get('BLOB_ACCOUNT_KEY')
 rolling = True
 # specify the kind of mask you want to use
@@ -35,7 +35,7 @@ for impact in impacts_to_process:
     ds = xr.open_zarr(
         get_store(
             'carbonplan-forests',
-            'risks/results/paper/{}_cmip.zarr'.format(impact),
+            'risks/results/web/{}_cmip_high_res.zarr'.format(impact),
             account_key=account_key,
         )
     )
