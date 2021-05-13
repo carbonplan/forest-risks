@@ -2,22 +2,6 @@ import warnings
 
 import numpy as np
 import xarray as xr
-from astropy.convolution import Gaussian2DKernel, convolve
-
-
-def smooth(da, gaussian_kernel_size=None):
-    """
-    Smooth in space a data array according
-    to box with height and width of `spatial_smoothing_window`
-    """
-    if gaussian_kernel_size is not None:
-        # define kernel size
-        kernel = Gaussian2DKernel(x_stddev=gaussian_kernel_size)
-        # blur your maps according to that kernel
-        blur = convolve(da.values, kernel, boundary='extend')
-        return xr.DataArray(blur, coords=da.coords)
-    else:
-        return da
 
 
 def annualize(
@@ -26,7 +10,6 @@ def annualize(
     signal,
     climate_prepend=None,
     rolling_period=None,
-    gaussian_kernel_size=None,
     analysis_tlim=slice('1984', '2018'),
 ):
     """
@@ -39,14 +22,8 @@ def annualize(
     else:
         da = ds[variable]
 
-    if gaussian_kernel_size is not None:
-        # smoooth
-        for t in range(len(da['time'])):
-            da[t] = smooth(da[t], gaussian_kernel_size)
-    else:
-        # mean
-        if signal == 'global':
-            da = da.mean(dim=['x', 'y'])
+    if signal == 'global':
+        da = da.mean(dim=['x', 'y'])
 
     if climate_prepend is not None:
         aggregated = da.rolling(
@@ -101,7 +78,6 @@ def fire(
     add_global_climate_trends=False,
     add_local_climate_trends=False,
     climate_prepend=None,
-    gaussian_kernel_size=None,
     analysis_tlim=('1970', '2099'),
 ):
     """
@@ -146,7 +122,6 @@ def fire(
                             'local',
                             climate_prepend=attrs['climate_prepend'],
                             rolling_period=attrs['rolling_period'],
-                            gaussian_kernel_size=attrs['gaussian_kernel_size'],
                             analysis_tlim=analysis_tlim,
                         ),
                         shape,

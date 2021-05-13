@@ -7,18 +7,9 @@
 
 **forest carbon potential and risks**
 
-_Note: This project is under active development. We expect to make many breaking changes to the utilities and APIs included in this repository. Feel free to look around, but use at your own risk._
-
-[![GitHub][github-badge]][github]
-[![Build Status]][actions]
-![MIT License][]
-
-[github]: https://github.com/carbonplan/forest-risks
-[github-badge]: https://badgen.net/badge/-/github?icon=github&label
-[build status]: https://github.com/carbonplan/forest-risks/actions/workflows/main.yaml/badge.svg
-[actions]: https://github.com/carbonplan/forest-risks/actions/workflows/main.yaml
-[mit license]: https://badgen.net/badge/license/MIT/blue
-
+[![CI](https://github.com/carbonplan/forest-offsets/actions/workflows/main.yaml/badge.svg)](https://github.com/carbonplan/forest-offsets/actions/workflows/main.yaml)
+[![MIT License](https://badgen.net/badge/license/MIT/blue)](./LICENSE)
+[![DOI](https://img.shields.io/badge/code-10.5281/zenodo.4741329-6aa3d5?link=https://doi.org/10.5281/zenodo.4741329)](https://doi.org/10.5281/zenodo.4741329)
 
 This repository includes our libraries and scripts for mapping forest carbon potential and risks.
 
@@ -32,12 +23,9 @@ pip install carbonplan[forest-risks]
 
 This codebase is organized into modules that implement data loading and model fitting as well as utitlies for plotting and other common tasks. Most anlayses involve some combination of the `load` and `fit` modules.
 
-There are four scripts in the `scripts` folder that use these tools to import data, run models, and parse results.
+The `scripts` folder contains tools to import data, run models, and parse results.
 
-- `biomass.py`
-- `fire.py`
-
-And there are two additional scripts `regrid.py` and `convert.py` for converting the results to zarr files for storage and geojson for visualization purposes.
+The `regrid.py` and `convert.py` scripts are for converting the results to zarr files for storage and geojson for visualization purposes.
 
 Several notebooks are additionally provided that show the use of these tools for fitting models and inspecting model outputs. Notebooks are organized by the model type, e.g. `biomass`, `fire`, etc.
 
@@ -49,7 +37,7 @@ As part of this project we have created derived data products for five key varia
 - `drought` The risk to forests from insect-related tree mortality.
 - `insects` The risk to forests from insect-related tree mortality.
 
-Gridded rasters for each of these layers are available for the continental United States at a 4km spatial scale. For biomass and fire, projections are shown through the end of the 21st century in decadal increments. Drought and insect models are still in development so we currently only show historical risks for these disturbance types.  All data are accessible via this [catalog](https://github.com/carbonplan/forest-risks/blob/master/carbonplan_forest_risks/data/catalog.yaml). Additional formats and download options will be provided in the future. *Note: These products are a work in progress and we expect that they will be updated in the future.
+Gridded rasters for each of these layers are available for the continental United States at a 4km spatial scale. For biomass and fire, projections are shown through the end of the 21st century in decadal increments. Drought and insect models are still in development so we currently only show historical risks for these disturbance types.  All data are accessible via this [catalog](https://github.com/carbonplan/forest-risks/blob/master/carbonplan_forest_risks/data/catalog.yaml). Additional formats and download options will be provided in the future.
 
 ## license
 

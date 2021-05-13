@@ -1,4 +1,3 @@
-import functools
 import sys
 
 import geopandas as gpd
