@@ -54,10 +54,19 @@ for impact in impacts_to_process:
         ds = ds.rolling(year=2).mean().drop_sel(year=1970)
 
     ds = ds.assign_coords({'year': list(map(lambda x: str(x), np.arange(1980, 2100, 10)))})
-    ds = ds.mean(dim='gcm').probability.to_dataset(dim='scenario')
 
     if mask_for_website:
         ds = ds.where(website_mask)
+    # first write out the full ds which will be used for the article
+    out_path = get_store(
+        'carbonplan-forests',
+        'risks/results/web/{}_full.zarr'.format(impact),
+        account_key=account_key,
+    )
+    ds.to_zarr(out_path, mode='w')
+
+    # then write out the ensemble-mean (which will be used for the webmap)
+    ds = ds.mean(dim='gcm').probability.to_dataset(dim='scenario')
 
     out_path = get_store(
         'carbonplan-forests', 'risks/results/web/{}.zarr'.format(impact), account_key=account_key
