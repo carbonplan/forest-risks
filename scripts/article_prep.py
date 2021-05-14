@@ -210,6 +210,8 @@ for impact in ['insects', 'drought', 'tmean', 'fire']:
         # appropriate variable
         if impact == 'tmean':
             selected = selected.mean(dim=['x', 'y']).compute().tmean
+            # create anomalies
+            selected -= selected.sel(year=[1980, 1990, 2000]).mean(dim='year')
         else:
             selected = selected.mean(dim=['x', 'y']).compute().probability
 
@@ -220,6 +222,7 @@ for impact in ['insects', 'drought', 'tmean', 'fire']:
         results_dict[impact][region]['historical']['mean'] = mean
         results_dict[impact][region]['historical']['models'] = models
         # then fill in each of the three different scenarios
+
         for scenario in scenarios:
             results_dict[impact][region][scenario] = {}
             # initialize your dictionary with the gcm keys
@@ -229,7 +232,7 @@ for impact in ['insects', 'drought', 'tmean', 'fire']:
 
 # write out to dictionary to rendered within the explainer
 with fsspec.open(
-    'az://carbonplan-forests/risks/results/web/time-series.json',
+    'az://carbonplan-forests/risks/results/web/time-series-hybrid.json',
     account_name="carbonplan",
     account_key=account_key,
     mode='w',
