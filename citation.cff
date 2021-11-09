@@ -37,7 +37,7 @@ license: MIT, CC-BY-4.0
 
 preferred-citation:
   title: "Climate risks to carbon sequestration in US forests"
-  abstrct: "Forests are currently a substantial carbon sink globally. Many climate change mitigation strategies rely on forest preservation and expansion, but the effectiveness of these approaches hinges on forests sequestering carbon for centuries despite anthropogenic climate change. Yet climate-driven disturbances pose critical risks to the long-term stability of forest carbon. We quantify the key climate drivers that fuel wildfire, drought, and insects, for the United States over 1984-2018 and project future disturbance risks over the 21st century. We find that current risks are widespread and projected to increase across different emission scenarios by a factor of 4-14 for fire and 1.3-1.8 for drought and insects. Our results provide insights for carbon cycle modeling, conservation, and climate policy, underscoring the escalating climate risks facing forests and the need for emissions reductions to mitigate climate change.Competing Interest StatementThe authors have declared no competing interest."
+  abstract: "Forests are currently a substantial carbon sink globally. Many climate change mitigation strategies rely on forest preservation and expansion, but the effectiveness of these approaches hinges on forests sequestering carbon for centuries despite anthropogenic climate change. Yet climate-driven disturbances pose critical risks to the long-term stability of forest carbon. We quantify the key climate drivers that fuel wildfire, drought, and insects, for the United States over 1984-2018 and project future disturbance risks over the 21st century. We find that current risks are widespread and projected to increase across different emission scenarios by a factor of 4-14 for fire and 1.3-1.8 for drought and insects. Our results provide insights for carbon cycle modeling, conservation, and climate policy, underscoring the escalating climate risks facing forests and the need for emissions reductions to mitigate climate change.Competing Interest StatementThe authors have declared no competing interest."
   type: preprint
   year: 2021
   journal: bioRxiv
@@ -75,7 +75,7 @@ preferred-citation:
 
 
 
-identifiers:
+repository:
   - description: "A repository containing the final output datasets from the analysis and figures in Anderegg and Chegwidden et al., “Climate risks to carbon sequestration in US forests”."
     type: doi
     value: https://doi.org/10.5281/zenodo.4741332
