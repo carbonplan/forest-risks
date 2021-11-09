@@ -10,8 +10,6 @@ authors:
 license: MIT - CC-BY-4.0
 
 preferred-citation:
-  authors:
-    given-names: Anderegg, William R.L. and Chegwidden, Oriana S. and Badgley, Grayson and Trugman, Anna T. and Cullenward, Danny and Abatzoglou, John T. and Hicke, Jeffrey A. and Freeman, Jeremy and Hamman, Joseph J.
   title: "Climate risks to carbon sequestration in US forests"
   abstrct: "Forests are currently a substantial carbon sink globally. Many climate change mitigation strategies rely on forest preservation and expansion, but the effectiveness of these approaches hinges on forests sequestering carbon for centuries despite anthropogenic climate change. Yet climate-driven disturbances pose critical risks to the long-term stability of forest carbon. We quantify the key climate drivers that fuel wildfire, drought, and insects, for the United States over 1984-2018 and project future disturbance risks over the 21st century. We find that current risks are widespread and projected to increase across different emission scenarios by a factor of 4-14 for fire and 1.3-1.8 for drought and insects. Our results provide insights for carbon cycle modeling, conservation, and climate policy, underscoring the escalating climate risks facing forests and the need for emissions reductions to mitigate climate change.Competing Interest StatementThe authors have declared no competing interest."
   type: preprint
@@ -20,6 +18,26 @@ preferred-citation:
   URL: https://www.biorxiv.org/content/early/2021/05/13/2021.05.11.443688
 	publisher: Cold Spring Harbor Laboratory
   doi: 10.1101/2021.05.11.443688
+  authors:
+  - family-names: "Anderegg"
+    given-names: "William R.L."
+  - family-names: "Chegwidden"
+    given-names: "Oriana S."
+  - family-names: "Badgley"
+    given-names: "Grayson"
+  - family-names: "Trugman"
+    given-names: "Anna T."
+  - family-names: "Cullenward"
+    given-names: "Danny"
+  - family-names: "Abatzoglou"
+    given-names: "John T."
+  - family-names: "Hicke"
+    given-names: "Jeffrey A."
+  - family-names: "Freeman"
+    given-names: "Jeremy"
+  - family-names: "Hamman"
+    given-names: "Joseph J."
+
 
 identifiers:
   - description: "forest-risks (code) Zenodo archive"
