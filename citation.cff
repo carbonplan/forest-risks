@@ -2,12 +2,38 @@ cff-version: 1.2.0
 message: If you use this software, please cite it as below.
 title: carbonplan / forest-risks
 abstract: This repository includes our libraries and scripts for mapping forest carbon potential and risks.
-authors:
-  - name: "CarbonPlan Team"
-  - name: "Bill Anderegg (@anderegg)"
-  - name: "Grayson Badgley (@badgley)"
-  - name: "Anna Trugman"
+  authors:
+  - family-names: "Chegwidden"
+    given-names: "Oriana S."
+    orcid: https:/orcid.org/0000-0003-1376-3835
+  - family-names: "Anderegg"
+    given-names: "William R.L."
+    orcid: https://orcid.org/0000-0001-6551-3331
+  - family-names: "Badgley"
+    given-names: "Grayson"
+    orcid: https://orcid.org/0000-0003-1011-4573
+  - family-names: "Trugman"
+    given-names: "Anna T."
+    orcid: https://orcid.org/0000-0002-7903-9711
+  - family-names: "Cullenward"
+    given-names: "Danny"
+    orcid: https://orcid.org/0000-0002-6803-9572
+  - family-names: "Abatzoglou"
+    given-names: "John T."
+    orcid: https://orcid.org/0000-0001-7599-9750
+  - family-names: "Hicke"
+    given-names: "Jeffrey A."
+    orcid: https://orcid.org/0000-0003-0494-2866
+  - family-names: "Freeman"
+    given-names: "Jeremy"
+    orcid: https://orcid.org/0000-0001-7077-7972
+  - family-names: "Hamman"
+    given-names: "Joseph J."
+    orcid: https://orcid.org/0000-0001-7479-8439
 license: MIT, CC-BY-4.0
+
+
+
 
 preferred-citation:
   title: "Climate risks to carbon sequestration in US forests"
@@ -21,25 +47,63 @@ preferred-citation:
   authors:
   - family-names: "Anderegg"
     given-names: "William R.L."
+    orcid: https://orcid.org/0000-0001-6551-3331
   - family-names: "Chegwidden"
     given-names: "Oriana S."
+    orcid: https:/orcid.org/0000-0003-1376-3835
   - family-names: "Badgley"
     given-names: "Grayson"
+    orcid: https://orcid.org/0000-0003-1011-4573
   - family-names: "Trugman"
     given-names: "Anna T."
+    orcid: https://orcid.org/0000-0002-7903-9711
   - family-names: "Cullenward"
     given-names: "Danny"
+    orcid: https://orcid.org/0000-0002-6803-9572
   - family-names: "Abatzoglou"
     given-names: "John T."
+    orcid: https://orcid.org/0000-0001-7599-9750
   - family-names: "Hicke"
     given-names: "Jeffrey A."
+    orcid: https://orcid.org/0000-0003-0494-2866
   - family-names: "Freeman"
     given-names: "Jeremy"
+    orcid: https://orcid.org/0000-0001-7077-7972
   - family-names: "Hamman"
     given-names: "Joseph J."
+    orcid: https://orcid.org/0000-0001-7479-8439
+
 
 
 identifiers:
-  - description: "forest-risks (data) Zenodo archive"
+  - description: "A repository containing the final output datasets from the analysis and figures in Anderegg and Chegwidden et al., “Climate risks to carbon sequestration in US forests”."
     type: doi
     value: https://doi.org/10.5281/zenodo.4741332
+  authors:
+  - family-names: "Chegwidden"
+    given-names: "Oriana S."
+    orcid: https:/orcid.org/0000-0003-1376-3835
+  - family-names: "Anderegg"
+    given-names: "William R.L."
+    orcid: https://orcid.org/0000-0001-6551-3331
+  - family-names: "Badgley"
+    given-names: "Grayson"
+    orcid: https://orcid.org/0000-0003-1011-4573
+  - family-names: "Trugman"
+    given-names: "Anna T."
+    orcid: https://orcid.org/0000-0002-7903-9711
+  - family-names: "Cullenward"
+    given-names: "Danny"
+    orcid: https://orcid.org/0000-0002-6803-9572
+  - family-names: "Abatzoglou"
+    given-names: "John T."
+    orcid: https://orcid.org/0000-0001-7599-9750
+  - family-names: "Hicke"
+    given-names: "Jeffrey A."
+    orcid: https://orcid.org/0000-0003-0494-2866
+  - family-names: "Freeman"
+    given-names: "Jeremy"
+    orcid: https://orcid.org/0000-0001-7077-7972
+  - family-names: "Hamman"
+    given-names: "Joseph J."
+    orcid: https://orcid.org/0000-0001-7479-8439
