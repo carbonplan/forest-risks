@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: All the code in this repository is MIT licensed. When possible, the data used by this project is licensed using the CC-BY-4.0 license. We include attribution and additional license information for third party datasets, and we request that you also maintain that attribution if using this data.
+title: carbonplan / forest-risks
+abstract: This repository includes our libraries and scripts for mapping forest carbon potential and risks.
+authors:
+  - name: "CarbonPlan Team"
+  - name: "Bill Anderegg (@anderegg)"
+  - name: "Grayson Badgley (@badgley)"
+  - name: "Anna Trugman"
+license: MIT - CC-BY-4.0
+
+preferred-citation:
+  authors:
+    given-names: Anderegg, William R.L. and Chegwidden, Oriana S. and Badgley, Grayson and Trugman, Anna T. and Cullenward, Danny and Abatzoglou, John T. and Hicke, Jeffrey A. and Freeman, Jeremy and Hamman, Joseph J.
+  title: "Climate risks to carbon sequestration in US forests"
+  abstrct: "Forests are currently a substantial carbon sink globally. Many climate change mitigation strategies rely on forest preservation and expansion, but the effectiveness of these approaches hinges on forests sequestering carbon for centuries despite anthropogenic climate change. Yet climate-driven disturbances pose critical risks to the long-term stability of forest carbon. We quantify the key climate drivers that fuel wildfire, drought, and insects, for the United States over 1984-2018 and project future disturbance risks over the 21st century. We find that current risks are widespread and projected to increase across different emission scenarios by a factor of 4-14 for fire and 1.3-1.8 for drought and insects. Our results provide insights for carbon cycle modeling, conservation, and climate policy, underscoring the escalating climate risks facing forests and the need for emissions reductions to mitigate climate change.Competing Interest StatementThe authors have declared no competing interest."
+  type: preprint
+  year: 2021
+  journal: bioRxiv
+  URL: https://www.biorxiv.org/content/early/2021/05/13/2021.05.11.443688
+	publisher: Cold Spring Harbor Laboratory
+  doi: 10.1101/2021.05.11.443688
+
+identifiers:
+  - description: "forest-risks (code) Zenodo archive"
+    type: doi
+    value: https://doi.org/10.5281/zenodo.4741328
+  - description: "forest-risks (data) Zenodo archive"
+    type: doi
+    value: https://doi.org/10.5281/zenodo.4741332
