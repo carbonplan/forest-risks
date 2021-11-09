@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: All the code in this repository is MIT licensed. When possible, the data used by this project is licensed using the CC-BY-4.0 license. We include attribution and additional license information for third party datasets, and we request that you also maintain that attribution if using this data.
+message: If you use this software, please cite it as below.
 title: carbonplan / forest-risks
 abstract: This repository includes our libraries and scripts for mapping forest carbon potential and risks.
 authors:
