@@ -40,9 +40,6 @@ preferred-citation:
 
 
 identifiers:
-  - description: "forest-risks (code) Zenodo archive"
-    type: doi
-    value: https://doi.org/10.5281/zenodo.4741328
   - description: "forest-risks (data) Zenodo archive"
     type: doi
     value: https://doi.org/10.5281/zenodo.4741332
