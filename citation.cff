@@ -31,9 +31,9 @@ abstract: This repository includes our libraries and scripts for mapping forest 
     given-names: "Joseph J."
     orcid: https://orcid.org/0000-0001-7479-8439
 license: MIT, CC-BY-4.0
-
-
-
+repository-code: "https://github.com/carbonplan/forest-offsets"
+version: 1.1.0
+doi:   https://doi.org/10.5281/zenodo.4741328
 
 preferred-citation:
   title: "Climate risks to carbon sequestration in US forests"
@@ -73,9 +73,7 @@ preferred-citation:
     given-names: "Joseph J."
     orcid: https://orcid.org/0000-0001-7479-8439
 
-
-
-repository:
+references:
   - description: "A repository containing the final output datasets from the analysis and figures in Anderegg and Chegwidden et al., “Climate risks to carbon sequestration in US forests”."
     type: doi
     value: https://doi.org/10.5281/zenodo.4741332
