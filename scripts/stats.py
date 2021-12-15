@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn.metrics import roc_auc_score
 
 from carbonplan_forest_risks import collect, fit, load, prepare, utils
 
@@ -31,6 +32,13 @@ def score(x, y, model, da, method):
     b = b - b.mean()
     spatial_r2 = 1 - np.sum((a - b) ** 2) / np.sum((a - np.mean(a)) ** 2)
 
+    a = da.mean("time").values.flatten()
+    b = prediction["prediction"].mean("time").values.flatten()
+    inds = ~np.isnan(a) & ~np.isnan(b)
+    a = a[inds]
+    b = b[inds]
+    spatial_auc = roc_auc_score(a > 0, b)
+
     bias = (prediction['prediction'].mean().values - da.mean().values) / da.mean().values
 
     return {
@@ -40,6 +48,7 @@ def score(x, y, model, da, method):
         'annual_r2': annual_r2,
         'seasonal_r2': seasonal_r2,
         'spatial_r2': spatial_r2,
+        'spatial_auc': spatial_auc,
         'bias': bias,
     }
 
@@ -155,7 +164,7 @@ for index in range(nruns):
     results = shuffle(x_z, y, mtbs['monthly'], f'shuffle_all_{index}')
     df = append(df, results)
 
-df = df[['method', 'roc', 'r2', 'annual_r2', 'seasonal_r2', 'spatial_r2', 'bias']]
+df = df[['method', 'roc', 'r2', 'annual_r2', 'seasonal_r2', 'spatial_r2', 'spatial_auc', 'bias']]
 
 print(df)
 
