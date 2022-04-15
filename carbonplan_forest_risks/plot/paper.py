@@ -100,12 +100,12 @@ def multipanel_ts(results_dict, region_bboxes, fig_path):
     ]
 
     titles = {
-        "fire": "Burn area\n(fraction/year)",
+        "fire": "Burn area\n(%/year)",
         "drought": "Drought-related\nmortality (%/year)",
         "insects": "Insect-related\nmortality (%/year)",
     }
     ylims = {
-        "fire": (0, 0.05),
+        "fire": (0, 5),
         "drought": (0, 2.5),
         "insects": (0, 1),
     }

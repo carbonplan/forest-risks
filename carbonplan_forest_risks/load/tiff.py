@@ -1,11 +1,12 @@
 import numpy as np
 import xarray as xr
-from carbonplan.data import cat
 from rasterio.enums import Resampling
+
+from .nlcd import nlcd
 
 
 def tiff(url, model_ds, coarsen=1):
-    target = cat.nlcd.raster.to_dask()
+    target = nlcd(store='az', year=2001).isel(band=0).drop('band')
     source = xr.open_rasterio(url)
     source = source.where(source > -1)
     ds = source.rio.reproject_match(target, resampling=Resampling.bilinear)
