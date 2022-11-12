@@ -48,8 +48,8 @@ def cmip(
         if model is None:
             raise ValueError('must specify model')
         if member is None:
-            member = members[model]   
-            
+            member = members[model]
+
 
         path = setup.loading(store)
 
