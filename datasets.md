@@ -13,7 +13,7 @@ store = fsspec.get_mapper('https://carbonplan.blob.core.windows.net/carbonplan-f
 ds = xr.open_zarr(store, consolidated=True)
 ```
 
-| Variable | License | Store |
+| Variable | License | Zarr store |
 | Fire | CC-BY | https://carbonplan.blob.core.windows.net/carbonplan-forests/risks/results/web/fire.zarr |
 | Insects | CC-BY | https://carbonplan.blob.core.windows.net/carbonplan-forests/risks/results/web/insects.zarr |
 | Drought | CC-BY | https://carbonplan.blob.core.windows.net/carbonplan-forests/risks/results/web/drought.zarr |
