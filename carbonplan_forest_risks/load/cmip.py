@@ -47,6 +47,9 @@ def cmip(
             raise ValueError('must specify scenario')
         if model is None:
             raise ValueError('must specify model')
+        if member is None:
+            member = members[model]
+
 
         path = setup.loading(store)
 
