@@ -321,7 +321,7 @@ def full_eval(
     }
 
     for metric, performance in eval_metrics.items():
-        print('performance at {} scale is: {}'.format(metric, performance))
+        print(f'performance at {metric} scale is: {performance}')
 
     return eval_metrics, evaluation(
         data,

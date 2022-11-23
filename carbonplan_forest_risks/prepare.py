@@ -39,7 +39,7 @@ def annualize(
     elif variable == 'cwd':
         aggregated = aggregated.max()
     else:
-        print('{} not implemented'.format(variable))
+        print(f'{variable} not implemented')
 
     # drop your first year if you were rolling
     if climate_prepend is not None:
