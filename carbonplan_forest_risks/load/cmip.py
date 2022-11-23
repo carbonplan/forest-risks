@@ -50,7 +50,6 @@ def cmip(
         if member is None:
             member = members[model]
 
-
         path = setup.loading(store)
 
         prefix = f'cmip6/{method}/conus/4000m/{sampling}/{model}.{scenario}.{member}.zarr'

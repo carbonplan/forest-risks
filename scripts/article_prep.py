@@ -25,7 +25,7 @@ class NpEncoder(json.JSONEncoder):
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
         else:
-            return super(NpEncoder, self).default(obj)
+            return super().default(obj)
 
 
 warnings.filterwarnings('ignore')
@@ -108,7 +108,7 @@ def repackage_drought_insects(ds):
     all_gcms = []
     for (gcm, ensemble_member) in gcms:
         all_gcms.append(
-            ds[['{}-{}'.format(gcm, scenario) for scenario in scenarios]]
+            ds[[f'{gcm}-{scenario}' for scenario in scenarios]]
             .to_array(dim='scenario', name='probability')
             .assign_coords({'scenario': scenarios})
         )
@@ -179,7 +179,7 @@ for impact in ['insects', 'drought', 'fire', 'tmean']:
         ds = build_climate_cube()
     # grab the risks data
     else:
-        store_path = 'risks/results/web/{}_full.zarr'.format(impact)
+        store_path = f'risks/results/web/{impact}_full.zarr'
         ds = xr.open_zarr(
             get_store(
                 'carbonplan-forests',
@@ -216,7 +216,7 @@ for impact in ['insects', 'drought', 'fire', 'tmean']:
 
     # loop through each of the regions of interest
     for region, bbox in region_bboxes.items():
-        print('Calculating regional averages over the {} for {}'.format(region, impact))
+        print(f'Calculating regional averages over the {region} for {impact}')
         # initialize the dictionary
         results_dict[impact][region] = {}
         # select out the box you want

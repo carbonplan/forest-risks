@@ -32,12 +32,13 @@ Several notebooks are additionally provided that show the use of these tools for
 ## data products
 
 As part of this project we have created derived data products for five key variables relevant to evaluating forest carbon storage potential and risks.
+
 - `biomass` The potential carbon storage in forests assuming continued growth of existing forests.
 - `fire` The risks associated with forest fires.
 - `drought` The risk to forests from insect-related tree mortality.
 - `insects` The risk to forests from insect-related tree mortality.
 
-Gridded rasters for each of these layers are available for the continental United States at a 4km spatial scale. For biomass and fire, projections are shown through the end of the 21st century in decadal increments. Drought and insect models are still in development so we currently only show historical risks for these disturbance types.  All data are accessible via this [catalog](https://github.com/carbonplan/forest-risks/blob/master/carbonplan_forest_risks/data/catalog.yaml). Additional formats and download options will be provided in the future.
+Gridded rasters for each of these layers are available for the continental United States at a 4km spatial scale. For biomass and fire, projections are shown through the end of the 21st century in decadal increments. Drought and insect models are still in development so we currently only show historical risks for these disturbance types. All data are accessible via this [catalog](https://github.com/carbonplan/forest-risks/blob/master/carbonplan_forest_risks/data/catalog.yaml). Additional formats and download options will be provided in the future.
 
 ## license
 

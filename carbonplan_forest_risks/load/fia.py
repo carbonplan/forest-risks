@@ -444,7 +444,7 @@ def fia_state_grouped(store, state, clean):
         key = f'year_{year}'
         if key in df.columns:
             if clean:
-                df = df[(df[key] < 9999) | np.isnan((df[key]))]
+                df = df[(df[key] < 9999) | np.isnan(df[key])]
             if sum(np.isnan(df[key])) == len(df):
                 del df[key]
 

@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: "*"
+    branches: '*'
   pull_request:
-    branches: "*"
+    branches: '*'
 
 jobs:
   test:
@@ -19,7 +19,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2.1.1
         with:
           python-version: ${{ matrix.python-version }}
-          mamba-version: "*"
+          mamba-version: '*'
           activate-environment: carbonplan
           channels: conda-forge
           channel-priority: true

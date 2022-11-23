@@ -35,7 +35,7 @@ for impact in impacts_to_process:
     ds = xr.open_zarr(
         get_store(
             'carbonplan-forests',
-            'risks/results/web/{}_cmip_high_res.zarr'.format(impact),
+            f'risks/results/web/{impact}_cmip_high_res.zarr',
             account_key=account_key,
         )
     )
@@ -60,7 +60,7 @@ for impact in impacts_to_process:
     # first write out the full ds which will be used for the article
     out_path = get_store(
         'carbonplan-forests',
-        'risks/results/web/{}_full.zarr'.format(impact),
+        f'risks/results/web/{impact}_full.zarr',
         account_key=account_key,
     )
     ds.to_zarr(out_path, mode='w')
@@ -69,6 +69,6 @@ for impact in impacts_to_process:
     ds = ds.mean(dim='gcm').probability.to_dataset(dim='scenario')
 
     out_path = get_store(
-        'carbonplan-forests', 'risks/results/web/{}.zarr'.format(impact), account_key=account_key
+        'carbonplan-forests', f'risks/results/web/{impact}.zarr', account_key=account_key
     )
     ds.to_zarr(out_path, mode='w')

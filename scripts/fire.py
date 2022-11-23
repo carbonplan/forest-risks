@@ -74,7 +74,7 @@ climate = load.terraclim(
 )
 for year in np.arange(1984, 2024, 10):
     ds = xr.Dataset()
-    print('[fire] evaluating on decade beginning in {}'.format(year))
+    print(f'[fire] evaluating on decade beginning in {year}')
     prepend_time_slice = slice(str(year - 1), str(year - 1))
     analysis_time_slice = slice(str(year), str(year + 9))
     prepend = climate.sel(time=prepend_time_slice)
@@ -107,7 +107,7 @@ for year in np.arange(1984, 2024, 10):
     elif store == 'az':
         path = get_store(
             'carbonplan-forests',
-            'risks/results/paper/fire_terraclimate_{}.zarr'.format(run_name),
+            f'risks/results/paper/fire_terraclimate_{run_name}.zarr',
             account_key=account_key,
         )
         if year == 1984:
@@ -144,9 +144,7 @@ for (cmip_model, member) in cmip_models:
             for year in np.arange(1970, 2100, 10):
                 ds_future = xr.Dataset()
 
-                print(
-                    '[fire] conducting prediction for {} {} {}'.format(cmip_model, scenario, year)
-                )
+                print(f'[fire] conducting prediction for {cmip_model} {scenario} {year}')
                 prepend_time_slice = slice(str(year - 1), str(year - 1))
                 analysis_time_slice = slice(str(year), str(year + 9))
 
@@ -180,7 +178,7 @@ for (cmip_model, member) in cmip_models:
                 )
                 path = get_store(
                     'carbonplan-scratch',
-                    'data/fire_future_{}_{}_{}.zarr'.format(run_name, cmip_model, scenario),
+                    f'data/fire_future_{run_name}_{cmip_model}_{scenario}.zarr',
                     account_key=account_key,
                 )
                 # if it's the first year then make a fresh store by overwriting; if it's later, append to existing file
@@ -210,7 +208,7 @@ gcms = ['CanESM5-CanOE', 'MIROC-ES2L', 'ACCESS-CM2', 'ACCESS-ESM1-5', 'MRI-ESM2-
 scenarios = ['ssp245', 'ssp370', 'ssp585']
 out_path = get_store(
     'carbonplan-forests',
-    'risks/results/paper/fire_cmip_{}.zarr'.format(run_name),
+    f'risks/results/paper/fire_cmip_{run_name}.zarr',
     account_key=account_key,
 )
 
@@ -221,13 +219,11 @@ if postprocess:
         for scenario in scenarios:
             path = get_store(
                 'carbonplan-scratch',
-                'data/fire_future_{}_{}_{}.zarr'.format(run_name, gcm, scenario),
+                f'data/fire_future_{run_name}_{gcm}_{scenario}.zarr',
                 account_key=account_key,
             )
-            scenario_list.append(
-                xr.open_zarr(path).rename({'{}_{}'.format(gcm, scenario): 'probability'})
-            )
-            print('{} {} is done!'.format(scenario, gcm))
+            scenario_list.append(xr.open_zarr(path).rename({f'{gcm}_{scenario}': 'probability'}))
+            print(f'{scenario} {gcm} is done!')
         ds = xr.concat(scenario_list, dim='scenario')
         ds = ds.assign_coords({'scenario': scenarios})
         gcm_list.append(ds)
