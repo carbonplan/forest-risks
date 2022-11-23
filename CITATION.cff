@@ -1,0 +1,107 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+title: carbonplan / forest-risks
+abstract: This repository includes our libraries and scripts for mapping forest carbon potential and risks.
+  authors:
+  - family-names: "Chegwidden"
+    given-names: "Oriana S."
+    orcid: https:/orcid.org/0000-0003-1376-3835
+  - family-names: "Anderegg"
+    given-names: "William R.L."
+    orcid: https://orcid.org/0000-0001-6551-3331
+  - family-names: "Badgley"
+    given-names: "Grayson"
+    orcid: https://orcid.org/0000-0003-1011-4573
+  - family-names: "Trugman"
+    given-names: "Anna T."
+    orcid: https://orcid.org/0000-0002-7903-9711
+  - family-names: "Cullenward"
+    given-names: "Danny"
+    orcid: https://orcid.org/0000-0002-6803-9572
+  - family-names: "Abatzoglou"
+    given-names: "John T."
+    orcid: https://orcid.org/0000-0001-7599-9750
+  - family-names: "Hicke"
+    given-names: "Jeffrey A."
+    orcid: https://orcid.org/0000-0003-0494-2866
+  - family-names: "Freeman"
+    given-names: "Jeremy"
+    orcid: https://orcid.org/0000-0001-7077-7972
+  - family-names: "Hamman"
+    given-names: "Joseph J."
+    orcid: https://orcid.org/0000-0001-7479-8439
+license: MIT, CC-BY-4.0
+repository-code: "https://github.com/carbonplan/forest-offsets"
+version: 1.1.0
+doi:   https://doi.org/10.5281/zenodo.4741328
+
+preferred-citation:
+  title: "Climate risks to carbon sequestration in US forests"
+  abstract: "Forests are currently a substantial carbon sink globally. Many climate change mitigation strategies rely on forest preservation and expansion, but the effectiveness of these approaches hinges on forests sequestering carbon for centuries despite anthropogenic climate change. Yet climate-driven disturbances pose critical risks to the long-term stability of forest carbon. We quantify the key climate drivers that fuel wildfire, drought, and insects, for the United States over 1984-2018 and project future disturbance risks over the 21st century. We find that current risks are widespread and projected to increase across different emission scenarios by a factor of 4-14 for fire and 1.3-1.8 for drought and insects. Our results provide insights for carbon cycle modeling, conservation, and climate policy, underscoring the escalating climate risks facing forests and the need for emissions reductions to mitigate climate change.Competing Interest StatementThe authors have declared no competing interest."
+  type: preprint
+  year: 2021
+  journal: bioRxiv
+  URL: https://www.biorxiv.org/content/early/2021/05/13/2021.05.11.443688
+	publisher: Cold Spring Harbor Laboratory
+  doi: 10.1101/2021.05.11.443688
+  authors:
+  - family-names: "Anderegg"
+    given-names: "William R.L."
+    orcid: https://orcid.org/0000-0001-6551-3331
+  - family-names: "Chegwidden"
+    given-names: "Oriana S."
+    orcid: https:/orcid.org/0000-0003-1376-3835
+  - family-names: "Badgley"
+    given-names: "Grayson"
+    orcid: https://orcid.org/0000-0003-1011-4573
+  - family-names: "Trugman"
+    given-names: "Anna T."
+    orcid: https://orcid.org/0000-0002-7903-9711
+  - family-names: "Cullenward"
+    given-names: "Danny"
+    orcid: https://orcid.org/0000-0002-6803-9572
+  - family-names: "Abatzoglou"
+    given-names: "John T."
+    orcid: https://orcid.org/0000-0001-7599-9750
+  - family-names: "Hicke"
+    given-names: "Jeffrey A."
+    orcid: https://orcid.org/0000-0003-0494-2866
+  - family-names: "Freeman"
+    given-names: "Jeremy"
+    orcid: https://orcid.org/0000-0001-7077-7972
+  - family-names: "Hamman"
+    given-names: "Joseph J."
+    orcid: https://orcid.org/0000-0001-7479-8439
+
+references:
+  - description: "A repository containing the final output datasets from the analysis and figures in Anderegg and Chegwidden et al., “Climate risks to carbon sequestration in US forests”."
+    type: doi
+    value: https://doi.org/10.5281/zenodo.4741332
+  authors:
+  - family-names: "Chegwidden"
+    given-names: "Oriana S."
+    orcid: https:/orcid.org/0000-0003-1376-3835
+  - family-names: "Anderegg"
+    given-names: "William R.L."
+    orcid: https://orcid.org/0000-0001-6551-3331
+  - family-names: "Badgley"
+    given-names: "Grayson"
+    orcid: https://orcid.org/0000-0003-1011-4573
+  - family-names: "Trugman"
+    given-names: "Anna T."
+    orcid: https://orcid.org/0000-0002-7903-9711
+  - family-names: "Cullenward"
+    given-names: "Danny"
+    orcid: https://orcid.org/0000-0002-6803-9572
+  - family-names: "Abatzoglou"
+    given-names: "John T."
+    orcid: https://orcid.org/0000-0001-7599-9750
+  - family-names: "Hicke"
+    given-names: "Jeffrey A."
+    orcid: https://orcid.org/0000-0003-0494-2866
+  - family-names: "Freeman"
+    given-names: "Jeremy"
+    orcid: https://orcid.org/0000-0001-7077-7972
+  - family-names: "Hamman"
+    given-names: "Joseph J."
+    orcid: https://orcid.org/0000-0001-7479-8439
