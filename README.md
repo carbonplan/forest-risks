@@ -1,15 +1,20 @@
-<img
-  src='https://carbonplan-assets.s3.amazonaws.com/monogram/dark-small.png'
-  height='48'
-/>
+<p align="left" >
+<a href='https://carbonplan.org'>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://carbonplan-assets.s3.amazonaws.com/monogram/light-small.png">
+  <img alt="CarbonPlan monogram." height="48" src="https://carbonplan-assets.s3.amazonaws.com/monogram/dark-small.png">
+</picture>
+</a>
+</p>
 
 # carbonplan / forest-risks
 
 **forest carbon potential and risks**
 
-[![CI](https://github.com/carbonplan/forest-offsets/actions/workflows/main.yaml/badge.svg)](https://github.com/carbonplan/forest-offsets/actions/workflows/main.yaml)
-[![MIT License](https://badgen.net/badge/license/MIT/blue)](./LICENSE)
-[![DOI](https://img.shields.io/badge/code-10.5281/zenodo.4741329-6aa3d5?link=https://doi.org/10.5281/zenodo.4741329)](https://doi.org/10.5281/zenodo.4741329)
+[![CI](https://github.com/carbonplan/forest-risks/actions/workflows/main.yaml/badge.svg)](https://github.com/carbonplan/forest-risks/actions/workflows/main.yaml)
+![PyPI](https://img.shields.io/pypi/v/carbonplan-forest-risks)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4741329.svg)](https://doi.org/10.5281/zenodo.4741329)
 
 This repository includes our libraries and scripts for mapping forest carbon potential and risks.
 
@@ -41,11 +46,11 @@ Gridded rasters for each of these layers are available for the continental Unite
 
 ## license
 
-All the code in this repository is [MIT](https://choosealicense.com/licenses/mit/) licensed. When possible, the data used by this project is licensed using the [CC-BY-4.0](https://choosealicense.com/licenses/cc-by-4.0/) license. We include attribution and additional license information for third party datasets, and we request that you also maintain that attribution if using this data.
+All the code in this repository is [MIT](https://choosealicense.com/licenses/mit/)-licensed. When possible, the data used by this project is licensed using the [CC-BY-4.0](https://choosealicense.com/licenses/cc-by-4.0/) license. We include attribution and additional license information for third party datasets, and we request that you also maintain that attribution if using this data.
 
 ## about us
 
-CarbonPlan is a non-profit organization that uses data and science for climate action. We aim to improve the transparency and scientific integrity of climate solutions with open data and tools. Find out more at [carbonplan.org](https://carbonplan.org/) or get in touch by [opening an issue](https://github.com/carbonplan/forest-risks/issues/new) or [sending us an email](mailto:hello@carbonplan.org).
+CarbonPlan is a nonprofit organization that uses data and science for climate action. We aim to improve the transparency and scientific integrity of climate solutions with open data and tools. Find out more at [carbonplan.org](https://carbonplan.org/) or get in touch by [opening an issue](https://github.com/carbonplan/forest-risks/issues/new) or [sending us an email](mailto:hello@carbonplan.org).
 
 ## contributors
 
