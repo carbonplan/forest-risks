@@ -7,8 +7,8 @@ def fire(y, src, inds=None):
     da['x'] = src.x
     da['y'] = src.y
     da['time'] = src.time
-    da['lat'] = (['y', 'x'], src['lat'])
-    da['lon'] = (['y', 'x'], src['lon'])
+    da['lat'] = (['y', 'x'], src['lat'].data)
+    da['lon'] = (['y', 'x'], src['lon'].data)
     shape = (len(src.time), len(src.y), len(src.x))
 
     if inds is None:
